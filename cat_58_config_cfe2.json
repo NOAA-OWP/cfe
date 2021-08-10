@@ -1,0 +1,28 @@
+{
+    "forcing_file":"./cfe/cat58_01Dec2015.csv",
+    "catchment_area_km2":15.617167355002097,
+    "alpha_fc":0.33,
+    "soil_params":{
+                   "depth":2.0,
+                   "bb":4.05,
+                   "mult":1000.0,
+                   "satdk":0.00000338,
+                   "satpsi":0.355,
+                   "slop":0.01,
+                   "smcmax":0.439,
+                   "wltsmc":0.066,
+                   "D":2.0
+                   },
+    "max_gw_storage":16.0,
+    "Cgw":0.01,
+    "expon":6.0,
+    "gw_storage":0.50,
+    "soil_storage":0.667,
+    "K_lf":0.01,
+    "K_nash":0.03,
+    "nash_storage":[0.0,0.0],
+    "giuh_ordinates":[0.1,0.35,0.2,0.14,0.1,0.06,0.05],
+    "stand_alone":1,
+    "unit_test":1,
+    "compare_results_file":"test_compare.csv"
+}
