@@ -1,3 +1,13 @@
+# RUN EXECUTABLES #
+###################
+run_cfe_bmi
+./original_author_code/run_cfe
+
+# MODEL OUTPUT FILES #
+######################
+original_author_code/test.out
+original_author_code/debug.out
+
 # Compiled source #
 ###################
 *.com
