@@ -466,8 +466,7 @@ double oldval;
 //############################      TIME LOOP       #################################
 //###################################################################################
 
-//num_timesteps=num_rain_dat+279;  // run a little bit beyond the rain data to see what happens.
-num_timesteps=50;
+num_timesteps=num_rain_dat+279;  // run a little bit beyond the rain data to see what happens.
 for(tstep=0;tstep<num_timesteps;tstep++)
   {
   
