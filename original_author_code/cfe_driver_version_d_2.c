@@ -67,6 +67,44 @@
 // define data structures
 //--------------------------
 
+//struct conceptual_reservoir
+//{
+//// this data structure describes a nonlinear reservoir having two outlets, one primary with an activation
+//// threshold that may be zero, and a secondary outlet with a threshold that may be zero
+//// this will also simulate a linear reservoir by setting the exponent parameter to 1.0 iff is_exponential==FALSE
+//// iff is_exponential==TRUE, then it uses the exponential discharge function from the NWM V2.0 forumulation
+//// as the primary discharge with a zero threshold, and does not calculate a secondary discharge.
+////--------------------------------------------------------------------------------------------------
+//int    is_exponential;  // set this true TRUE to use the exponential form of the discharge equation
+//double storage_max_m;   // maximum storage in this reservoir
+//double storage_m;       // state variable.
+//double coeff_primary;    // the primary outlet
+//double exponent_primary;
+//double storage_threshold_primary_m;
+//double storage_threshold_secondary_m;
+//double coeff_secondary;
+//double exponent_secondary;
+//};
+//
+//struct NWM_soil_parameters
+//{
+//// using same variable names as used in NWM.  <sorry>
+//double smcmax;  // effective porosity [V/V]
+//double wltsmc;  // wilting point soil moisture content [V/V]
+//double satdk;   // saturated hydraulic conductivity [m s-1]
+//double satpsi;	// saturated capillary head [m]
+//double bb;      // beta exponent on Clapp-Hornberger (1978) soil water relations [-]
+//double mult;    // the multiplier applied to satdk to route water rapidly downslope
+//double slop;   // this factor (0-1) modifies the gradient of the hydraulic head at the soil bottom.  0=no-flow.
+//double D;       // soil depth [m]
+//};
+
+
+struct conceptual_reservoir soil_reservoir;
+struct conceptual_reservoir gw_reservoir;
+struct NWM_soil_parameters NWM_soil_params;
+
+
 //DATA STRUCTURE TO HOLD AORC FORCING DATA
 struct aorc_forcing_data
 {
@@ -85,9 +123,6 @@ float longitude;                       // degrees east of prime meridian. Negati
 long int time; //TODO: type?           // seconds since 1970-01-01 00:00:00.0 0:00               | time
 } ;
 
-// function prototypes
-// --------------------------------
-
 extern double greg_2_jul(long year, long mon, long day, long h, long mi,
                          double se);
 extern void calc_date(double jd, long *y, long *m, long *d, long *h, long *mi,
@@ -97,6 +132,7 @@ extern void itwo_alloc( int ***ptr, int x, int y);
 extern void dtwo_alloc( double ***ptr, int x, int y);
 extern void d_alloc(double **var,int size);
 extern void i_alloc(int **var,int size);
+extern void l_alloc(long **var,int size);
 
 extern void parse_aorc_line(char *theString,long *year,long *month, long *day,long *hour,
                 long *minute, double *dsec, struct aorc_forcing_data *aorc);
@@ -126,12 +162,18 @@ long year,month,day,hour,minute;
 double dsec;
 double jdate_start=0.0;
 
-double catchment_area_km2=5.0;            // in the range of our desired size
+double catchment_area_km2=15.617167355002097;            // in the range of our desired size
 double drainage_density_km_per_km2=3.5;   // this is approx. the average blue line drainage density for CONUS
 
 int    num_timesteps;
 int    num_rain_dat;
 double timestep_h;
+long *sim_year=NULL;
+long *sim_month=NULL;
+long *sim_day=NULL;
+long *sim_hour=NULL;
+long *sim_minute=NULL;
+long *sim_second=NULL;
 
 // forcing
 double *rain_rate=NULL;
@@ -170,6 +212,7 @@ double flux_perc_m=0.0;                // flux from soil to deeper groundwater r
 double flux_lat_m;                     // lateral flux in the subsurface to the Nash cascade
 double flux_from_deep_gw_to_chan_m;    // flux from the deep reservoir into the channels
 double gw_reservoir_storage_deficit_m; // the available space in the conceptual groundwater reservoir
+//double primary_flux,secondary_flux;    // temporary vars.    //jmframe: move to CFE for conceptual_reservoir_flux_calc
 
 double field_capacity_atm_press_fraction; // [-]
 double soil_water_content_at_field_capacity; // [V/V]
@@ -184,9 +227,6 @@ double Omega;            // The limits of integration used in Eqn. 5 of the para
 
 double Qout_m;           // the sum of giuh, nash-cascade, and base flow outputs m per timestep
 
-struct conceptual_reservoir soil_reservoir;
-struct conceptual_reservoir gw_reservoir;
-struct NWM_soil_parameters NWM_soil_params;
 struct aorc_forcing_data aorc_data;
 
 double refkdt=3.0;   // in Sugar Creek WRF-Hydro calibration this value was 0.15  3.0 is the default from noah-mp.
@@ -235,25 +275,26 @@ d_alloc(&runoff_queue_m_per_timestep, MAX_NUM_GIUH_ORDINATES+1); // allocate mem
 
 // catchment properties
 //------------------------
-catchment_area_km2=15.617;
+catchment_area_km2=15.617167355002097;
 
 //initialize simulation constants
 //---------------------------
 num_timesteps=10000;
 timestep_h=1.0;
-atm_press_Pa=101300.0;
+atm_press_Pa=101325.0;
 unit_weight_water_N_per_m3=9810.0;
 
 //initialize NWM soil parameters, using LOAM soils from SOILPARM.TBL.
 //--------------------------------------------------------------------
-NWM_soil_params.smcmax=0.439;   // [V/V] maximum soil moisture content
-NWM_soil_params.wltsmc=0.066;   // [V/V] wilting point soil moisture content
-NWM_soil_params.satdk=3.38e-06; // [m per sec.]  soil vertical saturated hydraulic conductivity
-NWM_soil_params.satpsi=0.355;   // [m]  soil suction head at saturation
-NWM_soil_params.bb=4.05;        // [-]    -- called "bexp" in NWM empirical Clapp-Hornberger soil water param.
-NWM_soil_params.slop=0.01;       // [-] hydraulic gradient varies from 0 (no flow) to 1 (free drainage) at soil bottom
-NWM_soil_params.D=2.0;          // [m] soil thickness assumed in the NWM not from SOILPARM.TBL
-NWM_soil_params.mult=1000.0;     // not from SOILPARM.TBL, This is actually calibration parameter: LKSATFAC
+NWM_soil_params.smcmax=0.439;   // [V/V]
+NWM_soil_params.wltsmc=0.066;   // [V/V]
+NWM_soil_params.satdk=3.38e-06; // [m per sec.] 
+NWM_soil_params.satpsi=0.355;   // [m]
+NWM_soil_params.bb=4.05;        // [-]    -- called "bexp" in NWM
+//NWM_soil_params.slop=1.0;    // calibration factor that varies from 0 (no flow) to 1 (free drainage) at soil bottom
+NWM_soil_params.slop=0.01;    // calibration factor that varies from 0 (no flow) to 1 (free drainage) at soil bottom
+NWM_soil_params.D=2.0;       // [m] soil thickness assumed in the NWM not from SOILPARM.TBL
+NWM_soil_params.mult=1000.0;    // not from SOILPARM.TBL, This is actually calibration parameter: LKSATFAC
 
 trigger_z_m=0.5;   // distance from the bottom of the soil column to the center of the lowest discretization
 
@@ -282,7 +323,7 @@ printf("field capacity storage threshold = %lf m\n", field_capacity_storage_thre
 
 // initialize giuh parameters.  These would come from another source.
 //------------------------------------------------------------------
-num_giuh_ordinates=5;
+num_giuh_ordinates=7;
 if(num_giuh_ordinates>MAX_NUM_GIUH_ORDINATES)
   {
   fprintf(stderr,"Big problem, number of giuh ordinates greater than MAX_NUM_GIUH_ORDINATES.  Stopped.\n");
@@ -368,13 +409,19 @@ vol_soil_start     = soil_reservoir.storage_m;
 
 
 d_alloc(&rain_rate,MAX_NUM_RAIN_DATA);
+l_alloc(&sim_year,MAX_NUM_RAIN_DATA);
+l_alloc(&sim_month,MAX_NUM_RAIN_DATA);
+l_alloc(&sim_day,MAX_NUM_RAIN_DATA);
+l_alloc(&sim_hour,MAX_NUM_RAIN_DATA);
+l_alloc(&sim_minute,MAX_NUM_RAIN_DATA);
+l_alloc(&sim_second,MAX_NUM_RAIN_DATA);
 
 //########################################################################################################
 // read in the aorc forcing data, just save the rain rate in mm/h in an array, ignore other vars ffor now.
 //########################################################################################################
 if(yes_aorc==TRUE)  // reading a csv file containing all the AORC meteorological/radiation and rainfall
   {
-  if((in_fptr=fopen("cat87_01Dec2015.csv","r"))==NULL)
+  if((in_fptr=fopen("cat58_01Dec2015.csv","r"))==NULL)
     {printf("Can't open input file\n");exit(0);}
 
   num_rain_dat=720;  // hard coded number of lines in the forcing input file.
@@ -383,14 +430,23 @@ if(yes_aorc==TRUE)  // reading a csv file containing all the AORC meteorological
     {
     fgets(theString,512,in_fptr);  // read in a line of AORC data.
     parse_aorc_line(theString,&year,&month,&day,&hour,&minute,&dsec,&aorc_data);
+    sim_year[i]=year;
+    sim_month[i]=month;
+    sim_day[i]=day;
+    sim_hour[i]=hour;
+    sim_minute[i]=minute;
+    sim_second[i]=(long)dsec;
+
     if(i==0) jdate_start=greg_2_jul(year,month,day,hour,minute,dsec);      // calc & save the starting julian date of the rainfall data
     // saving only the rainfall data ffor now.
-    rain_rate[i]=(double)aorc_data.precip_kg_per_m2;  // assumed 1000 kg/m3 density of water.  This result is mm/h;
+    // rain_rate[i]=(double)aorc_data.precip_kg_per_m2;  // assumed 1000 kg/m3 density of water.  This result is mm/h;
+    rain_rate[i]=(double)aorc_data.precip_kg_per_m2*3600.0;  // precip_kg_per_m2 is in m/s, convert to m/h
+    //if ((i > 12) && (i < 24)) rain_rate[i] = 0.0;
     }
   }
 else  // reading a single column txt file that contains only rainfall (mm/h) 
   {
-  if((in_fptr=fopen("cat87_01Dec2015_rain_only.dat","r"))==NULL)
+  if((in_fptr=fopen("cat58_01Dec2015_rain_only.dat","r"))==NULL)
     {printf("Can't open input file\n");exit(0);}
 
   num_rain_dat=720;  // hard coded number of lines in the forcing input file.
@@ -403,15 +459,18 @@ fclose(in_fptr);
 //######################  END OF READ FORCING CODE  ######################################################
 
 
-fprintf(out_fptr,"#    ,            hourly ,  direct,   giuh ,lateral,  base,   total\n");
-fprintf(out_fptr,"#Time,           rainfall,  runoff,  runoff, flow  ,  flow,  discharge\n");
-fprintf(out_fptr,"# (h),             (mm)   ,  (mm) ,   (mm) , (mm)  ,  (mm),    (mm)\n");
+//fprintf(out_fptr,"#    ,           hourly,    direct,   giuh,   lateral,  base,   total\n");
+//fprintf(out_fptr,"#Time,           rainfall,  runoff,   runoff, flow,     flow,   discharge\n");
+//fprintf(out_fptr,"# (h),           (m/h),     (m/h),    (m/h),  (m/h),    (m/h),  (m/h)\n");
+fprintf(out_fptr,"Time Step,Time,Rainfall,Direct Runoff,GIUH Runoff,Lateral Flow,Base Flow,Total Discharge,Flow\n");
 //tstep,Schaake_output_runoff_m,giuh_runoff_m,
 //                                         nash_lateral_runoff_m, flux_from_deep_gw_to_chan_m, Qout_m 
 
 // run the model for num_timesteps+500
 //---------------------------------------
 
+double lateral_flux;      // flux from soil to lateral flow Nash cascade +to cascade
+double percolation_flux;  // flux from soil to gw nonlinear researvoir, +downward
 double oldval;
 
 //###################################################################################
@@ -419,66 +478,95 @@ double oldval;
 //###################################################################################
 
 num_timesteps=num_rain_dat+279;  // run a little bit beyond the rain data to see what happens.
+//num_timesteps=num_rain_dat;
 for(tstep=0;tstep<num_timesteps;tstep++)
   {
   
   
-  if(tstep<num_rain_dat)  timestep_rainfall_input_m=rain_rate[tstep]/1000.0;  // convert from mm/h to m w/ 1h timestep
+  // if(tstep<num_rain_dat)  timestep_rainfall_input_m=rain_rate[tstep]/1000.0;  // convert from mm/h to m w/ 1h timestep
+  if(tstep<num_rain_dat)  timestep_rainfall_input_m=rain_rate[tstep];  // in m/h already, no conversion needed
   else                    timestep_rainfall_input_m=0.0;
   volin+=timestep_rainfall_input_m;
-  
-  //##################################################//
-  // run the cfe code                                 //
-  //##################################################//
-cfe(                                                  //
-        &soil_reservoir_storage_deficit_m,            //
-        NWM_soil_params,                              //
-        &soil_reservoir,                               //
-        timestep_h,                                   //
-        Schaake_adjusted_magic_constant_by_soil_type, //
-        timestep_rainfall_input_m,                    //
-        &Schaake_output_runoff_m,                     //
-        &infiltration_depth_m,                        //
-        &flux_overland_m,                             //
-        &vol_sch_runoff,                              //
-        &vol_sch_infilt,                              //
-        &flux_perc_m,                                 // 
-        &vol_to_soil,                                 //
-        &flux_lat_m,                                  //
-        &gw_reservoir_storage_deficit_m,              //
-        &gw_reservoir,                                 //
-        &vol_to_gw,                                   //
-        &vol_soil_to_gw,                              //
-        &vol_soil_to_lat_flow,                        //
-        &volout,                                      //
-        &flux_from_deep_gw_to_chan_m,                 //
-        &vol_from_gw,                                 //
-        &giuh_runoff_m,                               //
-        num_giuh_ordinates,                           //
-        giuh_ordinates,                               //
-        runoff_queue_m_per_timestep,                  //
-        &vol_out_giuh,                                //
-        &nash_lateral_runoff_m,                       //
-        num_lateral_flow_nash_reservoirs,             //
-        K_nash,                                       //
-        nash_storage,                                 //
-        &vol_in_nash,                                 //
-        &vol_out_nash,                                //
-        &Qout_m                                       //
-    );                                                // 
-    // ###############################################//
-    // run the cfe code                               //
-    //################################################//
+
+
+  //##################################################
+  // run the cfe code
+  //##################################################
+cfe(
+        &soil_reservoir_storage_deficit_m,
+        NWM_soil_params,
+        soil_reservoir,
+        timestep_h,
+        Schaake_adjusted_magic_constant_by_soil_type,
+        timestep_rainfall_input_m,
+        &Schaake_output_runoff_m,
+        &infiltration_depth_m,
+        &flux_overland_m,
+        &vol_sch_runoff,
+        &vol_sch_infilt,
+        &flux_perc_m,
+        &vol_to_soil,
+        &percolation_flux,
+        &lateral_flux,
+        &flux_lat_m,
+        &gw_reservoir_storage_deficit_m,
+        gw_reservoir,
+        &vol_to_gw,
+        &vol_soil_to_gw,
+        &vol_soil_to_lat_flow,
+        &volout,
+        &flux_from_deep_gw_to_chan_m,
+        &vol_from_gw,
+        &giuh_runoff_m,
+        num_giuh_ordinates,
+        giuh_ordinates,
+        runoff_queue_m_per_timestep,
+        &vol_out_giuh,
+        &nash_lateral_runoff_m,
+        num_lateral_flow_nash_reservoirs,
+        K_nash,
+        nash_storage,
+        &vol_in_nash,
+        &vol_out_nash,
+        &Qout_m
+    );                      // #######################################################################
+
 
   // <<<<<<<<NOTE>>>>>>>>>
   // These fluxs are all in units of meters per time step.   Multiply them by the "catchment_area_km2" variable
   // to convert them into cubic meters per time step.
+  /*
+  timestep_rainfall_input_m *= catchment_area_km2*1000000.0;
+  Schaake_output_runoff_m *= catchment_area_km2*1000000.0;
+  giuh_runoff_m *= catchment_area_km2*1000000.0;
+  nash_lateral_runoff_m *= catchment_area_km2*1000000.0;
+  flux_from_deep_gw_to_chan_m *= catchment_area_km2*1000000.0;
+  Qout_m *= catchment_area_km2*1000000.0;
+
+  // WRITE OUTPUTS IN cubic meter/s
+  fprintf(out_fptr,"%16.8lf %lf %lf %lf %lf %lf %lf\n",jdate_start+(double)tstep*1.0/24.0,
+                           timestep_rainfall_input_m/3600.0,Schaake_output_runoff_m/3600.0,
+                           giuh_runoff_m/3600.0,nash_lateral_runoff_m/3600.0,flux_from_deep_gw_to_chan_m/3600.0,
+                           Qout_m/3600.0 );
+  */
   
+  /*
   // WRITE OUTPUTS IN mm/h ffor aiding in interpretation
   fprintf(out_fptr,"%16.8lf %lf %lf %lf %lf %lf %lf\n",jdate_start+(double)tstep*1.0/24.0,
                            timestep_rainfall_input_m*1000.0,Schaake_output_runoff_m*1000.0,
                            giuh_runoff_m*1000.0,nash_lateral_runoff_m*1000.0, flux_from_deep_gw_to_chan_m*1000.0,
                            Qout_m*1000.0 );
+  */
+  // WRITE OUTPUTS IN mm/h ffor aiding in interpretation
+  //fprintf(out_fptr,"%d, %ld-%02ld-%02ld %02ld:%02ld:%02ld, %16.8lf, %lf, %lf, %lf, %lf, %lf, %lf\n",
+  double total_discharge = Qout_m*catchment_area_km2*1000000.0/3600.0;
+  fprintf(out_fptr,"%d,%ld-%02ld-%02ld %02ld:%02ld:%02ld,%lf,%lf,%lf,%lf,%lf,%lf,%lf\n",
+                           tstep,sim_year[tstep],sim_month[tstep],sim_day[tstep],
+                           sim_hour[tstep],sim_minute[tstep],sim_second[tstep],
+                           //jdate_start+(double)tstep*1.0/24.0,
+                           timestep_rainfall_input_m,Schaake_output_runoff_m,
+                           giuh_runoff_m, nash_lateral_runoff_m, flux_from_deep_gw_to_chan_m,
+                           Qout_m, total_discharge);
   }  // END OF TIME LOOP
 
 
@@ -642,6 +730,9 @@ aorc->u_wind_speed_10m_m_per_s=atof(theWord);
 get_word(theString,&start,&end,theWord,&wordlen);
 aorc->v_wind_speed_10m_m_per_s=atof(theWord);      
 
+get_word(theString,&start,&end,theWord,&wordlen);
+aorc->precip_kg_per_m2=atof(theWord);
+
   
 return;
 }
@@ -662,10 +753,22 @@ while(theString[*start]==' ' || theString[*start]=='\t')
 j=0;
 for(i=(*start);i<lenny;i++)
   {
-  if(theString[i]!=' ' && theString[i]!='\t' && theString[i]!=',' && theString[i]!=':' && theString[i]!='/')
+  if(theString[i]!=' ' && theString[i]!='\t' && theString[i]!=',' && theString[i]!=':' && theString[i]!='/' && theString[i]!='-')
     {
-    theWord[j]=theString[i];
-    j++;
+      theWord[j]=theString[i];
+      j++;
+    }
+  else if (theString[i]!=' ' && theString[i]!='\t' && theString[i]!=',' && theString[i]!=':' && theString[i]!='/' \
+       && (theString[i]=='-' && theString[i-1]==',') )
+    {
+      theWord[j]=theString[i];
+      j++;
+    }
+  else if (theString[i]!=' ' && theString[i]!='\t' && theString[i]!=',' && theString[i]!=':' && theString[i]!='/' \
+       && (theString[i]=='-' && theString[i-1]=='e') )
+    {
+      theWord[j]=theString[i];
+      j++;
     }
   else
     {
@@ -774,6 +877,20 @@ void i_alloc(int **var,int size)
       return; 
       }
    else memset(*var,0,size*sizeof(int));
+   return;
+}
+
+void l_alloc(long **var,int size)
+{
+   size++;  /* just for safety */
+
+   *var = (long *)malloc(size * sizeof(long));
+   if (*var == NULL)
+      {
+      printf("Problem allocating memory in l_alloc\n");
+      return;
+      }
+   else memset(*var,0,size*sizeof(long));
    return;
 }
 
