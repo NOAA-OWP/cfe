@@ -3,6 +3,13 @@
 run_cfe_bmi
 ./original_author_code/run_cfe
 
+# TRASH BUCKETS #
+#################
+./original_author_code/z_trash/
+./original_author_code/z_old/
+./original_author_code/z_trash/*
+./original_author_code/z_old/*
+
 # MODEL OUTPUT FILES #
 ######################
 original_author_code/test.out
