@@ -13,6 +13,7 @@ run_cfe_bmi
 # MODEL OUTPUT FILES #
 ######################
 original_author_code/test.out
+original_author_code/test*.out
 original_author_code/debug.out
 
 # Compiled source #
