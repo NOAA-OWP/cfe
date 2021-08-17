@@ -466,7 +466,8 @@ double oldval;
 //############################      TIME LOOP       #################################
 //###################################################################################
 
-num_timesteps=num_rain_dat+279;  // run a little bit beyond the rain data to see what happens.
+//num_timesteps=num_rain_dat+279;  // run a little bit beyond the rain data to see what happens.
+num_timesteps=50;
 for(tstep=0;tstep<num_timesteps;tstep++)
   {
   
@@ -792,6 +793,11 @@ if(reservoir->is_exponential==TRUE)  // single outlet reservoir like the NWM V1.
   *primary_flux_m=reservoir->coeff_primary*
                     (exp(reservoir->exponent_primary*reservoir->storage_m/reservoir->storage_max_m)-1.0);
   *secondary_flux_m=0.0;
+  printf("da_reservoir->coeff_primary: %lf\n", reservoir->coeff_primary);
+  printf("da_reservoir->exponent_primary: %lf\n", reservoir->exponent_primary);
+  printf("da_reservoir->storage_m: %lf\n", reservoir->storage_m);
+  printf("da_reservoir->storage_max_m: %lf\n", reservoir->storage_max_m);
+  printf("EXPONENTIAL FUNCTION primary_flux: %lf, secondary_flux: %lf\n", *primary_flux_m, *secondary_flux_m);
   return;
   }
 // code goes past here iff it is not a single outlet exponential deep groundwater reservoir of the NWM variety
