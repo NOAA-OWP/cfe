@@ -1,3 +1,9 @@
+# RUN EXECUTABLES #
+###################
+run_cfe* 
+
+# TRASH BUCKETS #
+#################
 z_trash/
 z_trash/*
 z_old/
