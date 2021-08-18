@@ -4,7 +4,7 @@
 #include <float.h>
 #include <string.h>
 
-#include "cfe.c"
+#include "./cfe.h"
 
 #define TRUE 1
 #define FALSE 0

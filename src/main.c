@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "../include/cfe.h"
 #include "../include/bmi.h"
 #include "../include/bmi_cfe.h"
+#include "../original_author_code/cfe.h"
 
 /*
 This main program is a mock framwork.
@@ -32,16 +32,14 @@ int
 
   printf("Get the information from the configuration here in Main\n");
   // Get the information from the configuration here in Main  
-  cfe_model *cfe;
-  cfe = (cfe_model *) cfe_bmi_model->data;
-
-  printf("Updating CFE model\n");
-  cfe_bmi_model->update(cfe_bmi_model);
+  cfe_state_struct *cfe_main_data;
+  cfe_main_data = (cfe_state_struct *) cfe_bmi_model->data;
 
   printf("looping through and calling update\n");
   int i=0;
   for (i = 0; i < 700; i++){
     cfe_bmi_model->update(cfe_bmi_model);
+    print_cfe_at_timestep(cfe_main_data);
   }
 
   printf("Finalizing CFE model\n");
@@ -49,4 +47,3 @@ int
 
   return 0;
 }
-
