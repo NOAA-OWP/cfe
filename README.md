@@ -1,5 +1,5 @@
 # Conceptual Functional Equivalent Model
-This model is designed to be a simplified model of the National Water Model, which is functionally equicalent.
+This model is designed to be a simplified model of the National Water Model, which is functionally equivalent.
 
 # Compiling this code to run examples with a "pseudo" or "mini" framework.
 ## CFE Model reads its own forcing file
