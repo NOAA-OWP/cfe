@@ -226,6 +226,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     int is_K_nash_set = FALSE;
     int is_K_lf_set = FALSE;
     int is_num_timesteps_set = FALSE;
+    int is_verbosity_set = FALSE;
 
     // Keep track these in particular, because the "true" storage value may be a ratio and need both storage and max
     int is_gw_max_set = FALSE;
@@ -391,6 +392,11 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         if (strcmp(param_key, "num_timesteps") == 0) {
             model->num_timesteps = strtol(param_value, NULL, 10);
             is_num_timesteps_set = TRUE;
+            continue;
+        }
+        if (strcmp(param_key, "verbosity") == 0) {
+            model->verbosity = strtol(param_value, NULL, 10);
+            is_verbosity_set = TRUE;
             continue;
         }
     }
@@ -719,7 +725,7 @@ static int Initialize (Bmi *self, const char *file)
     cfe_bmi_data_ptr->et_struct.actual_et_m_per_timestep = 0;
 
     // Set all the mass balance trackers to zero.
-    set_volume_trackers_to_zero(cfe_bmi_data_ptr);
+    initialize_volume_trackers(cfe_bmi_data_ptr);
 
     return BMI_SUCCESS;
 }
@@ -741,6 +747,8 @@ static int Update (Bmi *self)
             
     cfe_state_struct* cfe_ptr = ((cfe_state_struct *) self->data);
     
+    cfe_ptr->vol_struct.volin += cfe_ptr->timestep_rainfall_input_m;
+
     run_cfe(cfe_ptr);
 
     // Advance the model time 
@@ -1603,7 +1611,7 @@ extern double init_reservoir_storage(int is_ratio, double amount, double max_amo
     }
 }
 
-extern void set_volume_trackers_to_zero(cfe_state_struct* cfe_ptr){
+extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr){
     cfe_ptr->vol_struct.vol_sch_runoff = 0;
     cfe_ptr->vol_struct.vol_sch_infilt = 0;
     cfe_ptr->vol_struct.vol_to_soil = 0;
@@ -1615,10 +1623,26 @@ extern void set_volume_trackers_to_zero(cfe_state_struct* cfe_ptr){
     cfe_ptr->vol_struct.vol_out_giuh = 0;
     cfe_ptr->vol_struct.vol_in_nash = 0;
     cfe_ptr->vol_struct.vol_out_nash = 0;
+    cfe_ptr->vol_struct.volstart       += cfe_ptr->gw_reservoir.storage_m;    // initial mass balance checks in g.w. reservoir
+    cfe_ptr->vol_struct.vol_in_gw_start = cfe_ptr->gw_reservoir.storage_m;  
+    cfe_ptr->vol_struct.volstart          += cfe_ptr->soil_reservoir.storage_m;    // initial mass balance checks in soil reservoir
+    cfe_ptr->vol_struct.vol_soil_start     = cfe_ptr->soil_reservoir.storage_m;
 }
 
-extern void print_cfe_at_timestep(cfe_state_struct* cfe_ptr){
-  printf("%16.8lf %lf %lf %lf %lf %lf %lf\n",
+/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
+/* ALL THE STUFF BELOW HERE IS VERBOSITY AND TROUBLESHOOTING */
+/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
+extern void print_cfe_flux_header(){
+    printf("#    ,            hourly ,  direct,   giuh ,lateral,  base,   total\n");
+    printf("#Time,           rainfall,  runoff,  runoff, flow  ,  flow,  discharge\n");
+    printf("# (h),             (mm)   ,  (mm) ,   (mm) , (mm)  ,  (mm),    (mm)\n");
+}
+extern void print_cfe_flux_at_timestep(cfe_state_struct* cfe_ptr){
+    printf("%16.8lf %lf %lf %lf %lf %lf %lf\n",
                            cfe_ptr->current_time_step,
                            cfe_ptr->timestep_rainfall_input_m*1000.0,
                            *cfe_ptr->flux_Schaake_output_runoff_m*1000.0,
@@ -1626,6 +1650,94 @@ extern void print_cfe_at_timestep(cfe_state_struct* cfe_ptr){
                            *cfe_ptr->flux_nash_lateral_runoff_m*1000.0, 
                            *cfe_ptr->flux_from_deep_gw_to_chan_m*1000.0,
                            *cfe_ptr->flux_Qout_m*1000.0 );
+}
+
+extern void mass_balance_check(cfe_state_struct* cfe_ptr){
+    //
+    // PERFORM MASS BALANCE CHECKS AND WRITE RESULTS TO stderr.
+    //----------------------------------------------------------
+    
+    double volend= cfe_ptr->soil_reservoir.storage_m+cfe_ptr->gw_reservoir.storage_m;
+    double vol_in_gw_end = cfe_ptr->gw_reservoir.storage_m;
+    double vol_end_giuh;
+    double vol_in_nash_end;
+    double vol_soil_end;
+    
+    // the GIUH queue might have water in it at the end of the simulation, so sum it up.
+    for(i=0;i<cfe_ptr->num_giuh_ordinates;i++) vol_end_giuh+=cfe_ptr->runoff_queue_m_per_timestep[i];
+    
+    for(i=0;i<cfe_ptr->num_lateral_flow_nash_reservoirs;i++)  vol_in_nash_end+=cfe_ptr->nash_storage[i];
+    
+    
+    vol_soil_end=cfe_ptr->soil_reservoir.storage_m;
+    
+    double global_residual;
+    double schaake_residual;
+    double giuh_residual;
+    double soil_residual;
+    double nash_residual;
+    double gw_residual;
+    
+    global_residual = cfe_ptr->vol_struct.volstart + cfe_ptr->vol_struct.volin - cfe_ptr->vol_struct.volout - volend;
+    printf("GLOBAL MASS BALANCE\n");
+    printf("  initial volume: %8.4lf m\n",cfe_ptr->vol_struct.volstart);
+    printf("    volume input: %8.4lf m\n",cfe_ptr->vol_struct.volin);
+    printf("   volume output: %8.4lf m\n",cfe_ptr->vol_struct.volout);
+    printf("    final volume: %8.4lf m\n",volend);
+    printf("        residual: %6.4e m\n",global_residual);
+    if(cfe_ptr->vol_struct.volin>0.0) printf("global pct. err: %6.4e percent of inputs\n",global_residual/cfe_ptr->vol_struct.volin*100.0);
+    else          printf("global pct. err: %6.4e percent of initial\n",global_residual/cfe_ptr->vol_struct.volstart*100.0);
+    if(!is_fabs_less_than_epsilon(global_residual,1.0e-12)) 
+                  printf("WARNING: GLOBAL MASS BALANCE CHECK FAILED\n");
+    
+    schaake_residual = cfe_ptr->vol_struct.volin - cfe_ptr->vol_struct.vol_sch_runoff - cfe_ptr->vol_struct.vol_sch_infilt;
+    printf(" SCHAAKE MASS BALANCE\n");
+    printf("  surface runoff: %8.4lf m\n",cfe_ptr->vol_struct.vol_sch_runoff);
+    printf("    infiltration: %8.4lf m\n",cfe_ptr->vol_struct.vol_sch_infilt);
+    printf("schaake residual: %6.4e m\n",schaake_residual);  // should equal 0.0
+    if(!is_fabs_less_than_epsilon(schaake_residual,1.0e-12))
+                  printf("WARNING: SCHAAKE PARTITIONING MASS BALANCE CHECK FAILED\n");
+    
+    giuh_residual = cfe_ptr->vol_struct.vol_out_giuh - cfe_ptr->vol_struct.vol_sch_runoff - vol_end_giuh;
+    printf(" GIUH MASS BALANCE\n");
+    printf("  vol. into giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_sch_runoff);
+    printf("   vol. out giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_out_giuh);
+    printf(" vol. end giuh q: %8.4lf m\n",vol_end_giuh);
+    printf("   giuh residual: %6.4e m\n",giuh_residual);  // should equal zero
+    if(!is_fabs_less_than_epsilon(giuh_residual,1.0e-12))
+                  printf("WARNING: GIUH MASS BALANCE CHECK FAILED\n");
+    
+    soil_residual=cfe_ptr->vol_struct.vol_soil_start + cfe_ptr->vol_struct.vol_sch_infilt -
+                  cfe_ptr->vol_struct.vol_soil_to_lat_flow - vol_soil_end - cfe_ptr->vol_struct.vol_to_gw;
+    printf(" SOIL WATER CONCEPTUAL RESERVOIR MASS BALANCE\n");
+    printf("   init soil vol: %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_start);     
+    printf("  vol. into soil: %8.4lf m\n",cfe_ptr->vol_struct.vol_sch_infilt);
+    printf("vol.soil2latflow: %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_to_lat_flow);
+    printf(" vol. soil to gw: %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_to_gw);
+    printf(" final vol. soil: %8.4lf m\n",vol_soil_end);   
+    printf("vol. soil resid.: %6.4e m\n",soil_residual);
+    if(!is_fabs_less_than_epsilon(soil_residual,1.0e-12))
+                   printf("WARNING: SOIL CONCEPTUAL RESERVOIR MASS BALANCE CHECK FAILED\n");
+    
+    nash_residual=cfe_ptr->vol_struct.vol_in_nash - cfe_ptr->vol_struct.vol_out_nash - vol_in_nash_end;
+    printf(" NASH CASCADE CONCEPTUAL RESERVOIR MASS BALANCE\n");
+    printf("    vol. to nash: %8.4lf m\n",cfe_ptr->vol_struct.vol_in_nash);
+    printf("  vol. from nash: %8.4lf m\n",cfe_ptr->vol_struct.vol_out_nash);
+    printf(" final vol. nash: %8.4lf m\n",vol_in_nash_end);
+    printf("nash casc resid.: %6.4e m\n",nash_residual);
+    if(!is_fabs_less_than_epsilon(nash_residual,1.0e-12))
+                   printf("WARNING: NASH CASCADE CONCEPTUAL RESERVOIR MASS BALANCE CHECK FAILED\n");
+    
+    
+    gw_residual = cfe_ptr->vol_struct.vol_in_gw_start + cfe_ptr->vol_struct.vol_to_gw - cfe_ptr->vol_struct.vol_from_gw - vol_in_gw_end;
+    printf(" GROUNDWATER CONCEPTUAL RESERVOIR MASS BALANCE\n");
+    printf("init gw. storage: %8.4lf m\n",cfe_ptr->vol_struct.vol_in_gw_start);
+    printf("       vol to gw: %8.4lf m\n",cfe_ptr->vol_struct.vol_to_gw);
+    printf("     vol from gw: %8.4lf m\n",cfe_ptr->vol_struct.vol_from_gw);
+    printf("final gw.storage: %8.4lf m\n",vol_in_gw_end);
+    printf("    gw. residual: %6.4e m\n",gw_residual);
+    if(!is_fabs_less_than_epsilon(gw_residual,1.0e-12))
+                   fprintf(stderr,"WARNING: GROUNDWATER CONCEPTUAL RESERVOIR MASS BALANCE CHECK FAILED\n");
 }
 
 /**************************************************************************/
@@ -1719,61 +1831,6 @@ void parse_aorc_line_cfe(char *theString,long *year,long *month, long *day,long 
     free(copy_to_free);
 
     return;
-//char str[20];
-//long yr,mo,da,hr,mi;
-//double mm,julian,se;
-//float val;
-//int i,start,end,len;
-//int yes_pm,wordlen;
-//char theWord[150];
-//
-//len=strlen(theString);
-//
-//start=0; /* begin at the beginning of theString */
-//get_word_cfe(theString,&start,&end,theWord,&wordlen);
-//*year=atol(theWord);
-//
-//get_word_cfe(theString,&start,&end,theWord,&wordlen);
-//*month=atol(theWord);
-//
-//get_word_cfe(theString,&start,&end,theWord,&wordlen);
-//*day=atol(theWord);
-//
-//get_word_cfe(theString,&start,&end,theWord,&wordlen);
-//*hour=atol(theWord);
-//
-//get_word_cfe(theString,&start,&end,theWord,&wordlen);
-//*minute=atol(theWord);
-//
-//get_word_cfe(theString,&start,&end,theWord,&wordlen);
-//*second=(double)atof(theWord);
-//
-//get_word_cfe(theString,&start,&end,theWord,&wordlen);
-//aorc->precip_kg_per_m2=atof(theWord);
-//
-//get_word_cfe(theString,&start,&end,theWord,&wordlen);
-//aorc->incoming_longwave_W_per_m2=atof(theWord);   
-//
-//get_word_cfe(theString,&start,&end,theWord,&wordlen);
-//aorc->incoming_shortwave_W_per_m2=atof(theWord);   
-//
-//get_word_cfe(theString,&start,&end,theWord,&wordlen);
-//aorc->surface_pressure_Pa=atof(theWord);           
-//
-//get_word_cfe(theString,&start,&end,theWord,&wordlen);
-//aorc->specific_humidity_2m_kg_per_kg=atof(theWord);
-//
-//get_word_cfe(theString,&start,&end,theWord,&wordlen);
-//aorc->air_temperature_2m_K=atof(theWord);          
-//
-//get_word_cfe(theString,&start,&end,theWord,&wordlen);
-//aorc->u_wind_speed_10m_m_per_s=atof(theWord);      
-//
-//get_word_cfe(theString,&start,&end,theWord,&wordlen);
-//aorc->v_wind_speed_10m_m_per_s=atof(theWord);      
-//
-//  
-//return;
 }
 
 /*####################################################################*/

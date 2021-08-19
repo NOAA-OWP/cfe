@@ -38,11 +38,15 @@ struct vol_tracking_struct{
     double vol_to_gw;
     double vol_soil_to_gw;
     double vol_soil_to_lat_flow;
+    double volstart;
     double volout;
+    double volin;
     double vol_from_gw;
     double vol_out_giuh;
     double vol_in_nash;
     double vol_out_nash;
+    double vol_in_gw_start;
+    double vol_soil_start;
 };
 typedef struct vol_tracking_struct vol_tracking_struct;
 
@@ -113,6 +117,9 @@ struct cfe_state_struct {
     double* flux_perc_m;
     double* flux_lat_m;
     double* flux_Qout_m;
+
+    int verbosity;
+
 };
 typedef struct cfe_state_struct cfe_state_struct;
 
@@ -139,9 +146,11 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, doub
 
 extern double init_reservoir_storage(int is_ratio, double amount, double max_amount);
 
-extern void set_volume_trackers_to_zero(cfe_state_struct* cfe_ptr);
+extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr);
 
-extern void print_cfe_at_timestep(cfe_state_struct* cfe_ptr);
+extern void print_cfe_flux_header();
+extern void print_cfe_flux_at_timestep(cfe_state_struct* cfe_ptr);
+extern void mass_balance_check(cfe_state_struct* cfe_ptr);
 
 // Bmi* register_bmi(Bmi *model);
 
