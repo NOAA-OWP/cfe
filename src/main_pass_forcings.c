@@ -98,7 +98,9 @@ int
   printf("precip_kg_per_m2 CFE: %e, AORC: %e \n", cfe_model_data->aorc.precip_kg_per_m2, aorc->aorc.precip_kg_per_m2);
   printf("Updating CFE: \n");
   cfe_bmi_model->update(cfe_bmi_model);                           //Update model 2
-  printf("CFE streamflow out: %8.3lf\n", cfe_model_data->flux_Qout_m);
+  if (cfe_model_data->verbosity > 0)
+    print_cfe_flux_header();
+    print_cfe_flux_at_timestep(cfe_model_data);
 
   /************************************************************************
     Now loop through time and call the models with the intermediate get/set
@@ -106,12 +108,17 @@ int
   printf("looping through and calling updata\n");
   int i;
   for (i = 1; i < 15; i++){
+    
     aorc_bmi_model->update(aorc_bmi_model);                         // Update model 1
+  
     pass_forcing_from_aorc_to_cfe(cfe_bmi_model, aorc_bmi_model);   // Get and Set values
+  
     printf("precip_kg_per_m2 CFE: %e, AORC: %e \n", cfe_model_data->aorc.precip_kg_per_m2, aorc->aorc.precip_kg_per_m2);
+  
     cfe_bmi_model->update(cfe_bmi_model);                           // Update model 2
-    printf("flux_Qout_m %8.4e, flux_giuh_runoff_m %8.4e, flux_lat_m %8.4e, and nash_lat_runoff_m: %8.4e\n", 
-            cfe_model_data->flux_Qout_m,  cfe_model_data->flux_giuh_runoff_m,  cfe_model_data->flux_lat_m,  cfe_model_data->flux_nash_lateral_runoff_m);
+  
+    if (cfe_model_data->verbosity > 0)
+      print_cfe_flux_at_timestep(cfe_model_data);
   }
 
   /************************************************************************
