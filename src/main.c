@@ -45,6 +45,7 @@ int
         print_cfe_flux_at_timestep(cfe_main_data);
   }
 
+  // Run the Mass Balance check
   mass_balance_check(cfe_main_data);
 
   printf("Finalizing CFE model\n");
