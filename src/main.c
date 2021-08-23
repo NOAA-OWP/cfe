@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include "../include/bmi.h"
 #include "../include/bmi_cfe.h"
-#include "../original_author_code/cfe.h"
+#include "../include/cfe.h"
 
 /*
 This main program is a mock framwork.

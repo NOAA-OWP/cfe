@@ -1,10 +1,6 @@
 #ifndef CFE_CFE_H
 #define CFE_CFE_H
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
-
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
@@ -13,14 +9,13 @@ extern "C" {
 
 #define TRUE 1
 #define FALSE 0
-#define DEBUG 0
 #define MAX_NUM_GIUH_ORDINATES 10
 #define MAX_NUM_NASH_CASCADE    3
 #define MAX_NUM_RAIN_DATA 720
 
 // t-shirt approximation of the hydrologic routing funtionality of the National Water Model v 1.2, 2.0, and 2.1
 // This code was developed to test the hypothesis that the National Water Model runoff generation, vadose zone
-// dynamics, and conceptual groundwater model can be greatly simplified by acknowledging that it is truly a
+// dynamics, and conceptual groundwater model can be greatly simplified by acknowledging that it is truly a 
 // conceptual model.  The hypothesis is supported by a number of observations made during a 2017-2018 deep dive
 // into the NWM code.  Thesed are:
 //
@@ -29,7 +24,7 @@ extern "C" {
 //    function by Moore, 1985.   The Schaake function is a single valued function of soil moisture deficit,
 //    predicts 100% runoff when the soil is saturated, like the curve-number method, and is fundamentally simple.
 // 2. Run-on infiltration is strictly not calculated.  Overland flow routing applies the Schaake function repeatedly
-//    to predict this phenomenon, which violates the underlying assumption of the PDM method that only rainfall
+//    to predict this phenomenon, which violates the underlying assumption of the PDM method that only rainfall 
 //    inputs affect soil moisture.
 // 3. The water-content based Richards' equation, applied using a coarse-discretization, can be replaced with a simple
 //    conceptual reservoir because it never allows saturation or infiltration-excess runoff unless deactivated by
@@ -68,6 +63,9 @@ extern "C" {
 //    This code was written entirely by Fred L. Ogden, May 22-24, 2020, in the service of the NOAA-NWS Office of Water
 //    Prediction, in Tuscaloosa, Alabama.
 
+// define data structures
+//--------------------------
+
 struct conceptual_reservoir
 {
 // this data structure describes a nonlinear reservoir having two outlets, one primary with an activation
@@ -76,178 +74,83 @@ struct conceptual_reservoir
 // iff is_exponential==TRUE, then it uses the exponential discharge function from the NWM V2.0 forumulation
 // as the primary discharge with a zero threshold, and does not calculate a secondary discharge.
 //--------------------------------------------------------------------------------------------------
-    int    is_exponential;  // set this true TRUE to use the exponential form of the discharge equation
-    double storage_max_m;   // maximum storage in this reservoir
-    double storage_m;       // state variable.
-    double coeff_primary;    // the primary outlet
-    double exponent_primary;
-    double storage_threshold_primary_m;
-    double storage_threshold_secondary_m;
-    double coeff_secondary;
-    double exponent_secondary;
-    double wilting_point_m; //jmframe adding this for the evapotranspiration mechanism.
+int    is_exponential;  // set this true TRUE to use the exponential form of the discharge equation
+double storage_max_m;   // maximum storage in this reservoir
+double storage_m;       // state variable.
+double coeff_primary;    // the primary outlet
+double exponent_primary;
+double storage_threshold_primary_m;
+double storage_threshold_secondary_m;
+double coeff_secondary;
+double exponent_secondary;
 };
-typedef struct conceptual_reservoir conceptual_reservoir;
 
 struct NWM_soil_parameters
 {
 // using same variable names as used in NWM.  <sorry>
-    double smcmax;  // effective porosity [V/V]
-    double wltsmc;  // wilting point soil moisture content [V/V]
-    double satdk;   // saturated hydraulic conductivity [m s-1]
-    double satpsi;	// saturated capillary head [m]
-    double bb;      // beta exponent on Clapp-Hornberger (1978) soil water relations [-]
-    double mult;    // the multiplier applied to satdk to route water rapidly downslope
-    double slop;   // this factor (0-1) modifies the gradient of the hydraulic head at the soil bottom.  0=no-flow.
-    double D;       // soil depth [m]
+double smcmax;  // effective porosity [V/V]
+double wltsmc;  // wilting point soil moisture content [V/V]
+double satdk;   // saturated hydraulic conductivity [m s-1]
+double satpsi;	// saturated capillary head [m]
+double bb;      // beta exponent on Clapp-Hornberger (1978) soil water relations [-]
+double mult;    // the multiplier applied to satdk to route water rapidly downslope
+double slop;   // this factor (0-1) modifies the gradient of the hydraulic head at the soil bottom.  0=no-flow.
+double D;       // soil depth [m]
 };
-typedef struct NWM_soil_parameters NWM_soil_parameters;
 
-//DATA STRUCTURE TO HOLD AORC FORCING DATA
-struct aorc_forcing_data_cfe
-{
-// struct NAME                          DESCRIPTION                                            ORIGINAL AORC NAME
-//____________________________________________________________________________________________________________________
-    double precip_kg_per_m2;                // Surface precipitation "kg/m^2"                         | APCP_surface
-    double incoming_longwave_W_per_m2 ;     // Downward Long-Wave Rad. Flux at 0m height, W/m^2       | DLWRF_surface
-    double incoming_shortwave_W_per_m2;     // Downward Short-Wave Radiation Flux at 0m height, W/m^2 | DSWRF_surface
-    double surface_pressure_Pa;             // Surface atmospheric pressure, Pa                       | PRES_surface
-    double specific_humidity_2m_kg_per_kg;  // Specific Humidity at 2m height, kg/kg                  | SPFH_2maboveground
-    double air_temperature_2m_K;            // Air temparture at 2m height, K                         | TMP_2maboveground
-    double u_wind_speed_10m_m_per_s;        // U-component of Wind at 10m height, m/s                 | UGRD_10maboveground
-    double v_wind_speed_10m_m_per_s;        // V-component of Wind at 10m height, m/s                 | VGRD_10maboveground
-    double latitude;                        // degrees north of the equator.  Negative south          | latitude
-    double longitude;                       // degrees east of prime meridian. Negative west          | longitude
-    long int time; //TODO: type?           // seconds since 1970-01-01 00:00:00.0 0:00               | time
-} ;
-typedef struct aorc_forcing_data_cfe aorc_forcing_data_cfe;
 
-struct result_fluxes {
-    double Schaake_output_runoff_m;
-    double giuh_runoff_m;
-    double nash_lateral_runoff_m;
-    double flux_from_deep_gw_to_chan_m;
-    // flux from soil to deeper groundwater reservoir
-    double flux_perc_m;
-    double flux_lat_m;
-    double Qout_m;
-};
-typedef struct result_fluxes result_fluxes;
 
-// jmframe adding potential evapotranspiration
-struct evapotranspiration_structure {
-    double potential_et_m_per_s;
-    double potential_et_m_per_timestep;
-    double actual_et_m_per_timestep;
-};
-typedef struct evapotranspiration_structure evapotranspiration_structure;
-
-struct cfe_model {
-    // ***********************************************************
-    // ***************** Non-dynamic allocations *****************
-    // ***********************************************************
-    struct conceptual_reservoir soil_reservoir;
-    struct conceptual_reservoir gw_reservoir;
-    struct NWM_soil_parameters NWM_soil_params;
-
-    // Epoch-based start time (BMI start time is considered 0.0)
-    long epoch_start_time;
-    int num_timesteps;
-    int current_time_step;
-    int time_step_size;
-  
-    // an integer to flag the forcings coming as "set_value" from BMI
-    int is_forcing_from_bmi;
-
-    char* forcing_file;
-
-    double Schaake_adjusted_magic_constant_by_soil_type;
-    int num_lateral_flow_nash_reservoirs;
-
-    double K_lf;
-    double K_nash;
-
-    int num_giuh_ordinates;
-
-    // ***********************************************************
-    // ******************* Dynamic allocations *******************
-    // ***********************************************************
-    struct evapotranspiration_structure et_struct;
-    struct aorc_forcing_data_cfe aorc;
-    double* forcing_data_precip_kg_per_m2;
-    double* forcing_data_surface_pressure_Pa;
-    long* forcing_data_time;
-
-    //result_fluxes* fluxes;
-
-    double* giuh_ordinates;
-    double* nash_storage;
-    double* runoff_queue_m_per_timestep;
-
-    // These are likely only single values, but should be allocated as pointers so the pointer can be returned
-    double* flux_Schaake_output_runoff_m;
-    double* flux_giuh_runoff_m;
-    double* flux_nash_lateral_runoff_m;
-    double* flux_from_deep_gw_to_chan_m;
-    // flux from soil to deeper groundwater reservoir
-    double* flux_perc_m;
-    double* flux_lat_m;
-    double* flux_Qout_m;
-};
-typedef struct cfe_model cfe_model;
-
-// jonathan frame. taking cfe_bmi out of framework
-//extern inline double get_K_lf_for_time_step(cfe_model* cfe);
-
-/*
-extern void init_ground_water_reservoir(cfe_model* cfe, double Cgw, double expon, double max_storage, double storage,
-                                        int is_storage_ratios);
-                                        */
-
-extern void init_soil_reservoir(cfe_model* cfe, double alpha_fc, double max_storage, double storage,
-                                int is_storage_ratios);
-
-extern double init_reservoir_storage(int is_ratio, double amount, double max_amount);
-
-extern void alloc_cfe_model(cfe_model *model);
-
-extern void free_cfe_model(cfe_model *model);
-
-extern int run_cfe(cfe_model* model);
-
+// function prototypes
+// --------------------------------
 extern void Schaake_partitioning_scheme(double dt, double magic_number, double deficit, double qinsur,
                                         double *runsrf, double *pddum);
 
 extern void conceptual_reservoir_flux_calc(struct conceptual_reservoir *da_reservoir,
-                                           double *primary_flux,double *secondary_flux);
+                                           double *primary_flux_m,double *secondary_flux_m);
 
-extern double convolution_integral(double runoff_m, int num_giuh_ordinates,
+extern double convolution_integral(double runoff_m, int num_giuh_ordinates, 
                                    double *giuh_ordinates, double *runoff_queue_m_per_timestep);
-
+                                   
 extern double nash_cascade(double flux_lat_m,int num_lateral_flow_nash_reservoirs,
-                           double K_nash,double *nash_storage);
+                           double K_nash,double *nash_storage_arr);
 
+extern int is_fabs_less_than_epsilon(double a,double epsilon);
 
-extern int is_fabs_less_than_epsilon(double a,double epsilon);  // returns TRUE iff fabs(a)<epsilon
-
-extern double greg_2_jul(long year, long mon, long day, long h, long mi,
-                         double se);
-extern void calc_date_cfe(double jd, long *y, long *m, long *d, long *h, long *mi,
-                      double *sec);
-
-extern void itwo_alloc_cfe( int ***ptr, int x, int y);
-extern void dtwo_alloc_cfe( double ***ptr, int x, int y);
-extern void d_alloc_cfe(double **var,int size);
-extern void i_alloc_cfe(int **var,int size);
-
-extern void parse_aorc_line_cfe(char *theString,long *year,long *month, long *day,long *hour,
-                            long *minute, double *dsec, struct aorc_forcing_data_cfe *aorc);
-
-extern void get_word_cfe(char *theString,int *start,int *end,char *theWord,int *wordlen);
-
-
-#if defined(__cplusplus)
-}
-#endif
+extern void cfe(
+        double *soil_reservoir_storage_deficit_m_ptr,
+        struct NWM_soil_parameters NWM_soil_params_struct,
+        struct conceptual_reservoir *soil_reservoir_struct,
+        double timestep_h,
+        double Schaake_adjusted_magic_constant_by_soil_type,
+        double timestep_rainfall_input_m,
+        double *Schaake_output_runoff_m_ptr,
+        double *infiltration_depth_m_ptr,
+        double *flux_overland_m_ptr,
+        double *vol_sch_runoff_ptr,
+        double *vol_sch_infilt_ptr,
+        double *flux_perc_m_ptr,
+        double *vol_to_soil_ptr,
+        double *flux_lat_m_ptr,
+        double *gw_reservoir_storage_deficit_m_ptr,
+        struct conceptual_reservoir *gw_reservoir_struct,
+        double *vol_to_gw_ptr,
+        double *vol_soil_to_gw_ptr,
+        double *vol_soil_to_lat_flow_ptr,
+        double *volout_ptr,
+        double *flux_from_deep_gw_to_chan_m_ptr,
+        double *vol_from_gw_ptr,
+        double *giuh_runoff_m_ptr,
+        int num_giuh_ordinates,
+        double *giuh_ordinates_arr,
+        double *runoff_queue_m_per_timestep_arr,
+        double *vol_out_giuh_ptr,
+        double *nash_lateral_runoff_m_ptr,
+        int num_lateral_flow_nash_reservoirs,
+        double K_nash,
+        double *nash_storage_arr,
+        double *vol_in_nash_ptr,
+        double *vol_out_nash_ptr,
+        double *Qout_m_ptr
+    );
 
 #endif //CFE_CFE_H
