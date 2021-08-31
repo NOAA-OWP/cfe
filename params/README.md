@@ -1,5 +1,5 @@
 
-# Project Title
+# GIUH Generation
 
 **Description**:  
 Calculates the GIUH (Geomorphological Instantaneous Unit Hydrograph), extract the parameters for CFE from the hydrofabrics files and generates the CFE config files for the basins in the hydrofabrics
