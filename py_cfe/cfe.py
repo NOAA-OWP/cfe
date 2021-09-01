@@ -190,7 +190,7 @@ class CFE():
             diff = self.previous_flux_perc_m - self.soil_reservoir_storage_deficit
             self.infiltration_depth_m = self.soil_reservoir_storage_deficit_m
             self.vol_sch_runoff += diff
-            self.vol_sch_infilt += diff
+            self.vol_sch_infilt -= diff
             self.surface_runoff_depth_m += diff
             
         # ________________________________________________
@@ -247,8 +247,7 @@ class CFE():
         
         # ________________________________________________
         self.vol_out_giuh += self.flux_giuh_runoff_m
-        self.volout += self.flux_giuh_runoff_m
-        self.volout += self.flux_from_deep_gw_to_chan_m
+        self.volout += self.flux_giuh_runoff_m + self.flux_from_deep_gw_to_chan_m
         
         # ________________________________________________
         self.nash_cascade()
@@ -298,20 +297,33 @@ class CFE():
     # __________________________________________________________________________________________________________
     def convolution_integral(self):
         """
-            This function solves the convolution integral involving N
-            GIUH ordinates.
+            This function solves the convolution integral involving N GIUH ordinates.
+            
+            Inputs:
+                Schaake_output_runoff_m
+                num_giuh_ordinates
+                giuh_ordinates
+            Outputs:
+                runoff_queue_m_per_timestep
         """
+
+#        self.runoff_queue_m_per_timestep[-1] = 0
         
-        for i in range(self.num_giuh_ordinates - 1): 
+        for i in range(self.num_giuh_ordinates): 
 
             self.runoff_queue_m_per_timestep[i] += self.giuh_ordinates[i] * self.surface_runoff_depth_m
             
         self.flux_giuh_runoff_m = self.runoff_queue_m_per_timestep[0]
         
-        for i in range(self.num_giuh_ordinates - 1):  # shift all the entries in preperation ffor the next timestep
+        # __________________________________________________________________
+        # shift all the entries in preperation for the next timestep
+        
+        for i in range(1, self.num_giuh_ordinates):  
             
-            self.runoff_queue_m_per_timestep[i] = self.runoff_queue_m_per_timestep[i+1]
-            
+            self.runoff_queue_m_per_timestep[i-1] = self.runoff_queue_m_per_timestep[i]
+
+        self.runoff_queue_m_per_timestep[-1] = 0
+
         return
     
 
@@ -564,13 +576,23 @@ class CFE():
          
         return
 
+    
     #________________________________________________________        
     def finalize_mass_balance(self, verbose=True):
+        
         self.volend        = self.soil_reservoir['storage_m'] + self.gw_reservoir['storage_m']
         self.vol_in_gw_end = self.gw_reservoir['storage_m']
-        self.global_residual  = self.volstart + self.volin - self.volout - self.volend
+        
+        # the GIUH queue might have water in it at the end of the simulation, so sum it up.
+        self.vol_end_giuh = np.sum(self.runoff_queue_m_per_timestep)
+        self.vol_in_nash_end = np.sum(self.nash_storage)
+
+        self.vol_soil_end = self.soil_reservoir['storage_m']
+        
+        self.global_residual  = self.volstart + self.volin - self.volout - self.volend -self.vol_end_giuh # jframe adding vol_end_giuh to residual
         self.schaake_residual = self.volin - self.vol_sch_runoff - self.vol_sch_infilt
-        self.giuh_residual    = self.vol_out_giuh - self.vol_sch_runoff - self.vol_end_giuh
+#       self.giuh_residual    = self.vol_out_giuh - self.vol_sch_runoff - self.vol_end_giuh
+        self.giuh_residual    = self.vol_sch_runoff - self.vol_out_giuh - self.vol_end_giuh
         self.soil_residual    = self.vol_soil_start + self.vol_sch_infilt - \
                                 self.vol_soil_to_lat_flow - self.vol_soil_end - self.vol_to_gw
         self.nash_residual    = self.vol_in_nash - self.vol_out_nash - self.vol_in_nash_end
@@ -663,8 +685,6 @@ class CFE():
             plt.legend()
             plt.show()
             plt.close()
-    
-    
     
     # __________________________________________________________________________________________________________
     ########## BMI FUNCTIONS BELOW ###############
