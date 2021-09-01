@@ -1,6 +1,11 @@
+# Off LIMITS RUN OPTIONS #
+make_and_run_bmi_pass_forcings.sh
+./src/main_pass_forcings.c
+
 # RUN EXECUTABLES #
 ###################
 run_cfe_bmi
+run_cfe_bmi_pass_forcings
 ./original_author_code/run_cfe
 
 # TRASH BUCKETS #

@@ -1,8 +1,13 @@
 # Conceptual Functional Equivalent Model
-This model is designed to be a simplified model of the National Water Model, which is functionally equivalent.
+This model is designed to be a simplified (conceptual) model of the National Water Model, which is functionally equivalent.
+
+# CFE was written by Fred Ogden, and this repository includes a Basic Model Interface (BMI) to run the CFE
+There are actually multiple ways to run the CFE.
+1. As written by the origional author. This include a full program to read and process atmospheric forcing data, print the model output and check for mass balance closure. This code can be run from the `original_author_code` directory.
+2. Through the BMI commands. This method will be used by the Next Generation U.S. National Water Model (Nextgen NWM). The `make_and_run_bmi.sh` script in the main directory does that for you through a main run file in the `./src` directory.
 
 # Compiling this code to run examples with a "pseudo" or "mini" framework.
-## CFE Model reads its own forcing file
+## Read local forcing file
 The BMI functionality was developed as a standalone module in C. To compile this code the developer used these steps:
 1. `module load gnu/10.1.0`
 2. `gcc -lm ./src/main.c ./src/cfe.c ./src/bmi_cfe.c -o run_bmi`
@@ -10,11 +15,6 @@ This should generate an executable called **run_cfe_bmi**. To run this executabl
 Included in this repository is an environment file (env_cheyenne.sh), and a "make and run" file (make_and_run_bmi.sh), which will compile the code and run an example. If you are on the Cheyenne computer, or if you can modify these files to your machine, you can simply follow these two steps to run this code:
 1. `source env_cheyenne.sh`
 2. `./make_and_run_bmi.sh`
-## CFE Model gets forcings passed from BMI
-The CFE was designed to read its own forcing file, but we have added an option to get forcings passed in through BMI. To test this functionality we need to also include the AORC BMI model when compiling. The steps are very similar to the example above, but with just adding two additional src files, which come from the AORC BMI Module. Notice that below in step 2 the AORC files come from a different directory. 
-1. `module load gnu/10.1.0`
-2. `gcc -lm ./src/main_pass_forcings.c ./src/cfe.c ./src/bmi_cfe.c ../AORC/src/aorc.c ../AORC/src/bmi_aorc.c  -o run_cfe_bmi_pass_forcings`
-This should generate an executable called **run_cfe_bmi_pass_forcings**. To run this executable you must pass the path to the corresponding configuration file for **BOTH** CFE and AORC (in that order): `./run_cfe_bmi_pass_forcings ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt`
 
 # Making this code to run in the NGen Framework
 make clean  

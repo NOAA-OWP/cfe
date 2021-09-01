@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "../include/cfe.h"
 #include "../include/bmi.h"
 #include "../include/bmi_cfe.h"
+#include "../include/cfe.h"
 
 /*
 This main program is a mock framwork.
@@ -32,21 +32,24 @@ int
 
   printf("Get the information from the configuration here in Main\n");
   // Get the information from the configuration here in Main  
-  cfe_model *cfe;
-  cfe = (cfe_model *) cfe_bmi_model->data;
-
-  printf("Updating CFE model\n");
-  cfe_bmi_model->update(cfe_bmi_model);
+  cfe_state_struct *cfe_main_data;
+  cfe_main_data = (cfe_state_struct *) cfe_bmi_model->data;
 
   printf("looping through and calling update\n");
+  if (cfe_main_data->verbosity > 0)
+      print_cfe_flux_header();
   int i=0;
   for (i = 0; i < 700; i++){
     cfe_bmi_model->update(cfe_bmi_model);
+    if (cfe_main_data->verbosity > 0)
+        print_cfe_flux_at_timestep(cfe_main_data);
   }
+
+  // Run the Mass Balance check
+  mass_balance_check(cfe_main_data);
 
   printf("Finalizing CFE model\n");
   cfe_bmi_model->finalize(cfe_bmi_model);
 
   return 0;
 }
-
