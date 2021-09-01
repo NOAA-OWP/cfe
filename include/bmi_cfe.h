@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include "../original_author_code/cfe.h"
+#include "./cfe.h"
 #include "bmi.h"
 
 /** Read number of lines in file and max line length, returning -1 if it does not exist or could not be read. */
