@@ -1,6 +1,6 @@
 # Off LIMITS RUN OPTIONS #
 make_and_run_bmi_pass_forcings.sh
-./sec/main_pass_forcings.c
+./src/main_pass_forcings.c
 
 # RUN EXECUTABLES #
 ###################
