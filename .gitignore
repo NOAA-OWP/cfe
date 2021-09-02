@@ -6,6 +6,7 @@ make_and_run_bmi_pass_forcings.sh
 ###################
 run_cfe_bmi
 run_cfe_bmi_pass_forcings
+run_cfe_aorc_et_bmi
 ./original_author_code/run_cfe
 
 # TRASH BUCKETS #

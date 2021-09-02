@@ -1,4 +1,6 @@
 #include "../include/cfe.h"
+#define max(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b);  _a > _b ? _a : _b; })
+#define min(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b);  _a < _b ? _a : _b; })
 
 // CFE STATE SPACE FUNCTION // #######################################################################
 // CFE STATE SPACE FUNCTION // #######################################################################
@@ -37,6 +39,7 @@ extern void cfe(
         double *nash_storage_arr,
         double *vol_in_nash_ptr,
         double *vol_out_nash_ptr,
+        struct evapotranspiration_structure *evap_struct,
         double *Qout_m_ptr
     ){                      // #######################################################################
 // CFE STATE SPACE FUNCTION // #######################################################################
@@ -437,65 +440,64 @@ return;
 //##############################################################
 //####################   ET FROM RAINFALL   ####################
 //##############################################################
-void et_from_rainfall(double *timestep_rainfall_input_m, double *potential_et_m_per_timestep, double *actual_et_m_per_timestep)
+void et_from_rainfall(double *timestep_rainfall_input_m, struct evapotranspiration_structure *et_struct)
 {
-        /*
-            iff it is raining, take PET from rainfall first.  Wet veg. is efficient evaporator.
-        */
+    /*
+        iff it is raining, take PET from rainfall first.  Wet veg. is efficient evaporator.
+    */
 
-        if (timestep_rainfall_input_m >0.0){
+    if (*timestep_rainfall_input_m >0.0){
 
-            if (timestep_rainfall_input_m > *potential_et_m_per_timestep){
-        
-                *actual_et_m_per_timestep = *potential_et_m_per_timestep
-                *timestep_rainfall_input_m -= *actual_et_m_per_timestep
-            }
+        if (*timestep_rainfall_input_m > et_struct->potential_et_m_per_timestep){
+    
+            et_struct->actual_et_m_per_timestep = et_struct->potential_et_m_per_timestep;
+            *timestep_rainfall_input_m -= et_struct->actual_et_m_per_timestep;
+        }
 
-            else{
+        else{
 
-                *potential_et_m_per_timestep -= *timestep_rainfall_input_m
-                *timestep_rainfall_input_m = 0.0
-
-            }
+            et_struct->potential_et_m_per_timestep -= *timestep_rainfall_input_m;
+            *timestep_rainfall_input_m = 0.0;
 
         }
 
-        return
-
+    }
 }
 
 //##############################################################
 //####################   ET FROM SOIL   ########################
 //##############################################################
-void et_from_soil(struct soil_reservoir *soil_res, double *potential_et_m_per_timestep, double *actual_et_m_per_timestep)
+void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspiration_structure *et_struct, struct NWM_soil_parameters *soil_parms)
 {
-        /*
-            take AET from soil moisture storage, 
-            using Budyko type curve to limit PET if wilting<soilmoist<field_capacity
-        */
+    /*
+        take AET from soil moisture storage, 
+        using Budyko type curve to limit PET if wilting<soilmoist<field_capacity
+    */
+    double Budyko_numerator;
+    double Budyko_denominator;
+    double Budyko;
+    
+    if (et_struct->potential_et_m_per_timestep > 0){
         
-        if (*potential_et_m_per_timestep > 0){
-            
-            if (soil_res.storage_m >= soil_res.storage_threshold_primary_m){
-            
-                *actual_et_m_per_timestep = min( *potential_et_m_per_timestep, *soil_res.storage_m)
+        if (soil_res->storage_m >= soil_res->storage_threshold_primary_m){
+        
+            et_struct->actual_et_m_per_timestep = min( et_struct->potential_et_m_per_timestep, soil_res->storage_m);
 
-                soil_res.storage_m -= *actual_et_m_per_timestep
+            soil_res->storage_m -= et_struct->actual_et_m_per_timestep;
 
-                *potential_et_m_per_timestep = 0.0
-            }                 
-            else if ((soil_res.storage_m > soil_res.wilting_point_m) & (soil_res.storage_m < soil_res.storage_threshold_primary_m)){
-            
-                Budyko_numerator = soil_res.storage_m - soil_res.wilting_point_m
-                Budyko_denominator = soil_res.storage_threshold_primary_m - soil_res.wilting_point_m
-                Budyki = Budyko_numerator / Budyko_denominator
-                               
-                *actual_et_m_per_timestep = Budyko * (*potential_et_m_per_timestep)
-                               
-                soil_res.storage_m -= *actual_et_m_per_timestep
-            }
+            et_struct->potential_et_m_per_timestep = 0.0;
+        }                 
+        else if (soil_res->storage_m > soil_parms->wilting_point_m && soil_res->storage_m < soil_res->storage_threshold_primary_m){
+        
+            Budyko_numerator = soil_res->storage_m - soil_parms->wilting_point_m;
+            Budyko_denominator = soil_res->storage_threshold_primary_m - soil_parms->wilting_point_m;
+            Budyko = Budyko_numerator / Budyko_denominator;
+                           
+            et_struct->actual_et_m_per_timestep = Budyko * (et_struct->potential_et_m_per_timestep);
+                           
+            soil_res->storage_m -= et_struct->actual_et_m_per_timestep;
         }
-        return
+    }
 }
 
 extern int is_fabs_less_than_epsilon(double a,double epsilon)  // returns true if fabs(a)<epsilon

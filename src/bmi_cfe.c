@@ -4,8 +4,6 @@
 #include "../include/bmi.h"
 #include "../include/bmi_cfe.h"
 #include <time.h>
-#define max(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b);  _a > _b ? _a : _b; })
-#define min(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b);  _a < _b ? _a : _b; })
 #ifndef WATER_SPECIFIC_WEIGHT
 #define WATER_SPECIFIC_WEIGHT 9810
 #endif
@@ -1541,6 +1539,7 @@ extern void run_cfe(cfe_state_struct* cfe_ptr){
         cfe_ptr->nash_storage,                              // Set from config file
         &cfe_ptr->vol_struct.vol_in_nash,                        // Set by set_volume_trackers_to_zero
         &cfe_ptr->vol_struct.vol_out_nash,                       // Set by set_volume_trackers_to_zero
+        &cfe_ptr->et_struct,                                    // Set to zero with initalize. Set by BMI (set_value) during run
         cfe_ptr->flux_Qout_m                                    // Set by CFE function
     );
 }
@@ -1566,6 +1565,9 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, doub
     double upper_lim = pow(Omega + cfe_ptr->NWM_soil_params.D, 
                                        (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb)) /
                        (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb);
+
+    // JMFRAME adding this, not sure if is correct. Ask FRED OGDEN
+    cfe_ptr->NWM_soil_params.wilting_point_m = cfe_ptr->NWM_soil_params.wltsmc * cfe_ptr->NWM_soil_params.D;
 
     // soil conceptual reservoir first, two outlets, two thresholds, linear (exponent=1.0).
     cfe_ptr->soil_reservoir.is_exponential = FALSE;  // set this TRUE to use the exponential form of the discharge equation
