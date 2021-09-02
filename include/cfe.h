@@ -98,8 +98,6 @@ double slop;   // this factor (0-1) modifies the gradient of the hydraulic head 
 double D;       // soil depth [m]
 };
 
-
-
 // function prototypes
 // --------------------------------
 extern void Schaake_partitioning_scheme(double dt, double magic_number, double deficit, double qinsur,
@@ -113,6 +111,10 @@ extern double convolution_integral(double runoff_m, int num_giuh_ordinates,
                                    
 extern double nash_cascade(double flux_lat_m,int num_lateral_flow_nash_reservoirs,
                            double K_nash,double *nash_storage_arr);
+
+extern void et_from_rainfall(double *timestep_rainfall_input_m, double *potential_et_m_per_timestep, double *actual_et_m_per_timestep);
+
+extern void et_from_soil(struct soil_reservoir *soil_res, double *potential_et_m_per_timestep, double *actual_et_m_per_timestep)
 
 extern int is_fabs_less_than_epsilon(double a,double epsilon);
 

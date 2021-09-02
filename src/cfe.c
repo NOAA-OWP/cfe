@@ -434,6 +434,70 @@ else
 return;
 }
 
+//##############################################################
+//####################   ET FROM RAINFALL   ####################
+//##############################################################
+void et_from_rainfall(double *timestep_rainfall_input_m, double *potential_et_m_per_timestep, double *actual_et_m_per_timestep)
+{
+        /*
+            iff it is raining, take PET from rainfall first.  Wet veg. is efficient evaporator.
+        */
+
+        if (timestep_rainfall_input_m >0.0){
+
+            if (timestep_rainfall_input_m > *potential_et_m_per_timestep){
+        
+                *actual_et_m_per_timestep = *potential_et_m_per_timestep
+                *timestep_rainfall_input_m -= *actual_et_m_per_timestep
+            }
+
+            else{
+
+                *potential_et_m_per_timestep -= *timestep_rainfall_input_m
+                *timestep_rainfall_input_m = 0.0
+
+            }
+
+        }
+
+        return
+
+}
+
+//##############################################################
+//####################   ET FROM SOIL   ########################
+//##############################################################
+void et_from_soil(struct soil_reservoir *soil_res, double *potential_et_m_per_timestep, double *actual_et_m_per_timestep)
+{
+        /*
+            take AET from soil moisture storage, 
+            using Budyko type curve to limit PET if wilting<soilmoist<field_capacity
+        */
+        
+        if (*potential_et_m_per_timestep > 0){
+            
+            if (soil_res.storage_m >= soil_res.storage_threshold_primary_m){
+            
+                *actual_et_m_per_timestep = min( *potential_et_m_per_timestep, *soil_res.storage_m)
+
+                soil_res.storage_m -= *actual_et_m_per_timestep
+
+                *potential_et_m_per_timestep = 0.0
+            }                 
+            else if ((soil_res.storage_m > soil_res.wilting_point_m) & (soil_res.storage_m < soil_res.storage_threshold_primary_m)){
+            
+                Budyko_numerator = soil_res.storage_m - soil_res.wilting_point_m
+                Budyko_denominator = soil_res.storage_threshold_primary_m - soil_res.wilting_point_m
+                Budyki = Budyko_numerator / Budyko_denominator
+                               
+                *actual_et_m_per_timestep = Budyko * (*potential_et_m_per_timestep)
+                               
+                soil_res.storage_m -= *actual_et_m_per_timestep
+            }
+        }
+        return
+}
+
 extern int is_fabs_less_than_epsilon(double a,double epsilon)  // returns true if fabs(a)<epsilon
 {
 if(fabs(a)<epsilon) return(TRUE);
