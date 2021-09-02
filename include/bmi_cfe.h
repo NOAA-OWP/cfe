@@ -50,13 +50,6 @@ struct vol_tracking_struct{
 };
 typedef struct vol_tracking_struct vol_tracking_struct;
 
-struct evapotranspiration_structure {
-    double potential_et_m_per_s;
-    double potential_et_m_per_timestep;
-    double actual_et_m_per_timestep;
-};
-typedef struct evapotranspiration_structure evapotranspiration_structure;
-
 struct cfe_state_struct {
 
     // *************************************
