@@ -23,8 +23,6 @@ void pass_forcing_from_aorc_to_cfe(Bmi *cfe_bmi_model, Bmi *aorc_bmi_model){
     double *var = NULL;
     var = (double*) malloc (sizeof (double)*1);
 
-//    printf("getting AORC from BMI and setting in ET\n");
-
     const char* var_name4 = "atmosphere_water__liquid_equivalent_precipitation_rate";
     aorc_bmi_model->get_value(aorc_bmi_model, var_name4, &(var[0]));
     cfe_bmi_model->set_value(cfe_bmi_model, var_name4, &(var[0]));
@@ -95,26 +93,32 @@ int
   ************************************************************************/
   aorc_bmi_model->update(aorc_bmi_model);                         // Update model 1
   pass_forcing_from_aorc_to_cfe(cfe_bmi_model, aorc_bmi_model);   // Get and Set values
-  printf("precip_kg_per_m2 CFE: %e, AORC: %e \n", cfe_model_data->aorc.precip_kg_per_m2, aorc->aorc.precip_kg_per_m2);
   printf("Updating CFE: \n");
   cfe_bmi_model->update(cfe_bmi_model);                           //Update model 2
-  if (cfe_model_data->verbosity > 0)
+  printf("cfe_model_data->verbosity: %d\n", cfe_model_data->verbosity);
+  if (cfe_model_data->verbosity > 0){
+    printf("\n");
     print_cfe_flux_header();
     print_cfe_flux_at_timestep(cfe_model_data);
+  }
 
   /************************************************************************
     Now loop through time and call the models with the intermediate get/set
   ************************************************************************/
   printf("looping through and calling updata\n");
   int i;
-  for (i = 1; i < 15; i++){
+  for (i = 1; i < 30; i++){
     
     aorc_bmi_model->update(aorc_bmi_model);                         // Update model 1
   
     pass_forcing_from_aorc_to_cfe(cfe_bmi_model, aorc_bmi_model);   // Get and Set values
   
-    printf("precip_kg_per_m2 CFE: %e, AORC: %e \n", cfe_model_data->aorc.precip_kg_per_m2, aorc->aorc.precip_kg_per_m2);
-  
+    if (cfe_model_data->aorc.precip_kg_per_m2 != aorc->aorc.precip_kg_per_m2){
+      printf("Precip values do not match\n");
+      printf("precip value from AORC is %lf\n", aorc->aorc.precip_kg_per_m2);
+      printf("precip value from CFE is %lf\n", cfe_model_data->aorc.precip_kg_per_m2);
+    }
+
     cfe_bmi_model->update(cfe_bmi_model);                           // Update model 2
   
     if (cfe_model_data->verbosity > 0)

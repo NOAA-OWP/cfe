@@ -82,16 +82,16 @@ struct aorc_forcing_data_pet
 {
   // struct NAME                          DESCRIPTION                                            ORIGINAL AORC NAME     
   //____________________________________________________________________________________________________________________
-  float precip_kg_per_m2;                // Surface precipitation "kg/m^2"                         | APCP_surface
-  float incoming_longwave_W_per_m2 ;     // Downward Long-Wave Rad. Flux at 0m height, W/m^2       | DLWRF_surface
-  float incoming_shortwave_W_per_m2;     // Downward Short-Wave Radiation Flux at 0m height, W/m^2 | DSWRF_surface
-  float surface_pressure_Pa;             // Surface atmospheric pressure, Pa                       | PRES_surface
-  float specific_humidity_2m_kg_per_kg;  // Specific Humidity at 2m height, kg/kg                  | SPFH_2maboveground
-  float air_temperature_2m_K;            // Air temparture at 2m height, K                         | TMP_2maboveground
-  float u_wind_speed_10m_m_per_s;        // U-component of Wind at 10m height, m/s                 | UGRD_10maboveground
-  float v_wind_speed_10m_m_per_s;        // V-component of Wind at 10m height, m/s                 | VGRD_10maboveground
-  float latitude;                        // degrees north of the equator.  Negative south          | latitude
-  float longitude;                       // degrees east of prime meridian. Negative west          | longitude
+  double precip_kg_per_m2;                // Surface precipitation "kg/m^2"                         | APCP_surface
+  double incoming_longwave_W_per_m2 ;     // Downward Long-Wave Rad. Flux at 0m height, W/m^2       | DLWRF_surface
+  double incoming_shortwave_W_per_m2;     // Downward Short-Wave Radiation Flux at 0m height, W/m^2 | DSWRF_surface
+  double surface_pressure_Pa;             // Surface atmospheric pressure, Pa                       | PRES_surface
+  double specific_humidity_2m_kg_per_kg;  // Specific Humidity at 2m height, kg/kg                  | SPFH_2maboveground
+  double air_temperature_2m_K;            // Air temparture at 2m height, K                         | TMP_2maboveground
+  double u_wind_speed_10m_m_per_s;        // U-component of Wind at 10m height, m/s                 | UGRD_10maboveground
+  double v_wind_speed_10m_m_per_s;        // V-component of Wind at 10m height, m/s                 | VGRD_10maboveground
+  double latitude;                        // degrees north of the equator.  Negative south          | latitude
+  double longitude;                       // degrees east of prime meridian. Negative west          | longitude
   double time; //TODO: type?           // seconds since 1970-01-01 00:00:00.0 0:00               | time
 };
 typedef struct aorc_forcing_data_pet aorc_forcing_data_pet;

@@ -72,7 +72,7 @@ Initialize (Bmi *self, const char *cfg_file)
     for (int i = 0; i < aorc->bmi.num_timesteps; i++) {
         fgets(line_str, max_forcing_line_length + 1, ffp);  // read in a line of AORC data.
         parse_aorc_line_aorc(line_str, &year, &month, &day, &hour, &minute, &dsec, &forcings);
-        aorc->forcing_data_precip_kg_per_m2[i] = forcings.precip_kg_per_m2 * ((float)aorc->bmi.time_step_size);
+        aorc->forcing_data_precip_kg_per_m2[i] = forcings.precip_kg_per_m2 * ((double)aorc->bmi.time_step_size);
         if (aorc->bmi.verbose >4)
             printf("precip %f \n", aorc->forcing_data_precip_kg_per_m2[i]);
         aorc->forcing_data_surface_pressure_Pa[i] = forcings.surface_pressure_Pa;
@@ -120,7 +120,7 @@ Update (Bmi *self)
       printf("BMI Update AORC ...\n");
   
     run_aorc(aorc);
-
+    // Delete me...    printf("_______PRECIP IN AORC UPDATE FUNCTION________: %lf\n", aorc->aorc.precip_kg_per_m2);
     aorc->bmi.current_time_step += aorc->bmi.time_step_size; // Seconds since start of run
     aorc->bmi.current_step +=1;                            // time steps since start of run
     aorc->bmi.current_time += aorc->bmi.time_step_size;   // Seconds since 1970
@@ -688,6 +688,7 @@ static int Get_var_type (Bmi *self, const char *name, char * type)
         }
     }
     // If we get here, it means the variable name wasn't recognized
+    printf("Error: The item was not recognized when trying to get type\n");
     type[0] = '\0';
     return BMI_FAILURE;
 }
@@ -780,62 +781,44 @@ static int Get_var_grid(Bmi *self, const char *name, int *grid)
 // ***********************************************************
 static int Get_value_ptr (Bmi *self, const char *name, void **dest)
 {
-    void *src = NULL;
-
-    if (strcmp (name, "land_surface_radiation~incoming~longwave__energy_flux") == 0) {
         aorc_model *aorc;
         aorc = (aorc_model *) self->data;
-        src = (void*)&aorc->aorc.incoming_longwave_W_per_m2;
-        *dest = src;
+        void *src = NULL;
+
+    if (strcmp (name, "land_surface_radiation~incoming~longwave__energy_flux") == 0) {
+        *dest = (void*)&aorc->aorc.incoming_longwave_W_per_m2;
         return BMI_SUCCESS;
     }
     if (strcmp (name, "land_surface_radiation~incoming~shortwave__energy_flux") == 0) {
-        aorc_model *aorc;
-        aorc = (aorc_model *) self->data;
-        src = (void*)&aorc->aorc.incoming_shortwave_W_per_m2;
-        *dest = src;
+        *dest = (void*)&aorc->aorc.incoming_shortwave_W_per_m2;
         return BMI_SUCCESS;
     }
     if (strcmp (name, "land_surface_air__pressure") == 0) {
-        aorc_model *aorc;
-        aorc = (aorc_model *) self->data;
-        src = (void*)&aorc->aorc.surface_pressure_Pa;
-        *dest = src;
+        *dest = (void*)&aorc->aorc.surface_pressure_Pa;
         return BMI_SUCCESS;
     }
     if (strcmp (name, "atmosphere_air_water~vapor__relative_saturation") == 0) {
-        aorc_model *aorc;
-        aorc = (aorc_model *) self->data;
-        src = (void*)&aorc->aorc.specific_humidity_2m_kg_per_kg;
-        *dest = src;
+        *dest = (void*)&aorc->aorc.specific_humidity_2m_kg_per_kg;
         return BMI_SUCCESS;
     }
     if (strcmp (name, "atmosphere_water__liquid_equivalent_precipitation_rate") == 0) {
-        aorc_model *aorc;
-        aorc = (aorc_model *) self->data;
+        // Delete me...    printf("______ VALUE IN AORC GET_VALUE_PTR FUNCTION %lf\n",aorc->aorc.precip_kg_per_m2);
         src = (void*)&aorc->aorc.precip_kg_per_m2;
+        // Delete me...    printf("______ VALUE IN AORC GET_VALUE_PTR FUNCTION %lf\n",src);
         *dest = src;
+        // Delete me...    printf("______ VALUE IN AORC GET_VALUE_PTR FUNCTION %lf\n",dest);
         return BMI_SUCCESS;
     }
     if (strcmp (name, "land_surface_air__temperature") == 0) {
-        aorc_model *aorc;
-        aorc = (aorc_model *) self->data;
-        src = (void*)&aorc->aorc.air_temperature_2m_K;
-        *dest = src;
+        *dest = (void*)&aorc->aorc.air_temperature_2m_K;
         return BMI_SUCCESS;
     }
     if (strcmp (name, "land_surface_wind__x_component_of_velocity") == 0) {
-        aorc_model *aorc;
-        aorc = (aorc_model *) self->data;
-        src = (void*)&aorc->aorc.u_wind_speed_10m_m_per_s;
-        *dest = src;
+        *dest = (void*)&aorc->aorc.u_wind_speed_10m_m_per_s;
         return BMI_SUCCESS;
     }
     if (strcmp (name, "land_surface_wind__y_component_of_velocity") == 0) {
-        aorc_model *aorc;
-        aorc = (aorc_model *) self->data;
-        src = (void*)&aorc->aorc.v_wind_speed_10m_m_per_s;
-        *dest = src;
+        *dest = (void*)&aorc->aorc.v_wind_speed_10m_m_per_s;
         return BMI_SUCCESS;
     }
 
@@ -872,14 +855,16 @@ static int Get_value(Bmi * self, const char * name, void *dest)
 {
     void *src = NULL;
     int nbytes = 0;
-
+    // Delete me...    printf("getting value\n");
     if (self->get_value_ptr (self, name, &src) == BMI_FAILURE)
         return BMI_FAILURE;
 
     if (self->get_var_nbytes (self, name, &nbytes) == BMI_FAILURE)
         return BMI_FAILURE;
-    
+ 
     memcpy(dest, src, nbytes);
+    // Delete me...    printf("___ VALUE IN AORC GET_VALUE FUNCTION (src) ___: %lf\n", src);
+    // Delete me...    printf("___ VALUE IN AORC GET_VALUE FUNCTION (dest)___: %lf\n", dest);
 
     return BMI_SUCCESS;
 }

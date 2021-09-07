@@ -153,7 +153,7 @@ void parse_aorc_line_aorc(char *theString, long *year, long *month, long *day, l
     char str[20];
     long yr, mo, da, hr, mi;
     double mm, julian, se;
-    float val;
+    double val;
     int i, start, end, len;
     int yes_pm, wordlen;
     char theWord[150];

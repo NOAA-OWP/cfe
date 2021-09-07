@@ -744,16 +744,21 @@ static int Update (Bmi *self)
 //    }
             
     cfe_state_struct* cfe_ptr = ((cfe_state_struct *) self->data);
+
+    // Two modes to get forcing data... 1) read from file, 2) pass with bmi    
+    if (cfe_ptr->is_forcing_from_bmi)
+      // BMI sets the precipitation to the aorc structure.
+      cfe_ptr->timestep_rainfall_input_m = cfe_ptr->aorc.precip_kg_per_m2;
+    else
+      // Set the current rainfall input to the right place in the forcing array.
+      cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step];
     
     cfe_ptr->vol_struct.volin += cfe_ptr->timestep_rainfall_input_m;
-
+    // Delete me...    printf("_______PRECIP IN  CFE UPDATE FUNCTION________: %lf\n", cfe_ptr->aorc.precip_kg_per_m2);
     run_cfe(cfe_ptr);
 
     // Advance the model time 
     cfe_ptr->current_time_step += 1;
-
-    // Set the current rainfall input to the right place in the forcing.
-    cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step];
 
     return BMI_SUCCESS;
 }
@@ -1190,6 +1195,16 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
 
 static int Set_value (Bmi *self, const char *name, void *array)
 {
+    // Avoid using set value, call instead set_value_at_index
+    // Use nested call to "by index" version
+
+    // Here, for now at least, we know all the variables are scalar, so
+    int inds[] = {0};
+
+    // Then we can just ...
+    return Set_value_at_indices(self, name, inds, 1, array);
+
+/*  This is the sample code from read the docs
     void * dest = NULL;
     int nbytes = 0;
 
@@ -1202,17 +1217,7 @@ static int Set_value (Bmi *self, const char *name, void *array)
     memcpy (dest, array, nbytes);
 
     return BMI_SUCCESS;
-    
-// jmframe: This is what was in this function within the framework as of May 4th 
-/*
-    // Use nested call to "by index" version
-
-    // Here, for now at least, we know all the variables are scalar, so
-    int inds[] = {0};
-
-    // Then we can just ...
-    return Set_value_at_indices(self, name, inds, 1, array);
-*/
+*/    
 }
 
 
