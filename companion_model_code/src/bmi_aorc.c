@@ -120,7 +120,7 @@ Update (Bmi *self)
       printf("BMI Update AORC ...\n");
   
     run_aorc(aorc);
-    // Delete me...    printf("_______PRECIP IN AORC UPDATE FUNCTION________: %lf\n", aorc->aorc.precip_kg_per_m2);
+    
     aorc->bmi.current_time_step += aorc->bmi.time_step_size; // Seconds since start of run
     aorc->bmi.current_step +=1;                            // time steps since start of run
     aorc->bmi.current_time += aorc->bmi.time_step_size;   // Seconds since 1970
@@ -802,11 +802,8 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
     if (strcmp (name, "atmosphere_water__liquid_equivalent_precipitation_rate") == 0) {
-        // Delete me...    printf("______ VALUE IN AORC GET_VALUE_PTR FUNCTION %lf\n",aorc->aorc.precip_kg_per_m2);
         src = (void*)&aorc->aorc.precip_kg_per_m2;
-        // Delete me...    printf("______ VALUE IN AORC GET_VALUE_PTR FUNCTION %lf\n",src);
         *dest = src;
-        // Delete me...    printf("______ VALUE IN AORC GET_VALUE_PTR FUNCTION %lf\n",dest);
         return BMI_SUCCESS;
     }
     if (strcmp (name, "land_surface_air__temperature") == 0) {
@@ -855,7 +852,7 @@ static int Get_value(Bmi * self, const char * name, void *dest)
 {
     void *src = NULL;
     int nbytes = 0;
-    // Delete me...    printf("getting value\n");
+ 
     if (self->get_value_ptr (self, name, &src) == BMI_FAILURE)
         return BMI_FAILURE;
 
@@ -863,8 +860,6 @@ static int Get_value(Bmi * self, const char * name, void *dest)
         return BMI_FAILURE;
  
     memcpy(dest, src, nbytes);
-    // Delete me...    printf("___ VALUE IN AORC GET_VALUE FUNCTION (src) ___: %lf\n", src);
-    // Delete me...    printf("___ VALUE IN AORC GET_VALUE FUNCTION (dest)___: %lf\n", dest);
 
     return BMI_SUCCESS;
 }

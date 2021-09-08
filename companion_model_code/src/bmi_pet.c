@@ -83,7 +83,7 @@ Initialize (Bmi *self, const char *cfg_file)
         for (int i = 0; i < pet->bmi.num_timesteps; i++) {
             fgets(line_str, max_forcing_line_length + 1, ffp);  // read in a line of AORC data.
             parse_aorc_line_pet(line_str, &year, &month, &day, &hour, &minute, &dsec, &forcings);
-            pet->forcing_data_precip_kg_per_m2[i] = forcings.precip_kg_per_m2 * ((float)pet->bmi.time_step_size_s);
+            pet->forcing_data_precip_kg_per_m2[i] = forcings.precip_kg_per_m2 * ((double)pet->bmi.time_step_size_s);
             if (pet->bmi.verbose >4)
                 printf("precip %f \n", pet->forcing_data_precip_kg_per_m2[i]);
             pet->forcing_data_surface_pressure_Pa[i] = forcings.surface_pressure_Pa;
@@ -127,7 +127,7 @@ static int
 Update (Bmi *self)
 {
     pet_model *pet = (pet_model *) self->data;
-  
+    
     if (pet->bmi.verbose >1)
       printf("BMI Update PET ...\n");
   

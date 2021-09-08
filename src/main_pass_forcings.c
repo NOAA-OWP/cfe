@@ -22,10 +22,36 @@ void pass_forcing_from_aorc_to_cfe(Bmi *cfe_bmi_model, Bmi *aorc_bmi_model){
 
     double *var = NULL;
     var = (double*) malloc (sizeof (double)*1);
+    
+    //Delete me
+    cfe_state_struct *cfex;
+    cfex = (cfe_state_struct *) cfe_bmi_model->data;
+    aorc_model *aorcx;
+    aorcx = (aorc_model *) aorc_bmi_model->data;
+    
+    printf("\n_________________________________________________________\n");
+    printf("aorc precip %lf\n", aorcx->aorc.precip_kg_per_m2);
+    printf("cfe precip %lf\n", cfex->aorc.precip_kg_per_m2);
+    aorc_bmi_model->get_value(aorc_bmi_model, "atmosphere_water__liquid_equivalent_precipitation_rate", &(var[0]));
+    printf("aorc precip %lf\n", aorcx->aorc.precip_kg_per_m2);
+    printf("cfe precip %lf\n", cfex->aorc.precip_kg_per_m2);
+    cfe_bmi_model->set_value(cfe_bmi_model, "atmosphere_water__liquid_equivalent_precipitation_rate", &(var[0]));
+    printf("aorc precip %lf\n", aorcx->aorc.precip_kg_per_m2);
+    printf("cfe precip %lf\n", cfex->aorc.precip_kg_per_m2);
+    printf("_________________________________________________________\n");
 
-    const char* var_name4 = "atmosphere_water__liquid_equivalent_precipitation_rate";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name4, &(var[0]));
-    cfe_bmi_model->set_value(cfe_bmi_model, var_name4, &(var[0]));
+    /*
+    printf("\n_________________________________________________________\n");
+    printf("aorc temperature %lf\n", aorcx->aorc.air_temperature_2m_K);
+    printf("cfe temperature %lf\n", cfex->aorc.air_temperature_2m_K);
+    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_air__temperature", &(var[0]));
+    printf("aorc temperature %lf\n", aorcx->aorc.air_temperature_2m_K);
+    printf("cfe temperature %lf\n", cfex->aorc.air_temperature_2m_K);
+    cfe_bmi_model->set_value(cfe_bmi_model, "land_surface_air__temperature", &var[0]);
+    printf("aorc temperature %lf\n", aorcx->aorc.air_temperature_2m_K);
+    printf("cfe temperature %lf\n", cfex->aorc.air_temperature_2m_K);
+    printf("_________________________________________________________\n");
+    */
 
 }
 

@@ -16,9 +16,8 @@ void pass_pet_to_cfe(Bmi *cfe_bmi_model, Bmi *pet_bmi_model){
     double var_val;
     double *var_ptr = &var_val;
 
-    const char* var_name1 = "water_potential_evaporation_flux";
-    pet_bmi_model->get_value(pet_bmi_model, var_name1, &var_ptr);
-    cfe_bmi_model->set_value(cfe_bmi_model, var_name1, &var_ptr);
+    pet_bmi_model->get_value(pet_bmi_model, "water_potential_evaporation_flux", &var_ptr);
+    cfe_bmi_model->set_value(cfe_bmi_model, "water_potential_evaporation_flux", &var_ptr);
 }
 
 /***************************************************************
@@ -35,39 +34,39 @@ void pass_forcing_from_aorc_to_cfe(Bmi *cfe_bmi_model, Bmi *aorc_bmi_model){
 
     double var_val;
     double *var_ptr = &var_val;
+    
+    //Delete me
+    cfe_state_struct *cfe3;
+    cfe3 = (cfe_state_struct *) cfe_bmi_model->data;
+    aorc_model *aorc3;
+    aorc3 = (aorc_model *) aorc_bmi_model->data;
 
-//    printf("getting AORC from BMI and setting in ET\n");
-    const char* var_name1 = "land_surface_air__temperature";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name1, var_ptr);
-    cfe_bmi_model->set_value(cfe_bmi_model, var_name1, var_ptr);
+    aorc_bmi_model->get_value(aorc_bmi_model, "atmosphere_water__liquid_equivalent_precipitation_rate", var_ptr);
+    cfe_bmi_model->set_value(cfe_bmi_model, "atmosphere_water__liquid_equivalent_precipitation_rate", var_ptr);
 
-    const char* var_name2 = "land_surface_air__pressure";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name2, var_ptr);
-    cfe_bmi_model->set_value(cfe_bmi_model, var_name2, var_ptr);
+    /*
+    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_air__temperature", var_ptr);
+    cfe_bmi_model->set_value(cfe_bmi_model, "land_surface_air__temperature", var_ptr);
 
-    const char* var_name3 = "atmosphere_air_water~vapor__relative_saturation";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name3, var_ptr);
-    cfe_bmi_model->set_value(cfe_bmi_model, var_name3, var_ptr);
+    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_air__pressure", var_ptr);
+    cfe_bmi_model->set_value(cfe_bmi_model, "land_surface_air__pressure", var_ptr);
 
-    const char* var_name4 = "atmosphere_water__time_integral_of_precipitation_mass_flux";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name4, var_ptr);
-    cfe_bmi_model->set_value(cfe_bmi_model, var_name4, var_ptr);
+    aorc_bmi_model->get_value(aorc_bmi_model, "atmosphere_air_water~vapor__relative_saturation", var_ptr);
+    cfe_bmi_model->set_value(cfe_bmi_model, "atmosphere_air_water~vapor__relative_saturation", var_ptr);
 
-    const char* var_name5 = "land_surface_radiation~incoming~shortwave__energy_flux";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name5, var_ptr);
-    cfe_bmi_model->set_value(cfe_bmi_model, var_name5, var_ptr);
+    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_radiation~incoming~shortwave__energy_flux", var_ptr);
+    cfe_bmi_model->set_value(cfe_bmi_model, "land_surface_radiation~incoming~shortwave__energy_flux", var_ptr);
 
-    const char* var_name6 = "land_surface_radiation~incoming~longwave__energy_flux";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name6, var_ptr);
-    cfe_bmi_model->set_value(cfe_bmi_model, var_name6, var_ptr);
+    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_radiation~incoming~longwave__energy_flux", var_ptr);
+    cfe_bmi_model->set_value(cfe_bmi_model, "land_surface_radiation~incoming~longwave__energy_flux", var_ptr);
 
-    const char* var_name7 = "land_surface_wind__x_component_of_velocity";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name7, var_ptr);
-    cfe_bmi_model->set_value(cfe_bmi_model, var_name7, var_ptr);
+    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_wind__x_component_of_velocity", var_ptr);
+    cfe_bmi_model->set_value(cfe_bmi_model, "land_surface_wind__x_component_of_velocity", var_ptr);
 
-    const char* var_name8 = "land_surface_wind__y_component_of_velocity";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name8, var_ptr);
-    cfe_bmi_model->set_value(cfe_bmi_model, var_name8, var_ptr);
+    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_wind__y_component_of_velocity", var_ptr);
+    cfe_bmi_model->set_value(cfe_bmi_model, "land_surface_wind__y_component_of_velocity", var_ptr);
+    */
+
 }
 
 /***************************************************************
@@ -82,41 +81,51 @@ void pass_forcing_from_aorc_to_pet(Bmi *pet_bmi_model, Bmi *aorc_bmi_model){
               so we don't re-write the get/set functions over and over
     ********************************************************************/
 
-    double var_val;
-    double *var_ptr = &var_val;
+    //Delete me
+    pet_model *pet2;
+    pet2 = (pet_model *) pet_bmi_model->data;
+    aorc_model *aorc2;
+    aorc2 = (aorc_model *) aorc_bmi_model->data;
 
-//    printf("getting AORC from BMI and setting in PET\n");
-    const char* var_name1 = "land_surface_air__temperature";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name1, var_ptr);
-    pet_bmi_model->set_value(pet_bmi_model, var_name1, var_ptr);
+    double var1_val;
+    double *var1_ptr = &var1_val;
+    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_air__temperature", var1_ptr);
+    pet_bmi_model->set_value(pet_bmi_model, "land_surface_air__temperature", var1_ptr);
 
-    const char* var_name2 = "land_surface_air__pressure";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name2, var_ptr);
-    pet_bmi_model->set_value(pet_bmi_model, var_name2, var_ptr);
+    double var2_val;
+    double *var2_ptr = &var2_val;
+    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_air__pressure", var2_ptr);
+    pet_bmi_model->set_value(pet_bmi_model, "land_surface_air__pressure", var2_ptr);
 
-    const char* var_name3 = "atmosphere_air_water~vapor__relative_saturation";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name3, var_ptr);
-    pet_bmi_model->set_value(pet_bmi_model, var_name3, var_ptr);
+    double var3_val;
+    double *var3_ptr = &var3_val;
+    aorc_bmi_model->get_value(aorc_bmi_model, "atmosphere_air_water~vapor__relative_saturation", var3_ptr);
+    pet_bmi_model->set_value(pet_bmi_model, "atmosphere_air_water~vapor__relative_saturation", var3_ptr);
 
-    const char* var_name4 = "atmosphere_water__time_integral_of_precipitation_mass_flux";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name4, var_ptr);
-    pet_bmi_model->set_value(pet_bmi_model, var_name4, var_ptr);
+    double var4_val;
+    double *var4_ptr = &var4_val;
+    aorc_bmi_model->get_value(aorc_bmi_model, "atmosphere_water__liquid_equivalent_precipitation_rate", var4_ptr);
+    pet_bmi_model->set_value(pet_bmi_model, "atmosphere_water__liquid_equivalent_precipitation_rate", var4_ptr);
 
-    const char* var_name5 = "land_surface_radiation~incoming~shortwave__energy_flux";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name5, var_ptr);
-    pet_bmi_model->set_value(pet_bmi_model, var_name5, var_ptr);
+    double var5_val;
+    double *var5_ptr = &var5_val;
+    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_radiation~incoming~shortwave__energy_flux", var5_ptr);
+    pet_bmi_model->set_value(pet_bmi_model, "land_surface_radiation~incoming~shortwave__energy_flux", var5_ptr);
 
-    const char* var_name6 = "land_surface_radiation~incoming~longwave__energy_flux";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name6, var_ptr);
-    pet_bmi_model->set_value(pet_bmi_model, var_name6, var_ptr);
+    double var6_val;
+    double *var6_ptr = &var6_val;
+    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_radiation~incoming~longwave__energy_flux", var6_ptr);
+    pet_bmi_model->set_value(pet_bmi_model, "land_surface_radiation~incoming~longwave__energy_flux", var6_ptr);
 
-    const char* var_name7 = "land_surface_wind__x_component_of_velocity";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name7, var_ptr);
-    pet_bmi_model->set_value(pet_bmi_model, var_name7, var_ptr);
+    double var7_val;
+    double *var7_ptr = &var7_val;
+    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_wind__x_component_of_velocity", var7_ptr);
+    pet_bmi_model->set_value(pet_bmi_model, "land_surface_wind__x_component_of_velocity", var7_ptr);
 
-    const char* var_name8 = "land_surface_wind__y_component_of_velocity";
-    aorc_bmi_model->get_value(aorc_bmi_model, var_name8, var_ptr);
-    pet_bmi_model->set_value(pet_bmi_model, var_name8, var_ptr);
+    double var8_val;
+    double *var8_ptr = &var8_val;
+    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_wind__y_component_of_velocity", var8_ptr);
+    pet_bmi_model->set_value(pet_bmi_model, "land_surface_wind__y_component_of_velocity", var8_ptr);
 }
 
 /********************************************************************
@@ -175,15 +184,15 @@ int
     Get the information from the configuration here in Main
   ************************************************************************/
   printf("Get the information from the configuration here in Main\n");
-  cfe_state_struct *cfe;
-  cfe = (cfe_state_struct *) cfe_bmi_model->data;
-  printf("forcing file for the CFE module %s\n", cfe->forcing_file);
-  pet_model *pet;
-  pet = (pet_model *) pet_bmi_model->data;
-  printf("forcing file for the PET module %s\n", pet->forcing_file);
-  aorc_model *aorc;
-  aorc = (aorc_model *) aorc_bmi_model->data;
-  printf("forcing file for the AORC module %s\n", aorc->forcing_file);
+  cfe_state_struct *cfe1;
+  cfe1 = (cfe_state_struct *) cfe_bmi_model->data;
+  printf("forcing file for the CFE module %s\n", cfe1->forcing_file);
+  pet_model *pet1;
+  pet1 = (pet_model *) pet_bmi_model->data;
+  printf("forcing file for the PET module %s\n", pet1->forcing_file);
+  aorc_model *aorc1;
+  aorc1 = (aorc_model *) aorc_bmi_model->data;
+  printf("forcing file for the AORC module %s\n", aorc1->forcing_file);
 
   /************************************************************************
     This is the basic process for getting the three things to talk through BMI
@@ -195,41 +204,50 @@ int
     5. Update the CFE model.
   ************************************************************************/
 
-  printf("Updating AORC: \n");
-  aorc_bmi_model->update(aorc_bmi_model);                         // Update model 1
-  pass_forcing_from_aorc_to_cfe(cfe_bmi_model, aorc_bmi_model);   // Get and Set values
-  pass_forcing_from_aorc_to_pet(pet_bmi_model, aorc_bmi_model);   // Get and Set values
-  printf("Updating PET: \n");
-  pet_bmi_model->update(pet_bmi_model);
-  pass_pet_to_cfe(cfe_bmi_model, pet_bmi_model);   // Get and Set values
-  printf("precip_kg_per_m2 CFE: %e, AORC: %e \n", cfe->aorc.precip_kg_per_m2, aorc->aorc.precip_kg_per_m2);
-  printf("PET m per s CFE: %e, PET: %e \n", cfe->et_struct.potential_et_m_per_s, pet->pet_m_per_s);
-  printf("Updating CFE: \n");
-  cfe_bmi_model->update(cfe_bmi_model);                           //Update model 2
-  printf("CFE streamflow out: %8.3lf\n", cfe->flux_Qout_m);
-  printf("PET value from CFE %8.6e\n", cfe->et_struct.potential_et_m_per_timestep);
-  printf("AET value from CFE %8.6e\n", cfe->et_struct.actual_et_m_per_timestep);
+  printf("looping through and calling update\n");
 
-//  printf("looping through and calling update\n");
-  int i=0;
-  for (i = 0; i < 719; i++){
+  if (cfe1->verbosity > 0)
+    print_cfe_flux_header();
+
+  for (int i = 0; i < 30; i++){
 
 
     aorc_bmi_model->update(aorc_bmi_model);                         // Update model 1
-    pass_forcing_from_aorc_to_cfe(cfe_bmi_model, aorc_bmi_model);   // Get and Set values
-    pass_forcing_from_aorc_to_pet(pet_bmi_model, pet_bmi_model);   // Get and Set values
+    
+    pass_forcing_from_aorc_to_pet(pet_bmi_model, aorc_bmi_model);   // Get and Set values
+
     pet_bmi_model->update(pet_bmi_model);
+
+    pass_forcing_from_aorc_to_cfe(cfe_bmi_model, aorc_bmi_model);   // Get and Set values
     pass_pet_to_cfe(cfe_bmi_model, pet_bmi_model);   // Get and Set values
-    printf("precip_kg_per_m2 CFE: %e, AORC: %e \n", cfe->aorc.precip_kg_per_m2, aorc->aorc.precip_kg_per_m2);
-    printf("PET m per s CFE: %e, PET: %e \n", cfe->et_struct.potential_et_m_per_s, pet->pet_m_per_s);
+    
+    if (pet1->aorc.air_temperature_2m_K != aorc1->aorc.air_temperature_2m_K){
+      printf("ERROR: Temperature values do not match from AORC and PET\n");
+      printf("Temperature value from AORC is %lf\n", aorc1->aorc.air_temperature_2m_K);
+      printf("Tempterature value from PET is %lf\n", pet1->aorc.air_temperature_2m_K);
+    }
+    if (cfe1->aorc.precip_kg_per_m2 != aorc1->aorc.precip_kg_per_m2){
+      printf("ERROR: Precip values do not match from AORC and CFE\n");
+      printf("precip value from AORC is %lf\n", aorc1->aorc.precip_kg_per_m2);
+      printf("precip value from CFE is %lf\n", cfe1->aorc.precip_kg_per_m2);
+    }
+
+    if (cfe1->et_struct.potential_et_m_per_s != pet1->pet_m_per_s){
+      printf("ERROR: PET values do not match from PET and CFE\n");
+      printf("PET value from PET is %8.9lf\n", pet1->pet_m_per_s);
+      printf("PET value from CFE is %8.9lf\n", cfe1->et_struct.potential_et_m_per_s);
+  }
+
+    if (cfe1->verbosity > 2){
+      printf("PET value from PET is %8.9lf\n", pet1->pet_m_per_s);
+      printf("PET value from CFE is %8.9lf\n", cfe1->et_struct.potential_et_m_per_s);
+  }
+
     cfe_bmi_model->update(cfe_bmi_model);                           //Update model 2
 
-    printf("Qout, soil_res_storage_m, PET and AET values from CFE %lf %lf %lf %lf\n", 
-            *cfe->flux_Qout_m, 
-            cfe->soil_reservoir.storage_m,
-            cfe->et_struct.potential_et_m_per_timestep, 
-            cfe->et_struct.actual_et_m_per_timestep);
-//    printf("--------------------- END OF TIMESTEP ---------------------------------\n");
+    if (cfe1->verbosity > 0)
+      print_cfe_flux_at_timestep(cfe1);
+
   }
 
   printf("Finalizing models\n");
