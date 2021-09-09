@@ -17,15 +17,15 @@ Included in this repository is an environment file (env_cheyenne.sh), and a "mak
 2. `./make_and_run_bmi.sh`
 
 ## CFE Model gets forcings passed from BMI
-The CFE was designed to read its own forcing file, but we have added an option to get forcings passed in through BMI. To test this functionality we need to also include the AORC BMI model when compiling. The steps are very similar to the example above, but with just adding two additional src files, which come from the AORC BMI Module in the `companion_model_code` directory.  
+The CFE was designed to read its own forcing file, but we have added an option to get forcings passed in through BMI. To test this functionality we need to also include the AORC BMI model when compiling. The steps are very similar to the example above, but with just adding two additional src files, which come from the AORC BMI Module in the `forcing_code` directory.  
 1. `module load gnu/10.1.0`
-2. `gcc -lm ./src/main_pass_forcings.c ./src/cfe.c ./src/bmi_cfe.c ./companion_model_code/src/aorc.c ./companion_model_code/src/bmi_aorc.c  -o run_cfe_bmi_pass_forcings`  
+2. `gcc -lm ./src/main_pass_forcings.c ./src/cfe.c ./src/bmi_cfe.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c  -o run_cfe_bmi_pass_forcings`  
 This should generate an executable called **run_cfe_bmi_pass_forcings**. To run this executable you must pass the path to the corresponding configuration files for **BOTH** CFE and AORC (in that order): `./run_cfe_bmi_pass_forcings ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt`
 
 ## CFE Model gets forcings AND Potential Evapotranspiration passed from BMI
-The CFE has functionality to remove mass through evapotransiration (directly from precipitation and from soil using the Bydukko function). The steps to test this functionality are very similar to the example above, but with just adding two additional src files, which come from the AORC BMI Module in the `companion_model_code` directory.  
+The CFE has functionality to remove mass through evapotransiration (directly from precipitation and from soil using the Bydukko function). The steps to test this functionality are very similar to the example above, but with just adding two additional src files, which come from the AORC BMI Module in the `forcing_code` directory.  
 1. `module load gnu/10.1.0`
-2. `gcc -lm ./src/main_cfe_aorc_pet.c ./companion_model_code/src/pet.c ./companion_model_code/src/bmi_pet.c ./src/cfe.c ./src/bmi_cfe.c ./companion_model_code/src/aorc.c ./companion_model_code/src/bmi_aorc.c -o run_cfe_aorc_et_bmi`  
+2. `gcc -lm ./src/main_cfe_aorc_pet.c ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c ./src/cfe.c ./src/bmi_cfe.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c -o run_cfe_aorc_et_bmi`  
 This should generate an executable called **run_cfe_bmi_pass_forcings**. To run this executable you must pass the path to the corresponding configuration files for **ALL** CFE, PET and AORC (in that order): `./run_cfe_aorc_et_bmi ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt ./configs/cat_89_bmi_config_pet_pass.txt`
 
 # Making this code to run in the NGen Framework
