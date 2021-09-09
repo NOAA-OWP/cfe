@@ -35,37 +35,8 @@ void pass_forcing_from_aorc_to_cfe(Bmi *cfe_bmi_model, Bmi *aorc_bmi_model){
     double var_val;
     double *var_ptr = &var_val;
     
-    //Delete me
-    cfe_state_struct *cfe3;
-    cfe3 = (cfe_state_struct *) cfe_bmi_model->data;
-    aorc_model *aorc3;
-    aorc3 = (aorc_model *) aorc_bmi_model->data;
-
     aorc_bmi_model->get_value(aorc_bmi_model, "atmosphere_water__liquid_equivalent_precipitation_rate", var_ptr);
     cfe_bmi_model->set_value(cfe_bmi_model, "atmosphere_water__liquid_equivalent_precipitation_rate", var_ptr);
-
-    /*
-    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_air__temperature", var_ptr);
-    cfe_bmi_model->set_value(cfe_bmi_model, "land_surface_air__temperature", var_ptr);
-
-    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_air__pressure", var_ptr);
-    cfe_bmi_model->set_value(cfe_bmi_model, "land_surface_air__pressure", var_ptr);
-
-    aorc_bmi_model->get_value(aorc_bmi_model, "atmosphere_air_water~vapor__relative_saturation", var_ptr);
-    cfe_bmi_model->set_value(cfe_bmi_model, "atmosphere_air_water~vapor__relative_saturation", var_ptr);
-
-    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_radiation~incoming~shortwave__energy_flux", var_ptr);
-    cfe_bmi_model->set_value(cfe_bmi_model, "land_surface_radiation~incoming~shortwave__energy_flux", var_ptr);
-
-    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_radiation~incoming~longwave__energy_flux", var_ptr);
-    cfe_bmi_model->set_value(cfe_bmi_model, "land_surface_radiation~incoming~longwave__energy_flux", var_ptr);
-
-    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_wind__x_component_of_velocity", var_ptr);
-    cfe_bmi_model->set_value(cfe_bmi_model, "land_surface_wind__x_component_of_velocity", var_ptr);
-
-    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_wind__y_component_of_velocity", var_ptr);
-    cfe_bmi_model->set_value(cfe_bmi_model, "land_surface_wind__y_component_of_velocity", var_ptr);
-    */
 
 }
 
@@ -80,12 +51,6 @@ void pass_forcing_from_aorc_to_pet(Bmi *pet_bmi_model, Bmi *aorc_bmi_model){
         TODO: Get variable names through BMI, then loop through those
               so we don't re-write the get/set functions over and over
     ********************************************************************/
-
-    //Delete me
-    pet_model *pet2;
-    pet2 = (pet_model *) pet_bmi_model->data;
-    aorc_model *aorc2;
-    aorc2 = (aorc_model *) aorc_bmi_model->data;
 
     double var1_val;
     double *var1_ptr = &var1_val;
@@ -204,6 +169,9 @@ int
     5. Update the CFE model.
   ************************************************************************/
 
+  /************************************************************************
+    Now loop through time and call the models with the intermediate get/set
+  ************************************************************************/
   printf("looping through and calling update\n");
 
   if (cfe1->verbosity > 0)
@@ -250,6 +218,12 @@ int
 
   }
 
+  // Run the Mass Balance check
+  mass_balance_check(cfe1);
+
+  /************************************************************************
+    Finalize the CFE, PET and AORC bmi models
+  ************************************************************************/
   printf("Finalizing models\n");
   cfe_bmi_model->finalize(cfe_bmi_model);
   aorc_bmi_model->finalize(aorc_bmi_model);

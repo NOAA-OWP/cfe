@@ -23,35 +23,8 @@ void pass_forcing_from_aorc_to_cfe(Bmi *cfe_bmi_model, Bmi *aorc_bmi_model){
     double *var = NULL;
     var = (double*) malloc (sizeof (double)*1);
     
-    //Delete me
-    cfe_state_struct *cfex;
-    cfex = (cfe_state_struct *) cfe_bmi_model->data;
-    aorc_model *aorcx;
-    aorcx = (aorc_model *) aorc_bmi_model->data;
-    
-    printf("\n_________________________________________________________\n");
-    printf("aorc precip %lf\n", aorcx->aorc.precip_kg_per_m2);
-    printf("cfe precip %lf\n", cfex->aorc.precip_kg_per_m2);
     aorc_bmi_model->get_value(aorc_bmi_model, "atmosphere_water__liquid_equivalent_precipitation_rate", &(var[0]));
-    printf("aorc precip %lf\n", aorcx->aorc.precip_kg_per_m2);
-    printf("cfe precip %lf\n", cfex->aorc.precip_kg_per_m2);
     cfe_bmi_model->set_value(cfe_bmi_model, "atmosphere_water__liquid_equivalent_precipitation_rate", &(var[0]));
-    printf("aorc precip %lf\n", aorcx->aorc.precip_kg_per_m2);
-    printf("cfe precip %lf\n", cfex->aorc.precip_kg_per_m2);
-    printf("_________________________________________________________\n");
-
-    /*
-    printf("\n_________________________________________________________\n");
-    printf("aorc temperature %lf\n", aorcx->aorc.air_temperature_2m_K);
-    printf("cfe temperature %lf\n", cfex->aorc.air_temperature_2m_K);
-    aorc_bmi_model->get_value(aorc_bmi_model, "land_surface_air__temperature", &(var[0]));
-    printf("aorc temperature %lf\n", aorcx->aorc.air_temperature_2m_K);
-    printf("cfe temperature %lf\n", cfex->aorc.air_temperature_2m_K);
-    cfe_bmi_model->set_value(cfe_bmi_model, "land_surface_air__temperature", &var[0]);
-    printf("aorc temperature %lf\n", aorcx->aorc.air_temperature_2m_K);
-    printf("cfe temperature %lf\n", cfex->aorc.air_temperature_2m_K);
-    printf("_________________________________________________________\n");
-    */
 
 }
 
@@ -117,23 +90,14 @@ int
     2. Getting forcing from AORC and setting forcing for CFE
     3. Update the CFE model.
   ************************************************************************/
-  aorc_bmi_model->update(aorc_bmi_model);                         // Update model 1
-  pass_forcing_from_aorc_to_cfe(cfe_bmi_model, aorc_bmi_model);   // Get and Set values
-  printf("Updating CFE: \n");
-  cfe_bmi_model->update(cfe_bmi_model);                           //Update model 2
-  printf("cfe_model_data->verbosity: %d\n", cfe_model_data->verbosity);
-  if (cfe_model_data->verbosity > 0){
-    printf("\n");
-    print_cfe_flux_header();
-    print_cfe_flux_at_timestep(cfe_model_data);
-  }
 
   /************************************************************************
     Now loop through time and call the models with the intermediate get/set
   ************************************************************************/
   printf("looping through and calling updata\n");
-  int i;
-  for (i = 1; i < 30; i++){
+  if (cfe_model_data->verbosity > 0)
+    print_cfe_flux_header();
+  for (int i = 0; i < 30; i++){
     
     aorc_bmi_model->update(aorc_bmi_model);                         // Update model 1
   
@@ -150,6 +114,9 @@ int
     if (cfe_model_data->verbosity > 0)
       print_cfe_flux_at_timestep(cfe_model_data);
   }
+
+  // Run the Mass Balance check
+  mass_balance_check(cfe_model_data);
 
   /************************************************************************
     Finalize both the CFE and AORC bmi models
