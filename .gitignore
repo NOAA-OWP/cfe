@@ -18,6 +18,7 @@ run_cfe_aorc_et_bmi
 
 # MODEL OUTPUT FILES #
 ######################
+*.out
 original_author_code/test.out
 original_author_code/test*.out
 original_author_code/debug.out
