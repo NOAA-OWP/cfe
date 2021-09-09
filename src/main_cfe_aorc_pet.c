@@ -177,7 +177,7 @@ int
   if (cfe1->verbosity > 0)
     print_cfe_flux_header();
 
-  for (int i = 0; i < 30; i++){
+  for (int i = 0; i < 720; i++){
 
 
     aorc_bmi_model->update(aorc_bmi_model);                         // Update model 1
