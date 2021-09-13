@@ -302,7 +302,8 @@ def generate_giuh_per_basin(namestr,catchments, time_to_stream_raster, soil_para
                     
                     f.write("%s" %("forcing_file=BMI\n"))
                     f.write("%s" %("soil_params.depth=2.0\n"))
-                    f.write("%s" %("soil_params.b="+str(soil_params.loc[cat]['bexp_soil_layers_stag=1_Time=1'])+"\n"))                    
+                    f.write("%s" %("soil_params.b="+str(soil_params.loc[cat]['bexp_soil_layers_stag=1_Time=1'])+"\n"))
+                    # TODO: This parameter (LKSATFAC) needs to be added when the file Fulldom_CONUS_FullRouting.csv is added to the hydrofabrics                                   
                     f.write("%s" %("soil_params.mult=1000.0\n"))
                     f.write("%s" %("soil_params.satdk="+str(soil_params.loc[cat]['dksat_soil_layers_stag=1_Time=1'])+"\n"))
                     f.write("%s" %("soil_params.satpsi="+str(soil_params.loc[cat]['psisat_soil_layers_stag=1_Time=1'])+"\n"))
