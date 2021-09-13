@@ -1073,6 +1073,13 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
     /***********************************************************/
     /***********    OUTPUT   ***********************************/
     /***********************************************************/
+    if (strcmp (name, "RAIN_RATE") == 0) {   //jmframe: Seems unnecessary to have rain rate as an output variable.
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->aorc.precip_kg_per_m2;
+        return BMI_SUCCESS;
+    }
+
     if (strcmp (name, "SCHAAKE_OUTPUT_RUNOFF") == 0) {
         *dest = (void*) ((cfe_state_struct *)(self->data))->flux_Schaake_output_runoff_m;
         return BMI_SUCCESS;
