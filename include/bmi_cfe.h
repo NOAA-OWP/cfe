@@ -102,7 +102,7 @@ struct cfe_state_struct {
     double* runoff_queue_m_per_timestep;
 
     // These are likely only single values, but should be allocated as pointers so the pointer can be returned
-    double* flux_overland_m;
+//    double* flux_overland_m;   NOT NEEDED, redundant with flux_Schaake_output_runoff_m
     double* flux_Schaake_output_runoff_m;
     double* flux_giuh_runoff_m;
     double* flux_nash_lateral_runoff_m;

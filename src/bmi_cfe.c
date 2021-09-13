@@ -618,7 +618,7 @@ static int Initialize (Bmi *self, const char *file)
        JMFRAME: Moved these up before the read forcing line,
                 Since we need them even if we don't read forcings from file.
     ************************************************************************/
-    cfe_bmi_data_ptr->flux_overland_m = malloc(sizeof(double));
+//    cfe_bmi_data_ptr->flux_overland_m = malloc(sizeof(double));    //NOT NEEDED, redundant with flux_Schaake_output_runoff_m
     cfe_bmi_data_ptr->flux_Schaake_output_runoff_m = malloc(sizeof(double));
     cfe_bmi_data_ptr->flux_Qout_m = malloc(sizeof(double));
     cfe_bmi_data_ptr->flux_from_deep_gw_to_chan_m = malloc(sizeof(double));
@@ -862,8 +862,8 @@ static int Finalize (Bmi *self)
         if( model->runoff_queue_m_per_timestep != NULL )
             free(model->runoff_queue_m_per_timestep);
 
-        if( model->flux_overland_m != NULL )
-            free(model->flux_overland_m);
+ //       if( model->flux_overland_m != NULL )    //NOT NEEDED redundant with flux_Schaake_runoff_m
+ //           free(model->flux_overland_m);
         if( model->flux_Qout_m != NULL )
             free(model->flux_Qout_m);
         if( model->flux_Schaake_output_runoff_m != NULL )
@@ -1519,7 +1519,7 @@ extern void run_cfe(cfe_state_struct* cfe_ptr){
         cfe_ptr->timestep_rainfall_input_m,                      // Set by bmi (set value) or read from file.
         cfe_ptr->flux_Schaake_output_runoff_m,                  // Set by cfe function
         &cfe_ptr->infiltration_depth_m,                          // Set by Schaake partitioning scheme
-        cfe_ptr->flux_overland_m,                               // Set by CFE function, after Schaake
+//        cfe_ptr->flux_overland_m,                               // Set by CFE function, after Schaake  not needed, redundant with flux_Schaake_runoff_m
         &cfe_ptr->vol_struct.vol_sch_runoff,                     // Set by set_volume_trackers_to_zero
         &cfe_ptr->vol_struct.vol_sch_infilt,                     // Set by set_volume_trackers_to_zero
         cfe_ptr->flux_perc_m,                                   // Set to zero in definition.

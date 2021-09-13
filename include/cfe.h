@@ -135,7 +135,7 @@ extern void cfe(
         double timestep_rainfall_input_m,
         double *Schaake_output_runoff_m_ptr,
         double *infiltration_depth_m_ptr,
-        double *flux_overland_m_ptr,
+//        double *flux_overland_m_ptr,  // NOT NEEDED redundant with Schaake_output_runoff_m_fptr
         double *vol_sch_runoff_ptr,
         double *vol_sch_infilt_ptr,
         double *flux_perc_m_ptr,
