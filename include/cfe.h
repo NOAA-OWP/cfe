@@ -96,9 +96,15 @@ double bb;      // beta exponent on Clapp-Hornberger (1978) soil water relations
 double mult;    // the multiplier applied to satdk to route water rapidly downslope
 double slop;   // this factor (0-1) modifies the gradient of the hydraulic head at the soil bottom.  0=no-flow.
 double D;       // soil depth [m]
+double wilting_point_m;
 };
 
-
+struct evapotranspiration_structure {
+    double potential_et_m_per_s;
+    double potential_et_m_per_timestep;
+    double actual_et_m_per_timestep;
+};
+typedef struct evapotranspiration_structure evapotranspiration_structure;
 
 // function prototypes
 // --------------------------------
@@ -106,13 +112,17 @@ extern void Schaake_partitioning_scheme(double dt, double magic_number, double d
                                         double *runsrf, double *pddum);
 
 extern void conceptual_reservoir_flux_calc(struct conceptual_reservoir *da_reservoir,
-                                           double *primary_flux_m,double *secondary_flux_m);
+                                           double *primary_flux_m, double *secondary_flux_m);
 
 extern double convolution_integral(double runoff_m, int num_giuh_ordinates, 
                                    double *giuh_ordinates, double *runoff_queue_m_per_timestep);
                                    
 extern double nash_cascade(double flux_lat_m,int num_lateral_flow_nash_reservoirs,
                            double K_nash,double *nash_storage_arr);
+
+extern void et_from_rainfall(double *timestep_rainfall_input_m, struct evapotranspiration_structure *et_struct);
+
+extern void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspiration_structure *et_struct, struct NWM_soil_parameters *soil_parms);
 
 extern int is_fabs_less_than_epsilon(double a,double epsilon);
 
@@ -125,7 +135,7 @@ extern void cfe(
         double timestep_rainfall_input_m,
         double *Schaake_output_runoff_m_ptr,
         double *infiltration_depth_m_ptr,
-        double *flux_overland_m_ptr,
+//        double *flux_overland_m_ptr,  // NOT NEEDED redundant with Schaake_output_runoff_m_fptr
         double *vol_sch_runoff_ptr,
         double *vol_sch_infilt_ptr,
         double *flux_perc_m_ptr,
@@ -150,6 +160,7 @@ extern void cfe(
         double *nash_storage_arr,
         double *vol_in_nash_ptr,
         double *vol_out_nash_ptr,
+        struct evapotranspiration_structure *evap_struct,
         double *Qout_m_ptr
     );
 

@@ -4,8 +4,6 @@
 #include "../include/bmi.h"
 #include "../include/bmi_cfe.h"
 #include <time.h>
-#define max(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b);  _a > _b ? _a : _b; })
-#define min(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b);  _a < _b ? _a : _b; })
 #ifndef WATER_SPECIFIC_WEIGHT
 #define WATER_SPECIFIC_WEIGHT 9810
 #endif
@@ -620,7 +618,7 @@ static int Initialize (Bmi *self, const char *file)
        JMFRAME: Moved these up before the read forcing line,
                 Since we need them even if we don't read forcings from file.
     ************************************************************************/
-    cfe_bmi_data_ptr->flux_overland_m = malloc(sizeof(double));
+//    cfe_bmi_data_ptr->flux_overland_m = malloc(sizeof(double));    //NOT NEEDED, redundant with flux_Schaake_output_runoff_m
     cfe_bmi_data_ptr->flux_Schaake_output_runoff_m = malloc(sizeof(double));
     cfe_bmi_data_ptr->flux_Qout_m = malloc(sizeof(double));
     cfe_bmi_data_ptr->flux_from_deep_gw_to_chan_m = malloc(sizeof(double));
@@ -746,16 +744,21 @@ static int Update (Bmi *self)
 //    }
             
     cfe_state_struct* cfe_ptr = ((cfe_state_struct *) self->data);
+
+    // Two modes to get forcing data... 1) read from file, 2) pass with bmi    
+    if (cfe_ptr->is_forcing_from_bmi)
+      // BMI sets the precipitation to the aorc structure.
+      cfe_ptr->timestep_rainfall_input_m = cfe_ptr->aorc.precip_kg_per_m2;
+    else
+      // Set the current rainfall input to the right place in the forcing array.
+      cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step];
     
     cfe_ptr->vol_struct.volin += cfe_ptr->timestep_rainfall_input_m;
-
+    // Delete me...    printf("_______PRECIP IN  CFE UPDATE FUNCTION________: %lf\n", cfe_ptr->aorc.precip_kg_per_m2);
     run_cfe(cfe_ptr);
 
     // Advance the model time 
     cfe_ptr->current_time_step += 1;
-
-    // Set the current rainfall input to the right place in the forcing.
-    cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step];
 
     return BMI_SUCCESS;
 }
@@ -859,8 +862,8 @@ static int Finalize (Bmi *self)
         if( model->runoff_queue_m_per_timestep != NULL )
             free(model->runoff_queue_m_per_timestep);
 
-        if( model->flux_overland_m != NULL )
-            free(model->flux_overland_m);
+ //       if( model->flux_overland_m != NULL )    //NOT NEEDED redundant with flux_Schaake_runoff_m
+ //           free(model->flux_overland_m);
         if( model->flux_Qout_m != NULL )
             free(model->flux_Qout_m);
         if( model->flux_Schaake_output_runoff_m != NULL )
@@ -1070,6 +1073,13 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
     /***********************************************************/
     /***********    OUTPUT   ***********************************/
     /***********************************************************/
+    if (strcmp (name, "RAIN_RATE") == 0) {   //jmframe: Seems unnecessary to have rain rate as an output variable.
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->aorc.precip_kg_per_m2;
+        return BMI_SUCCESS;
+    }
+
     if (strcmp (name, "SCHAAKE_OUTPUT_RUNOFF") == 0) {
         *dest = (void*) ((cfe_state_struct *)(self->data))->flux_Schaake_output_runoff_m;
         return BMI_SUCCESS;
@@ -1192,6 +1202,16 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
 
 static int Set_value (Bmi *self, const char *name, void *array)
 {
+    // Avoid using set value, call instead set_value_at_index
+    // Use nested call to "by index" version
+
+    // Here, for now at least, we know all the variables are scalar, so
+    int inds[] = {0};
+
+    // Then we can just ...
+    return Set_value_at_indices(self, name, inds, 1, array);
+
+/*  This is the sample code from read the docs
     void * dest = NULL;
     int nbytes = 0;
 
@@ -1204,17 +1224,7 @@ static int Set_value (Bmi *self, const char *name, void *array)
     memcpy (dest, array, nbytes);
 
     return BMI_SUCCESS;
-    
-// jmframe: This is what was in this function within the framework as of May 4th 
-/*
-    // Use nested call to "by index" version
-
-    // Here, for now at least, we know all the variables are scalar, so
-    int inds[] = {0};
-
-    // Then we can just ...
-    return Set_value_at_indices(self, name, inds, 1, array);
-*/
+*/    
 }
 
 
@@ -1516,7 +1526,7 @@ extern void run_cfe(cfe_state_struct* cfe_ptr){
         cfe_ptr->timestep_rainfall_input_m,                      // Set by bmi (set value) or read from file.
         cfe_ptr->flux_Schaake_output_runoff_m,                  // Set by cfe function
         &cfe_ptr->infiltration_depth_m,                          // Set by Schaake partitioning scheme
-        cfe_ptr->flux_overland_m,                               // Set by CFE function, after Schaake
+//        cfe_ptr->flux_overland_m,                               // Set by CFE function, after Schaake  not needed, redundant with flux_Schaake_runoff_m
         &cfe_ptr->vol_struct.vol_sch_runoff,                     // Set by set_volume_trackers_to_zero
         &cfe_ptr->vol_struct.vol_sch_infilt,                     // Set by set_volume_trackers_to_zero
         cfe_ptr->flux_perc_m,                                   // Set to zero in definition.
@@ -1541,6 +1551,7 @@ extern void run_cfe(cfe_state_struct* cfe_ptr){
         cfe_ptr->nash_storage,                              // Set from config file
         &cfe_ptr->vol_struct.vol_in_nash,                        // Set by set_volume_trackers_to_zero
         &cfe_ptr->vol_struct.vol_out_nash,                       // Set by set_volume_trackers_to_zero
+        &cfe_ptr->et_struct,                                    // Set to zero with initalize. Set by BMI (set_value) during run
         cfe_ptr->flux_Qout_m                                    // Set by CFE function
     );
 }
@@ -1566,6 +1577,9 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, doub
     double upper_lim = pow(Omega + cfe_ptr->NWM_soil_params.D, 
                                        (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb)) /
                        (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb);
+
+    // JMFRAME adding this, not sure if is correct. Ask FRED OGDEN
+    cfe_ptr->NWM_soil_params.wilting_point_m = cfe_ptr->NWM_soil_params.wltsmc * cfe_ptr->NWM_soil_params.D;
 
     // soil conceptual reservoir first, two outlets, two thresholds, linear (exponent=1.0).
     cfe_ptr->soil_reservoir.is_exponential = FALSE;  // set this TRUE to use the exponential form of the discharge equation

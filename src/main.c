@@ -38,11 +38,14 @@ int
   printf("looping through and calling update\n");
   if (cfe_main_data->verbosity > 0)
       print_cfe_flux_header();
-  int i=0;
-  for (i = 0; i < 700; i++){
+
+  for (int i = 0; i < 720; i++){
+
     cfe_bmi_model->update(cfe_bmi_model);
+
     if (cfe_main_data->verbosity > 0)
         print_cfe_flux_at_timestep(cfe_main_data);
+
   }
 
   // Run the Mass Balance check

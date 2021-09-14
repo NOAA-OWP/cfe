@@ -1,8 +1,10 @@
 #include "../include/cfe.h"
+#define max(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b);  _a > _b ? _a : _b; })
+#define min(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b);  _a < _b ? _a : _b; })
 
 // CFE STATE SPACE FUNCTION // #######################################################################
-// CFE STATE SPACE FUNCTION // #######################################################################
-// CFE STATE SPACE FUNCTION // #######################################################################
+// Adapted version of Conceptual Functional Equivalent model re-written in state-space form July, 2021
+//####################################################################################################
 extern void cfe(
         double *soil_reservoir_storage_deficit_m_ptr,
         struct NWM_soil_parameters NWM_soil_params_struct,
@@ -12,7 +14,7 @@ extern void cfe(
         double timestep_rainfall_input_m,
         double *Schaake_output_runoff_m_ptr,
         double *infiltration_depth_m_ptr,
-        double *flux_overland_m_ptr,
+     //   double *flux_overland_m_ptr,   FIXME NOT NEEDED, redundant with Schaake_outout_runoff_m_ptr
         double *vol_sch_runoff_ptr,
         double *vol_sch_infilt_ptr,
         double *flux_perc_m_ptr,
@@ -37,40 +39,44 @@ extern void cfe(
         double *nash_storage_arr,
         double *vol_in_nash_ptr,
         double *vol_out_nash_ptr,
+        struct evapotranspiration_structure *evap_struct,
         double *Qout_m_ptr
     ){                      // #######################################################################
 // CFE STATE SPACE FUNCTION // #######################################################################
 
-    // ####    COPY THE MODEL FUNCTION STATE SPACE    ####
-    double soil_reservoir_storage_deficit_m = *soil_reservoir_storage_deficit_m_ptr;
-    double Schaake_output_runoff_m          = *Schaake_output_runoff_m_ptr;
-    double infiltration_depth_m             = *infiltration_depth_m_ptr;
-    double flux_overland_m                  = *flux_overland_m_ptr;
-    double vol_sch_runoff                   = *vol_sch_runoff_ptr;
-    double vol_sch_infilt                   = *vol_sch_infilt_ptr;
-    double flux_perc_m                      = *flux_perc_m_ptr;
-    double vol_to_soil                      = *vol_to_soil_ptr;
-    double flux_lat_m                       = *flux_lat_m_ptr;
-    double gw_reservoir_storage_deficit_m   = *gw_reservoir_storage_deficit_m_ptr;
-    double vol_to_gw                        = *vol_to_gw_ptr;
-    double vol_soil_to_gw                   = *vol_soil_to_gw_ptr;
-    double vol_soil_to_lat_flow             = *vol_soil_to_lat_flow_ptr;
-    double volout                           = *volout_ptr;
-    double flux_from_deep_gw_to_chan_m      = *flux_from_deep_gw_to_chan_m_ptr;
-    double vol_from_gw                      = *vol_from_gw_ptr;
-    double giuh_runoff_m                    = *giuh_runoff_m_ptr;
-    double vol_out_giuh                     = *vol_out_giuh_ptr;
-    double nash_lateral_runoff_m            = *nash_lateral_runoff_m_ptr;
-    double vol_in_nash                      = *vol_in_nash_ptr;
-    double vol_out_nash                     = *vol_out_nash_ptr;
-    double Qout_m                           = *Qout_m_ptr;
+// ####    COPY THE MODEL FUNCTION STATE SPACE TO LOCAL VARIABLES    ####
+// ####    Reason: so we don't have to re-write domain science code to de-reference a whole bunch of pointers
+// ####        Note: all of thes variables are storages in [m] or fluxes in [m/timestep]    
+    double soil_reservoir_storage_deficit_m = *soil_reservoir_storage_deficit_m_ptr;   // storage [m]
+    double Schaake_output_runoff_m          = *Schaake_output_runoff_m_ptr;            // Schaake partitioned runoff this timestep [m]
+    double infiltration_depth_m             = *infiltration_depth_m_ptr;               // Schaake partitioned infiltration this timestep [m]
+ //   double flux_overland_m                  = *flux_overland_m_ptr;       FIXME NOT NEEDED, redundant with Schaake_output_runoff_m
+    double flux_perc_m                      = *flux_perc_m_ptr;                        // water moved from soil reservoir to gw reservoir this timestep [m]
+    double flux_lat_m                       = *flux_lat_m_ptr;                         // water moved from soil reservoir to lateral flow Nash cascad this timestep [m]
+    double gw_reservoir_storage_deficit_m   = *gw_reservoir_storage_deficit_m_ptr;     // deficit in gw reservoir storage [m]
+    double flux_from_deep_gw_to_chan_m      = *flux_from_deep_gw_to_chan_m_ptr;        // water moved from gw reservoir to catchment outlet nexus this timestep [m]
+    double giuh_runoff_m                    = *giuh_runoff_m_ptr;                      // water leaving GIUH to outlet this timestep [m]
+    double nash_lateral_runoff_m            = *nash_lateral_runoff_m_ptr;              // water leaving lateral subsurface flow Nash cascade this timestep [m]
+    double Qout_m                           = *Qout_m_ptr;                             // the total runoff this timestep (GIUH+Nash+GW) [m]
+    double vol_sch_runoff                   = *vol_sch_runoff_ptr;         // mass balance change in storage [m] this timestep or flux [m/timestep]
+    double vol_sch_infilt                   = *vol_sch_infilt_ptr;         // mass balance change in storage [m] this timestep or flux [m/timestep]
+    double vol_to_soil                      = *vol_to_soil_ptr;            // mass balance change in storage [m] this timestep or flux [m/timestep]
+    double vol_to_gw                        = *vol_to_gw_ptr;              // mass balance change in storage [m] this timestep or flux [m/timestep]
+    double vol_soil_to_gw                   = *vol_soil_to_gw_ptr;         // mass balance change in storage [m] this timestep or flux [m/timestep]
+    double vol_soil_to_lat_flow             = *vol_soil_to_lat_flow_ptr;   // mass balance change in storage [m] this timestep or flux [m/timestep]
+    double vol_from_gw                      = *vol_from_gw_ptr;            // mass balance change in storage [m] this timestep or flux [m/timestep]
+    double vol_out_giuh                     = *vol_out_giuh_ptr;           // mass balance change in storage [m] this timestep or flux [m/timestep]
+    double vol_in_nash                      = *vol_in_nash_ptr;            // mass balance change in storage [m] this timestep or flux [m/timestep]
+    double vol_out_nash                     = *vol_out_nash_ptr;           // mass balance change in storage [m] this timestep or flux [m/timestep]
+    double volout                           = *volout_ptr;                 // mass balance change in storage [m] this timestep or flux [m/timestep]  
 
-    // LOCAL PARAMETERS
-    double diff=0;
-    double primary_flux=0;
-    double secondary_flux=0;
-    double lateral_flux=0;      // flux from soil to lateral flow Nash cascade +to cascade
-    double percolation_flux=0;  // flux from soil to gw nonlinear researvoir, +downward
+    // LOCAL VARIABLES, the values of which are not important to describe the model state.  They are like notes on scrap paper.
+ 
+    double diff=0.0;
+    double primary_flux=0.0;      // pointers to these variables passed to conceptual nonlinear reservoir which has two outlets, primary & secondary
+    double secondary_flux=0.0;    // pointers to these variables passed to conceptual nonlinear reservoir which has two outlets, primary & secondary
+    double lateral_flux=0.0;      // flux from soil to lateral flow Nash cascade +to cascade  [m/timestep]
+    double percolation_flux=0.0;  // flux from soil to gw nonlinear researvoir, +downward  [m/timestep]
 
   //##################################################
   // partition rainfall using Schaake function
@@ -78,14 +84,22 @@ extern void cfe(
 
   soil_reservoir_storage_deficit_m=(NWM_soil_params_struct.smcmax*NWM_soil_params_struct.D-soil_reservoir_struct->storage_m);
   
-  Schaake_partitioning_scheme(timestep_h,Schaake_adjusted_magic_constant_by_soil_type,soil_reservoir_storage_deficit_m,
+  if(timestep_rainfall_input_m >0.0) // Call Schaake function only if rainfall input this time step is nonzero.
+    {
+    Schaake_partitioning_scheme(timestep_h,Schaake_adjusted_magic_constant_by_soil_type,soil_reservoir_storage_deficit_m,
                               timestep_rainfall_input_m,&Schaake_output_runoff_m,&infiltration_depth_m);
+    }
+  else // No need to call the Schaake function.
+    {
+    Schaake_output_runoff_m=0.0;
+    infiltration_depth_m=0.0;
+    }
   
   // check to make sure that there is storage available in soil to hold the water that does not runoff
   //--------------------------------------------------------------------------------------------------
   if(soil_reservoir_storage_deficit_m<infiltration_depth_m)
     {
-    Schaake_output_runoff_m+=(infiltration_depth_m-soil_reservoir_storage_deficit_m);  // put won't fit back into runoff
+    Schaake_output_runoff_m+=(infiltration_depth_m-soil_reservoir_storage_deficit_m);  // put infiltration that won't fit back into runoff
     infiltration_depth_m=soil_reservoir_storage_deficit_m;
     soil_reservoir_struct->storage_m=soil_reservoir_struct->storage_max_m;
     }
@@ -95,9 +109,7 @@ extern void cfe(
                                  timestep_rainfall_input_m-Schaake_output_runoff_m-infiltration_depth_m);
 #endif
 
-  flux_overland_m=Schaake_output_runoff_m;
-
-  vol_sch_runoff   += flux_overland_m;
+  vol_sch_runoff   += Schaake_output_runoff_m;
   vol_sch_infilt   += infiltration_depth_m;
   
   // put infiltration flux into soil conceptual reservoir.  If not enough room
@@ -111,7 +123,7 @@ extern void cfe(
     infiltration_depth_m=soil_reservoir_storage_deficit_m;  
     vol_sch_runoff+=diff;  // send excess water back to GIUH runoff
     vol_sch_infilt-=diff;  // correct overprediction of infilt.
-    flux_overland_m+=diff; // bug found by Nels.  This was missing and fixes it.
+    Schaake_output_runoff_m+=diff; // bug found by Nels.  This was missing and fixes it.
     }
 
   vol_to_soil              += infiltration_depth_m; 
@@ -167,7 +179,7 @@ extern void cfe(
   // Solve the convolution integral ffor this time step 
 
   giuh_runoff_m = convolution_integral(Schaake_output_runoff_m,num_giuh_ordinates,
-                                              giuh_ordinates_arr,runoff_queue_m_per_timestep_arr);
+                                       giuh_ordinates_arr,runoff_queue_m_per_timestep_arr);
   vol_out_giuh+=giuh_runoff_m;
 
   volout+=giuh_runoff_m;
@@ -185,11 +197,11 @@ extern void cfe(
 
   Qout_m = giuh_runoff_m + nash_lateral_runoff_m + flux_from_deep_gw_to_chan_m;
     
-    // #### COPY BACK FUNCTION VALUES    ####    
+    // #### COPY BACK STATE VALUES BY POINTER REFERENCE SO VISIBLE TO FRAMEWORK    ####    
     *soil_reservoir_storage_deficit_m_ptr = soil_reservoir_storage_deficit_m;
     *Schaake_output_runoff_m_ptr          = Schaake_output_runoff_m;
     *infiltration_depth_m_ptr             = infiltration_depth_m;
-    *flux_overland_m_ptr                  = flux_overland_m;
+//    *flux_overland_m_ptr                  = Schaake_output_runoff_m;   NOT NEEDED, They are the same thing.
     *vol_sch_runoff_ptr                   = vol_sch_runoff;
     *vol_sch_infilt_ptr                   = vol_sch_infilt;
     *flux_perc_m_ptr                      = flux_perc_m;
@@ -432,6 +444,69 @@ else
   *infiltration_depth_m = 0.0;
   }
 return;
+}
+
+//##############################################################
+//####################   ET FROM RAINFALL   ####################
+//##############################################################
+void et_from_rainfall(double *timestep_rainfall_input_m, struct evapotranspiration_structure *et_struct)
+{
+    /*
+        iff it is raining, take PET from rainfall first.  Wet veg. is efficient evaporator.
+    */
+
+    if (*timestep_rainfall_input_m >0.0){
+
+        if (*timestep_rainfall_input_m > et_struct->potential_et_m_per_timestep){
+    
+            et_struct->actual_et_m_per_timestep = et_struct->potential_et_m_per_timestep;
+            *timestep_rainfall_input_m -= et_struct->actual_et_m_per_timestep;
+        }
+
+        else{
+
+            et_struct->potential_et_m_per_timestep -= *timestep_rainfall_input_m;
+            *timestep_rainfall_input_m = 0.0;
+
+        }
+
+    }
+}
+
+//##############################################################
+//####################   ET FROM SOIL   ########################
+//##############################################################
+void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspiration_structure *et_struct, struct NWM_soil_parameters *soil_parms)
+{
+    /*
+        take AET from soil moisture storage, 
+        using Budyko type function to limit PET if wilting<soilmoist<field_capacity
+    */
+    double Budyko_numerator;
+    double Budyko_denominator;
+    double Budyko;
+    
+    if (et_struct->potential_et_m_per_timestep > 0){
+        
+        if (soil_res->storage_m >= soil_res->storage_threshold_primary_m){
+        
+            et_struct->actual_et_m_per_timestep = min( et_struct->potential_et_m_per_timestep, soil_res->storage_m);
+
+            soil_res->storage_m -= et_struct->actual_et_m_per_timestep;
+
+            et_struct->potential_et_m_per_timestep = 0.0;
+        }                 
+        else if (soil_res->storage_m > soil_parms->wilting_point_m && soil_res->storage_m < soil_res->storage_threshold_primary_m){
+        
+            Budyko_numerator = soil_res->storage_m - soil_parms->wilting_point_m;
+            Budyko_denominator = soil_res->storage_threshold_primary_m - soil_parms->wilting_point_m;
+            Budyko = Budyko_numerator / Budyko_denominator;
+                           
+            et_struct->actual_et_m_per_timestep = Budyko * (et_struct->potential_et_m_per_timestep);
+                           
+            soil_res->storage_m -= et_struct->actual_et_m_per_timestep;
+        }
+    }
 }
 
 extern int is_fabs_less_than_epsilon(double a,double epsilon)  // returns true if fabs(a)<epsilon
