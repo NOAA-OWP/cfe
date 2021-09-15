@@ -10,7 +10,14 @@ extern void cfe(
         struct NWM_soil_parameters NWM_soil_params_struct,
         struct conceptual_reservoir *soil_reservoir_struct,
         double timestep_h,
-        double Schaake_adjusted_magic_constant_by_soil_type,
+
+        /* JMFRAME COMMENT: since we are doing the option for Schaake and XinJiang, 
+                            instead of passing in the constants
+                            pass in a structure with the constants for both subroutines.
+        *//////////////////////////////////////////////////////////////////////////////
+        //double Schaake_adjusted_magic_constant_by_soil_type,
+        struct direct_runoff_parameters direct_runoff_param_struct,
+
         double timestep_rainfall_input_m,
         double *Schaake_output_runoff_m_ptr,
         double *infiltration_depth_m_ptr,
@@ -86,8 +93,30 @@ extern void cfe(
   
   if(timestep_rainfall_input_m >0.0) // Call Schaake function only if rainfall input this time step is nonzero.
     {
-    Schaake_partitioning_scheme(timestep_h,Schaake_adjusted_magic_constant_by_soil_type,soil_reservoir_storage_deficit_m,
-                              timestep_rainfall_input_m,&Schaake_output_runoff_m,&infiltration_depth_m);
+
+//    Schaake_partitioning_scheme(timestep_h,Schaake_adjusted_magic_constant_by_soil_type,soil_reservoir_storage_deficit_m,
+//                              timestep_rainfall_input_m,&Schaake_output_runoff_m,&infiltration_depth_m);
+
+
+
+    if(model->direct_runoff_method == 1){
+        Schaake_partitioning_scheme(timestep_h, direct_runoff_param_struct.Schaake_adjusted_magic_constant_by_soil_type,
+                                soil_reservoir_storage_deficit_m, timestep_rainfall_input_m,
+                                &flux_output_direct_runoff_m, &infiltration_depth_m);
+
+    } else if (model->direct_runoff_method == 2) {
+          Xinanjiang_partitioning_scheme(timestep_rainfall_input_m, soil_reservoir_struct.storage_threshold_primary_m,
+                                     soil_reservoir_struct.storage_max_m, soil_reservoir_struct.storage_m,
+                                     direct_runoff_param_struct, 
+                                     &flux_output_direct_runoff_m, &infiltration_depth_m);
+
+    } else {
+      printf(" 'direct_runoff_method' out of range");
+    }
+
+
+
+
     }
   else // No need to call the Schaake function.
     {
