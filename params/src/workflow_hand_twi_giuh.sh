@@ -141,7 +141,16 @@ for val in  ${HUC[@]}; do
 	else
 		mpiexec -np $nproc  areadinf -ang ${Outdir}${file_name}ang.tif -sca ${Outdir}${file_name}sca.tif 
 	fi
-	
+
+	if test -f ${Outdir}${file_name}hf.tif; then
+		echo "catchments_wgs84.geojson exists"
+	else
+	 	echo "rasterize flow line"
+		
+		gdal_translate -scale 0 40000000000000 0 0 ${Outdir}${file_name}fel.tif ${Outdir}${file_name}hf.tif	
+		gdal_rasterize -b 1 -burn 1  ${Dir}${hydrofabrics_directory}flowpaths_wgs84.json ${Outdir}${file_name}hf.tif			
+	fi
+		
 	if [[ $Variable == *"TWI"* ]]; then
 
 		#-----------------------------------------------
@@ -173,14 +182,7 @@ for val in  ${HUC[@]}; do
 			
 		fi
 		
-		if test -f ${Outdir}${file_name}hf.tif; then
-			echo "catchments_wgs84.geojson exists"
-		else
-		 	echo "rasterize flow line"
-			
-			gdal_translate -scale 0 40000000000000 0 0 ${Outdir}${file_name}fel.tif ${Outdir}${file_name}hf.tif	
-			gdal_rasterize -b 1 -burn 1  ${Dir}${hydrofabrics_directory}flowpaths_wgs84.json ${Outdir}${file_name}hf.tif			
-		fi
+
 
 	fi
 	
