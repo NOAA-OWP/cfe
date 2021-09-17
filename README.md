@@ -7,6 +7,18 @@ There are actually multiple ways to run the CFE.
 2. With the CFE as a state space model using the `cfe_driver.c` to read the forcings and loop through the model time. Use `make_and_run_driver.sh` which compile the code, runs and produces an output file: `test.out`.
 3. Through the BMI commands. This method will be used by the Next Generation U.S. National Water Model (Nextgen NWM). The `make_and_run_bmi.sh` script in the main directory does that for you through a main run file in the `./src` directory.
 
+# Running with BMI requires a configuration file
+There are several parameters in CFE (e.g., number of nash buckets, hydraulic conductivity, etc.) and a few options for routines such as direct runoff. These are all set in the configuration file when using BMI. They are hard coded into the driver file when not using BMI. The configuration files live in the `configs` directory.
+## Direct runoff 
+The user has the option to pick a particular direct runoff method:
+1. Schaake function (configuration: `direct_runoff_method=1`)
+2. XinanJiang function (configuration: `direct_runoff_method=2`). When using this runoff method the user must also include three parameters.
+### If XinanJiang is choosen these parameters need to be included in the configuration file:
+1. a_Xinanjiang_inflection_point_parameter
+2. b_Xinanjiang_shape_parameter
+3. x_Xinanjiang_shape_parameter  
+
+
 # Compiling this code to run examples with a "pseudo" or "mini" BMI framework.
 ## Read local forcing file
 The BMI functionality was developed as a standalone module in C. To compile this code the developer used these steps:
