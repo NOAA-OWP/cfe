@@ -310,7 +310,7 @@ def generate_giuh_per_basin(namestr,catchments, time_to_stream_raster, soil_para
                     f.write("%s" %("soil_params.slop="+str(soil_params.loc[cat]['slope_Time=1'])+"\n"))
                     f.write("%s" %("soil_params.smcmax="+str(soil_params.loc[cat]['smcmax_soil_layers_stag=1_Time=1'])+"\n"))
                     f.write("%s" %("soil_params.wltsmc="+str(soil_params.loc[cat]['smcwlt_soil_layers_stag=1_Time=1'])+"\n"))
-                    f.write("%s" %("refkdt"+str(soil_params.loc[cat]['refkdt_Time=1'])+"\n"))
+                    f.write("%s" %("refkdt="+str(soil_params.loc[cat]['refkdt_Time=1'])+"\n"))
                     f.write("%s" %("max_gw_storage="+str(GW_params.loc[cat]['Zmax'])+"\n"))
                    
                     f.write("%s" %("Cgw="+str(GW_params.loc[cat]['Coeff'])+"\n"))
@@ -319,6 +319,7 @@ def generate_giuh_per_basin(namestr,catchments, time_to_stream_raster, soil_para
                     f.write("%s" %("alpha_fc=0.33\n"))
                     f.write("%s" %("soil_storage=66.7%\n"))
                     f.write("%s" %("K_nash=0.03\n"))
+                    f.write("%s" %("K_lf=0.01\n"))
                     f.write("%s" %("nash_storage=0.0,0.0\n"))
                     giuh="giuh_ordinates="+"{0:.2f}".format((round(CDF['Freq'].iloc[0],4)))
                     for icdf in range(1,len(CDF)):
