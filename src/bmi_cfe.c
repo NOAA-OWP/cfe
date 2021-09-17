@@ -231,6 +231,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     int is_verbosity_set = FALSE;
 
     /* xinanjiang_dev*/
+    int is_direct_runoff_method_set = FALSE;
     int is_a_Xinanjiang_inflection_point_parameter_set = FALSE;
     int is_b_Xinanjiang_shape_parameter_set = FALSE;
     int is_x_Xinanjiang_shape_parameter_set = FALSE;
@@ -1143,7 +1144,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
     if (strcmp (name, "DIRECT_RUNOFF") == 0) {
         *dest = (void*) ((cfe_state_struct *)(self->data))->flux_output_direct_runoff_m;
         return BMI_SUCCESS;
-    }*/
+    }
 
     if (strcmp (name, "GIUH_RUNOFF") == 0) {
         *dest = (void *) ((cfe_state_struct *)(self->data))->flux_giuh_runoff_m;
@@ -1591,7 +1592,7 @@ extern void run_cfe(cfe_state_struct* cfe_ptr){
     /* xinanjiang_dev
         changing the name to the more general "direct runoff"
         cfe_ptr->Schaake_adjusted_magic_constant_by_soil_type,   // Set by config file*/
-        &cfe_ptr->direct_runoff_params_struct,   // Set by config file, includes parameters for Schaake and/or XinanJiang*/
+        cfe_ptr->direct_runoff_params_struct,   // Set by config file, includes parameters for Schaake and/or XinanJiang*/
 
         cfe_ptr->timestep_rainfall_input_m,                      // Set by bmi (set value) or read from file.
 
@@ -1746,7 +1747,7 @@ extern void print_cfe_flux_at_timestep(cfe_state_struct* cfe_ptr){
                            
                            /* xinanjiang_dev
                            *cfe_ptr->flux_Schaake_output_runoff_m*1000.0,*/
-                           *cfe_ptr->flux_Schaake_output_runoff_m*1000.0,
+                           *cfe_ptr->flux_output_direct_runoff_m*1000.0,
 
                            *cfe_ptr->flux_giuh_runoff_m*1000.0,
                            *cfe_ptr->flux_nash_lateral_runoff_m*1000.0, 
@@ -1810,7 +1811,7 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     printf("    infiltration: %8.4lf m\n",cfe_ptr->vol_struct.vol_dir_infilt);
     printf("direct residual: %6.4e m\n",direct_residual);  // should equal 0.0
     if(!is_fabs_less_than_epsilon(direct_residual,1.0e-12))
-                  printf("WARNING: DIRECT RUNOFF PARTITIONING MASS BALANCE CHECK FAILED\n");*/
+                  printf("WARNING: DIRECT RUNOFF PARTITIONING MASS BALANCE CHECK FAILED\n");
     
     /* xinanjiang_dev
     giuh_residual = cfe_ptr->vol_struct.vol_out_giuh - cfe_ptr->vol_struct.vol_sch_runoff - vol_end_giuh;   */
