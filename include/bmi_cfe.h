@@ -32,8 +32,13 @@ struct aorc_forcing_data_cfe
 typedef struct aorc_forcing_data_cfe aorc_forcing_data_cfe;
 
 struct vol_tracking_struct{
+
+    /* xinanjiang_dev
     double vol_sch_runoff;
-    double vol_sch_infilt;
+    double vol_sch_infilt;        */
+    double vol_dir_runoff;
+    double vol_dir_infilt;
+
     double vol_to_soil;
     double vol_to_gw;
     double vol_soil_to_gw;
@@ -69,6 +74,9 @@ struct cfe_state_struct {
     struct evapotranspiration_structure et_struct;
     struct vol_tracking_struct vol_struct;
 
+    /* xinanjiang_dev */
+    struct direct_runoff_parameters_structure direct_runoff_params_struct;
+
     // Epoch-based start time (BMI start time is considered 0.0)
     long epoch_start_time;
     int num_timesteps;
@@ -80,7 +88,9 @@ struct cfe_state_struct {
 
     char* forcing_file;
 
-    double Schaake_adjusted_magic_constant_by_soil_type;
+    /* xinanjiang_dev
+    double Schaake_adjusted_magic_constant_by_soil_type;    */
+
     int num_lateral_flow_nash_reservoirs;
 
     double K_lf;
@@ -104,7 +114,7 @@ struct cfe_state_struct {
     /* xinanjiang_dev
         changing the name to the more general "direct runoff"
     double* flux_Schaake_output_runoff_m;*/
-    double flux_output_direct_runoff_m ;
+    double* flux_output_direct_runoff_m ;
 
     double* flux_giuh_runoff_m;
     double* flux_nash_lateral_runoff_m;

@@ -106,6 +106,7 @@ struct evapotranspiration_structure {
 };
 typedef struct evapotranspiration_structure evapotranspiration_structure;
 
+/* xinanjiang_dev*/
 struct direct_runoff_parameters_structure{
     int method;
     double Schaake_adjusted_magic_constant_by_soil_type;
