@@ -906,14 +906,6 @@ static int Get_adjusted_index_for_variable(const char *name)
 
 static int Get_var_grid(Bmi *self, const char *name, int *grid)
 {
-/* jonathan frame. I am trying to run the CFE BMI outside the framework
- I am just going to comment this out, because I don't want to troubleshoot,
- but the error is:
- warning: assignment makes integer from pointer without a cast [enabled by default]
- ./src/bmi_cfe.c:826:19:   *grid = input_var_grids[i];
-*/
-
-/*
     // Check to see if in output array first
     for (i = 0; i < OUTPUT_VAR_NAME_COUNT; i++) {
         if (strcmp(name, output_var_names[i]) == 0) {
@@ -930,8 +922,7 @@ static int Get_var_grid(Bmi *self, const char *name, int *grid)
     }
     // If we get here, it means the variable name wasn't recognized
     grid[0] = '\0';
-*/
-
+    
     return BMI_FAILURE;
 }
 
