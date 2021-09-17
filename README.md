@@ -4,29 +4,33 @@ This model is designed to be a simplified (conceptual) model of the National Wat
 # CFE was written by Fred Ogden, and this repository includes a Basic Model Interface (BMI) to run the CFE
 There are actually multiple ways to run the CFE.
 1. As written by the original  author. This includes a full program to read and process atmospheric forcing data, print the model output and check for mass balance closure. This code can be run from the `original_author_code` directory.
-2. Through the BMI commands. This method will be used by the Next Generation U.S. National Water Model (Nextgen NWM). The `make_and_run_bmi.sh` script in the main directory does that for you through a main run file in the `./src` directory.
+2. With the CFE as a state space model using the `cfe_driver.c` to read the forcings and loop through the model time. Use `make_and_run_driver.sh` which compile the code, runs and produces an output file: `test.out`.
+3. Through the BMI commands. This method will be used by the Next Generation U.S. National Water Model (Nextgen NWM). The `make_and_run_bmi.sh` script in the main directory does that for you through a main run file in the `./src` directory.
 
-# Compiling this code to run examples with a "pseudo" or "mini" framework.
+# Compiling this code to run examples with a "pseudo" or "mini" BMI framework.
 ## Read local forcing file
 The BMI functionality was developed as a standalone module in C. To compile this code the developer used these steps:
 1. `module load gnu/10.1.0`
-2. `gcc -lm ./src/main.c ./src/cfe.c ./src/bmi_cfe.c -o run_bmi_cfe`
-This should generate an executable called **run_cfe_bmi**. To run this executable you must pass the path to the corresponding configuration file: `./run_bmi_cfe ./configs/cat_58_bmi_config_cfe.txt`  
+2. `gcc -lm ./src/main.c ./src/cfe.c ./src/bmi_cfe.c -o run_cfe_bmi`  
+This should generate an executable called **run_cfe_bmi**. To run this executable you must pass the path to the corresponding configuration file: `./run_cfe_bmi ./configs/cat_58_bmi_config_cfe.txt`  
 Included in this repository is an environment file (env_cheyenne.sh), and a "make and run" file (make_and_run_bmi.sh), which will compile the code and run an example. If you are on the Cheyenne computer, or if you can modify these files to your machine, you can simply follow these two steps to run this code:
 1. `source env_cheyenne.sh`
-2. `./make_and_run_bmi.sh`
+2. `./make_and_run_bmi.sh`  
+To run the CFE model with the XinanJiang direct runoff function, use the following command: `./run_cfe_bmi ./configs/cat_89_bmi_config_cfe_xj.txt`  
 
 ## CFE Model gets forcings passed from BMI
 The CFE was designed to read its own forcing file, but we have added an option to get forcings passed in through BMI. To test this functionality we need to also include the AORC BMI model when compiling. The steps are very similar to the example above, but with just adding two additional src files, which come from the AORC BMI Module in the `forcing_code` directory.  
 1. `module load gnu/10.1.0`
 2. `gcc -lm ./src/main_pass_forcings.c ./src/cfe.c ./src/bmi_cfe.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c  -o run_cfe_bmi_pass_forcings`  
-This should generate an executable called **run_cfe_bmi_pass_forcings**. To run this executable you must pass the path to the corresponding configuration files for **BOTH** CFE and AORC (in that order): `./run_cfe_bmi_pass_forcings ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt`
+This should generate an executable called **run_cfe_bmi_pass_forcings**. To run this executable you must pass the path to the corresponding configuration files for **BOTH** CFE and AORC (in that order): `./run_cfe_bmi_pass_forcings ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt`  
+To run the CFE model with the XinanJiang direct runoff function, use the following command: `./run_cfe_bmi_pass_forcings ./configs/cat_89_bmi_config_cfe_pass_xj.txt ./configs/cat_89_bmi_config_aorc.txt`  
 
 ## CFE Model gets forcings AND Potential Evapotranspiration passed from BMI
 The CFE has functionality to remove mass through evapotranspiration (directly from precipitation and from soil using the Bydukko function). The steps to test this functionality are very similar to the example above, but with just adding two additional src files, which come from the AORC BMI Module in the `forcing_code` directory.  
 1. `module load gnu/10.1.0`
 2. `gcc -lm ./src/main_cfe_aorc_pet.c ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c ./src/cfe.c ./src/bmi_cfe.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c -o run_cfe_aorc_et_bmi`  
 This should generate an executable called **run_cfe_bmi_pass_forcings**. To run this executable you must pass the path to the corresponding configuration files for **ALL** CFE, PET and AORC (in that order): `./run_cfe_aorc_et_bmi ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt ./configs/cat_89_bmi_config_pet_pass.txt`
+To run the CFE model with the XinanJiang direct runoff function, use the following command: `./run_cfe_bmi_pass_forcings ./configs/cat_89_bmi_config_cfe_pass_xj.txt ./configs/cat_89_bmi_config_aorc.txt  ./configs/cat_89_bmi_config_pet_pass.txt`
 
 # Run CFE BMI in stand alone, independent of a framework
 make clean  
