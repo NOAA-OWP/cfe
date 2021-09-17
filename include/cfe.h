@@ -106,10 +106,29 @@ struct evapotranspiration_structure {
 };
 typedef struct evapotranspiration_structure evapotranspiration_structure;
 
+struct direct_runoff_parameters_structure{
+    int method;
+    double Schaake_adjusted_magic_constant_by_soil_type;
+    double a_Xinanjiang_inflection_point_parameter;
+    double b_Xinanjiang_shape_parameter;
+    double x_Xinanjiang_shape_parameter;
+};
+typedef struct direct_runoff_parameters_structure direct_runoff_parameters_structure;
+
 // function prototypes
 // --------------------------------
 extern void Schaake_partitioning_scheme(double dt, double magic_number, double deficit, double qinsur,
                                         double *runsrf, double *pddum);
+
+// xinanjiang_dev: XinJiang function written by Rachel adapted by Jmframe, 
+extern void Xinanjiang_partitioning_scheme(double qinsur, double smcref, double smcmax, double smc, 
+                                           struct direct_runoff_parameters_structure *parms,
+                                           double *runsrf, double *pddum);
+
+// xinanjiang_dev: A seperate function to run through the logic for calling the particular runoff
+/*void direct_runoff(double timestep_h, struct direct_runoff_parameters_structure *parms,
+                                    double soil_reservoir_storage_deficit_m, double timestep_rainfall_input_m,
+                                    double *flux_output_direct_runoff_m, double *infiltration_depth_m){*/
 
 extern void conceptual_reservoir_flux_calc(struct conceptual_reservoir *da_reservoir,
                                            double *primary_flux_m, double *secondary_flux_m);
@@ -131,13 +150,27 @@ extern void cfe(
         struct NWM_soil_parameters NWM_soil_params_struct,
         struct conceptual_reservoir *soil_reservoir_struct,
         double timestep_h,
-        double Schaake_adjusted_magic_constant_by_soil_type,
+        
+        /* xinanjiang_dev: since we are doing the option for Schaake and XinJiang, 
+                           instead of passing in the constants
+                           pass in a structure with the constants for both subroutines.
+        //double Schaake_adjusted_magic_constant_by_soil_type,*/
+        struct direct_runoff_parameters_structure direct_runoff_param_struct,
+
         double timestep_rainfall_input_m,
-        double *Schaake_output_runoff_m_ptr,
+
+        /* xinanjiang_dev:
+        double *Schaake_output_runoff_m_ptr,*/
+        double *flux_output_direct_runoff_m,
+
         double *infiltration_depth_m_ptr,
-//        double *flux_overland_m_ptr,  // NOT NEEDED redundant with Schaake_output_runoff_m_fptr
+
+        /* xinanjiang_dev
         double *vol_sch_runoff_ptr,
-        double *vol_sch_infilt_ptr,
+        double *vol_sch_infilt_ptr,    */
+        double *vol_dir_runoff_ptr,
+        double *vol_dir_infilt_ptr,
+
         double *flux_perc_m_ptr,
         double *vol_to_soil_ptr,
         double *flux_lat_m_ptr,
