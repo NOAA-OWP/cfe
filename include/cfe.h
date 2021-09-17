@@ -126,9 +126,9 @@ extern void Xinanjiang_partitioning_scheme(double qinsur, double smcref, double 
                                            double *runsrf, double *pddum);
 
 // xinanjiang_dev: A seperate function to run through the logic for calling the particular runoff
-void direct_runoff(double timestep_h, struct direct_runoff_parameters_structure *parms,
+/*void direct_runoff(double timestep_h, struct direct_runoff_parameters_structure *parms,
                                     double soil_reservoir_storage_deficit_m, double timestep_rainfall_input_m,
-                                    double *flux_output_direct_runoff_m, double *infiltration_depth_m){
+                                    double *flux_output_direct_runoff_m, double *infiltration_depth_m){*/
 
 extern void conceptual_reservoir_flux_calc(struct conceptual_reservoir *da_reservoir,
                                            double *primary_flux_m, double *secondary_flux_m);
@@ -158,10 +158,19 @@ extern void cfe(
         struct direct_runoff_parameters_structure direct_runoff_param_struct,
 
         double timestep_rainfall_input_m,
-        double *Schaake_output_runoff_m_ptr,
+
+        /* xinanjiang_dev:
+        double *Schaake_output_runoff_m_ptr,*/
+        double *flux_output_direct_runoff_m,
+
         double *infiltration_depth_m_ptr,
+
+        /* xinanjiang_dev
         double *vol_sch_runoff_ptr,
-        double *vol_sch_infilt_ptr,
+        double *vol_sch_infilt_ptr,    */
+        double *vol_dir_runoff_ptr,
+        double *vol_dir_infilt_ptr,
+
         double *flux_perc_m_ptr,
         double *vol_to_soil_ptr,
         double *flux_lat_m_ptr,

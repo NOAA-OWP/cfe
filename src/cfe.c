@@ -15,7 +15,7 @@ extern void cfe(
                            instead of passing in the constants
                            pass in a structure with the constants for both subroutines.
         //double Schaake_adjusted_magic_constant_by_soil_type,*/
-        struct direct_runoff_parameters direct_runoff_param_struct,
+        struct direct_runoff_parameters_structure direct_runoff_params_struct,
 
         double timestep_rainfall_input_m,
         
@@ -24,8 +24,13 @@ extern void cfe(
         double *direct_output_runoff_m_ptr,
         
         double *infiltration_depth_m_ptr,
+
+        /* xinanjiang_dev
         double *vol_sch_runoff_ptr,
-        double *vol_sch_infilt_ptr,
+        double *vol_sch_infilt_ptr,   */
+        double *vol_dir_runoff_ptr,
+        double *vol_dir_infilt_ptr,
+        
         double *flux_perc_m_ptr,
         double *vol_to_soil_ptr,
         double *flux_lat_m_ptr,
@@ -70,8 +75,13 @@ extern void cfe(
     double giuh_runoff_m                    = *giuh_runoff_m_ptr;                      // water leaving GIUH to outlet this timestep [m]
     double nash_lateral_runoff_m            = *nash_lateral_runoff_m_ptr;              // water leaving lateral subsurface flow Nash cascade this timestep [m]
     double Qout_m                           = *Qout_m_ptr;                             // the total runoff this timestep (GIUH+Nash+GW) [m]
+    
+    /* xinanjiang_dev
     double vol_sch_runoff                   = *vol_sch_runoff_ptr;         // mass balance change in storage [m] this timestep or flux [m/timestep]
-    double vol_sch_infilt                   = *vol_sch_infilt_ptr;         // mass balance change in storage [m] this timestep or flux [m/timestep]
+    double vol_sch_infilt                   = *vol_sch_infilt_ptr;         // mass balance change in storage [m] this timestep or flux [m/timestep]    */
+    double vol_dir_runoff                   = *vol_dir_runoff_ptr;         // mass balance change in storage [m] this timestep or flux [m/timestep]
+    double vol_dir_infilt                   = *vol_dir_infilt_ptr;         // mass balance change in storage [m] this timestep or flux [m/timestep]
+    
     double vol_to_soil                      = *vol_to_soil_ptr;            // mass balance change in storage [m] this timestep or flux [m/timestep]
     double vol_to_gw                        = *vol_to_gw_ptr;              // mass balance change in storage [m] this timestep or flux [m/timestep]
     double vol_soil_to_gw                   = *vol_soil_to_gw_ptr;         // mass balance change in storage [m] this timestep or flux [m/timestep]
@@ -98,29 +108,64 @@ extern void cfe(
   
  /* xinanjiang_dev: Somewhere we need to add logic to the call the particular runoff method.
                     Since the logic can get kind of long, lets make a subroutine to do it.
- *//////////////////////////////////////////////////////////////////////////////
-//    Schaake_partitioning_scheme(timestep_h,Schaake_adjusted_magic_constant_by_soil_type,soil_reservoir_storage_deficit_m,
-//                              timestep_rainfall_input_m,&Schaake_output_runoff_m,&infiltration_depth_m);
-  direct_runoff(timestep_h, &direct_runoff_parameters_structure,
+    Schaake_partitioning_scheme(timestep_h,Schaake_adjusted_magic_constant_by_soil_type,soil_reservoir_storage_deficit_m,
+                              timestep_rainfall_input_m,&Schaake_output_runoff_m,&infiltration_depth_m);                      */
+  /*direct_runoff(timestep_h, direct_runoff_params_struct,
                 soil_reservoir_storage_deficit_m, timestep_rainfall_input_m,
-                &direct_output_runoff_m, &infiltration_depth_m);
+                *direct_output_runoff_m, *infiltration_depth_m);*/
+  if(timestep_rainfall_input_m >0.0) // Call a runoff function only if rainfall input this time step is nonzero.
+    {
+
+      if(direct_runoff_params_struct.method == 1){
+          Schaake_partitioning_scheme(timestep_h, direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type,
+                                  soil_reservoir_storage_deficit_m, timestep_rainfall_input_m,
+                                  &direct_output_runoff_m, &infiltration_depth_m);
+    
+      } else if (direct_runoff_params_struct.method == 2) {
+            Xinanjiang_partitioning_scheme(timestep_rainfall_input_m, soil_reservoir_struct->storage_threshold_primary_m,
+                                       soil_reservoir_struct->storage_max_m, soil_reservoir_struct->storage_m,
+                                       &direct_runoff_params_struct, 
+                                       &direct_output_runoff_m, &infiltration_depth_m);
+    
+      } else {
+          Schaake_partitioning_scheme(timestep_h, direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type,
+                                  soil_reservoir_storage_deficit_m, timestep_rainfall_input_m,
+                                  &direct_output_runoff_m, &infiltration_depth_m);
+      }
+    }
+  else // No need to call the Schaake function.
+    {
+    
+    /* xinanjiang_dev
+    Schaake_output_runoff_m=0.0;    */
+    direct_output_runoff_m=0.0;
+    
+    infiltration_depth_m=0.0;
+    }
 
   // check to make sure that there is storage available in soil to hold the water that does not runoff
   //--------------------------------------------------------------------------------------------------
   if(soil_reservoir_storage_deficit_m<infiltration_depth_m)
     {
-    Schaake_output_runoff_m+=(infiltration_depth_m-soil_reservoir_storage_deficit_m);  // put infiltration that won't fit back into runoff
+    direct_output_runoff_m+=(infiltration_depth_m-soil_reservoir_storage_deficit_m);  // put infiltration that won't fit back into runoff
     infiltration_depth_m=soil_reservoir_storage_deficit_m;
     soil_reservoir_struct->storage_m=soil_reservoir_struct->storage_max_m;
     }
 #ifdef DEBUG
+  /* xinanjiang_dev
   printf("After Schaake function: rain:%8.5lf mm  runoff:%8.5lf mm  infiltration:%8.5lf mm  residual:%e m\n",
                                  timestep_rainfall_input_m,Schaake_output_runoff_m*1000.0,infiltration_depth_m*1000.0,
-                                 timestep_rainfall_input_m-Schaake_output_runoff_m-infiltration_depth_m);
+                                 timestep_rainfall_input_m-Schaake_output_runoff_m-infiltration_depth_m);                   */
+  printf("After direct runoff function: rain:%8.5lf mm  runoff:%8.5lf mm  infiltration:%8.5lf mm  residual:%e m\n",
+                                 timestep_rainfall_input_m,direct_output_runoff_m*1000.0,infiltration_depth_m*1000.0,
+                                 timestep_rainfall_input_m-direct_output_runoff_m-infiltration_depth_m);
 #endif
 
+  /* xinanjiang_dev
   vol_sch_runoff   += Schaake_output_runoff_m;
-  vol_sch_infilt   += infiltration_depth_m;
+  vol_sch_infilt   += infiltration_depth_m;    */
+  vol_dir_runoff   += direct_output_runoff_m;
+  vol_dir_infilt   += infiltration_depth_m;
   
   // put infiltration flux into soil conceptual reservoir.  If not enough room
   // limit amount transferred to deficit
@@ -131,9 +176,15 @@ extern void cfe(
     {
     diff=flux_perc_m-soil_reservoir_storage_deficit_m;  // the amount that there is not capacity ffor
     infiltration_depth_m=soil_reservoir_storage_deficit_m;  
+
+    /* xinanjiang_dev
     vol_sch_runoff+=diff;  // send excess water back to GIUH runoff
     vol_sch_infilt-=diff;  // correct overprediction of infilt.
-    Schaake_output_runoff_m+=diff; // bug found by Nels.  This was missing and fixes it.
+    Schaake_output_runoff_m+=diff; // bug found by Nels.  This was missing and fixes it. */
+    vol_dir_runoff+=diff;  // send excess water back to GIUH runoff
+    vol_dir_infilt-=diff;  // correct overprediction of infilt.
+    direct_output_runoff_m+=diff; // bug found by Nels.  This was missing and fixes it.
+
     }
 
   vol_to_soil              += infiltration_depth_m; 
@@ -158,8 +209,13 @@ extern void cfe(
     {
     diff=flux_perc_m-gw_reservoir_storage_deficit_m;
     flux_perc_m=gw_reservoir_storage_deficit_m;
+
+    /* xinanjiang_dev
     vol_sch_runoff+=diff;  // send excess water back to GIUH runoff
-    vol_sch_infilt-=diff;  // correct overprediction of infilt.
+    vol_sch_infilt-=diff;  // correct overprediction of infilt.          */
+    vol_dir_runoff+=diff;  // send excess water back to GIUH runoff
+    vol_dir_infilt-=diff;  // correct overprediction of infilt.
+
     }
     
   vol_to_gw                +=flux_perc_m;
@@ -188,7 +244,9 @@ extern void cfe(
   
   // Solve the convolution integral ffor this time step 
 
-  giuh_runoff_m = convolution_integral(Schaake_output_runoff_m,num_giuh_ordinates,
+  /* xinanjiang_dev
+  giuh_runoff_m = convolution_integral(Schaake_output_runoff_m,num_giuh_ordinates,    */
+  giuh_runoff_m = convolution_integral(direct_output_runoff_m,num_giuh_ordinates,
                                        giuh_ordinates_arr,runoff_queue_m_per_timestep_arr);
   vol_out_giuh+=giuh_runoff_m;
 
@@ -209,11 +267,19 @@ extern void cfe(
     
     // #### COPY BACK STATE VALUES BY POINTER REFERENCE SO VISIBLE TO FRAMEWORK    ####    
     *soil_reservoir_storage_deficit_m_ptr = soil_reservoir_storage_deficit_m;
-    *Schaake_output_runoff_m_ptr          = Schaake_output_runoff_m;
+    
+    /* xinanjiang_dev
+    *Schaake_output_runoff_m_ptr          = Schaake_output_runoff_m;    */
+    *direct_output_runoff_m_ptr          = direct_output_runoff_m;
+
     *infiltration_depth_m_ptr             = infiltration_depth_m;
-//    *flux_overland_m_ptr                  = Schaake_output_runoff_m;   NOT NEEDED, They are the same thing.
+
+    /* xinanjiang_dev
     *vol_sch_runoff_ptr                   = vol_sch_runoff;
-    *vol_sch_infilt_ptr                   = vol_sch_infilt;
+    *vol_sch_infilt_ptr                   = vol_sch_infilt;    */
+    *vol_dir_runoff_ptr                   = vol_dir_runoff;
+    *vol_dir_infilt_ptr                   = vol_dir_infilt;
+
     *flux_perc_m_ptr                      = flux_perc_m;
     *vol_to_soil_ptr                      = vol_to_soil;
     *flux_lat_m_ptr                       = flux_lat_m;
@@ -461,40 +527,44 @@ return;
 //##############################################################
 //########   DIRECT RUNOFF LOGICAL FUNCTION   ###########
 //##############################################################
-void direct_runoff(double timestep_h, struct direct_runoff_param_struct *parms,
-                                    double soil_reservoir_storage_deficit_m, double timestep_rainfall_input_m,
-                                    double *flux_output_direct_runoff_m, double *infiltration_depth_m){
-  //------------------------------------------------------------------------
-  //  This function runs through the logic of calling a direct runoff method
-  // So it doesn't have to clutter up the CFE function
-   
-  if(timestep_rainfall_input_m >0.0) // Call a runoff function only if rainfall input this time step is nonzero.
-    {
-
-      if(direct_runoff_param_struct.method == 1){
-          Schaake_partitioning_scheme(timestep_h, direct_runoff_param_struct.Schaake_adjusted_magic_constant_by_soil_type,
-                                  soil_reservoir_storage_deficit_m, timestep_rainfall_input_m,
-                                  &flux_output_direct_runoff_m, &infiltration_depth_m);
-    
-      } else if (direct_runoff_param_struct.method == 2) {
-            Xinanjiang_partitioning_scheme(timestep_rainfall_input_m, soil_reservoir_struct.storage_threshold_primary_m,
-                                       soil_reservoir_struct.storage_max_m, soil_reservoir_struct.storage_m,
-                                       parms, 
-                                       &flux_output_direct_runoff_m, &infiltration_depth_m);
-    
-      } else {
-          Schaake_partitioning_scheme(timestep_h, direct_runoff_param_struct.Schaake_adjusted_magic_constant_by_soil_type,
-                                  soil_reservoir_storage_deficit_m, timestep_rainfall_input_m,
-                                  &flux_output_direct_runoff_m, &infiltration_depth_m);
-      }
-    }
-  else // No need to call the Schaake function.
-    {
-    Schaake_output_runoff_m=0.0;
-    infiltration_depth_m=0.0;
-    }
-
-}
+//void direct_runoff(double timestep_h, struct direct_runoff_params_struct *parms,
+//                                    double soil_reservoir_storage_deficit_m, double timestep_rainfall_input_m,
+//                                    double *flux_output_direct_runoff_m, double *infiltration_depth_m){
+//  //------------------------------------------------------------------------
+//  //  This function runs through the logic of calling a direct runoff method
+//  // So it doesn't have to clutter up the CFE function
+//   
+//  if(timestep_rainfall_input_m >0.0) // Call a runoff function only if rainfall input this time step is nonzero.
+//    {
+//
+//      if(direct_runoff_params_struct.method == 1){
+//          Schaake_partitioning_scheme(timestep_h, direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type,
+//                                  soil_reservoir_storage_deficit_m, timestep_rainfall_input_m,
+//                                  &flux_output_direct_runoff_m, &infiltration_depth_m);
+//    
+//      } else if (direct_runoff_params_struct.method == 2) {
+//            Xinanjiang_partitioning_scheme(timestep_rainfall_input_m, soil_reservoir_struct.storage_threshold_primary_m,
+//                                       soil_reservoir_struct.storage_max_m, soil_reservoir_struct.storage_m,
+//                                       parms, 
+//                                       &flux_output_direct_runoff_m, &infiltration_depth_m);
+//    
+//      } else {
+//          Schaake_partitioning_scheme(timestep_h, direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type,
+//                                  soil_reservoir_storage_deficit_m, timestep_rainfall_input_m,
+//                                  &flux_output_direct_runoff_m, &infiltration_depth_m);
+//      }
+//    }
+//  else // No need to call the Schaake function.
+//    {
+//    
+//    /* xinanjiang_dev
+//    Schaake_output_runoff_m=0.0;    */
+//    flux_output_direct_runoff_m=0.0;
+//    
+//    infiltration_depth_m=0.0;
+//    }
+//
+//}
 
 //##############################################################
 //########   XINANJIANG RUNOFF PARTITIONING SCHEME   ###########
@@ -502,7 +572,7 @@ void direct_runoff(double timestep_h, struct direct_runoff_param_struct *parms,
 
 void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_capacity_m,
                                     double max_soil_moisture_storage_m, double column_total_soil_water_m,
-                                    struct direct_runoff_parameters *parms, 
+                                    struct direct_runoff_parameters_structure *parms, 
                                     double *surface_runoff_depth_m, double *infiltration_depth_m)
 {
   //------------------------------------------------------------------------
@@ -570,22 +640,22 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
     // Calculate total estimated pervious runoff. 
     // NOTE: If the impervious surface runoff due to frozen soils is added,
     // the pervious_runoff_m equation will need to be adjusted by the fraction of pervious area.
-    if ((tension_water_m/max_tension_water_m) <= (0.5 - parms.a_inflection_point_parameter)) {
-      pervious_runoff_m = water_input_depth_m * (pow((0.5 - parms.a_inflection_point_parameter), 
-                                                     (1 - parms.b_shape_parameter)) *
+    if ((tension_water_m/max_tension_water_m) <= (0.5 - parms->a_Xinanjiang_inflection_point_parameter)) {
+      pervious_runoff_m = water_input_depth_m * (pow((0.5 - parms->a_Xinanjiang_inflection_point_parameter), 
+                                                     (1 - parms->b_Xinanjiang_shape_parameter)) *
                                                  pow((1 - (tension_water_m/max_tension_water_m)),
-                                                     parms.b_shape_parameter));
+                                                     parms->b_Xinanjiang_shape_parameter));
 
     } else {
-      pervious_runoff_m = water_input_depth_m * (1 - pow((0.5 + parms.a_inflection_point_parameter), 
-                                                         (1 - parms.b_shape_parameter)) * 
+      pervious_runoff_m = water_input_depth_m * (1 - pow((0.5 + parms->a_Xinanjiang_inflection_point_parameter), 
+                                                         (1 - parms->b_Xinanjiang_shape_parameter)) * 
                                                      pow((1 - (tension_water_m/max_tension_water_m)),
-                                                         (parms.b_shape_parameter)));
+                                                         (parms->b_Xinanjiang_shape_parameter)));
     }
     // Separate the surface water from the pervious runoff 
     // NOTE: If impervious runoff is added to this subroutine, impervious runoff should be added to
     // the surface_runoff_depth_m.
-    *surface_runoff_depth_m = pervious_runoff_m * (1 - pow((1 - (free_water_m/max_free_water_m)),x_shape_parameter));
+    *surface_runoff_depth_m = pervious_runoff_m * (1 - pow((1 - (free_water_m/max_free_water_m)),parms->x_Xinanjiang_shape_parameter));
     // The surface runoff depth is bounded by a minimum of 0 and a maximum of the water input depth.
     // Check that the estimated surface runoff is not less than 0.0 and if so, change the value to 0.0.
     if(*surface_runoff_depth_m < 0.0) *surface_runoff_depth_m = 0.0;

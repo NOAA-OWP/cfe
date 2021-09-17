@@ -1600,8 +1600,14 @@ extern void run_cfe(cfe_state_struct* cfe_ptr){
         cfe_ptr->flux_output_direct_runoff_m,
 
         &cfe_ptr->infiltration_depth_m,                          // Set by Schaake partitioning scheme
+        
+        /* xinanjiang_dev
         &cfe_ptr->vol_struct.vol_sch_runoff,                     // Set by set_volume_trackers_to_zero
-        &cfe_ptr->vol_struct.vol_sch_infilt,                     // Set by set_volume_trackers_to_zero
+        &cfe_ptr->vol_struct.vol_sch_infilt,                     // Set by set_volume_trackers_to_zero      */
+        &cfe_ptr->vol_struct.vol_dir_runoff,                     // Set by set_volume_trackers_to_zero
+        &cfe_ptr->vol_struct.vol_dir_infilt,                     // Set by set_volume_trackers_to_zero      */
+
+
         cfe_ptr->flux_perc_m,                                   // Set to zero in definition.
         &cfe_ptr->vol_struct.vol_to_soil,                        // Set by set_volume_trackers_to_zero
         cfe_ptr->flux_lat_m,                                    // Set by CFE function after soil_resevroir calc
@@ -1699,8 +1705,13 @@ extern double init_reservoir_storage(int is_ratio, double amount, double max_amo
 }
 
 extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr){
+
+/* xinanjiang_dev
     cfe_ptr->vol_struct.vol_sch_runoff = 0;
-    cfe_ptr->vol_struct.vol_sch_infilt = 0;
+    cfe_ptr->vol_struct.vol_sch_infilt = 0;    */
+    cfe_ptr->vol_struct.vol_dir_runoff = 0;
+    cfe_ptr->vol_struct.vol_dir_infilt = 0;
+
     cfe_ptr->vol_struct.vol_to_soil = 0;
     cfe_ptr->vol_struct.vol_to_gw = 0;
     cfe_ptr->vol_struct.vol_soil_to_gw = 0;
@@ -1750,9 +1761,9 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     
     double volend= cfe_ptr->soil_reservoir.storage_m+cfe_ptr->gw_reservoir.storage_m;
     double vol_in_gw_end = cfe_ptr->gw_reservoir.storage_m;
-    double vol_end_giuh;
-    double vol_in_nash_end;
-    double vol_soil_end;
+    double vol_end_giuh = 0;
+    double vol_in_nash_end = 0;
+    double vol_soil_end = 0;
     
     // the GIUH queue might have water in it at the end of the simulation, so sum it up.
     for(i=0;i<cfe_ptr->num_giuh_ordinates;i++) vol_end_giuh+=cfe_ptr->runoff_queue_m_per_timestep[i];
@@ -1766,6 +1777,7 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
 
     /* xinanjiang_dev
     double schaake_residual;*/
+    double direct_residual;
 
     double giuh_residual;
     double soil_residual;
@@ -1792,21 +1804,42 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     printf("schaake residual: %6.4e m\n",schaake_residual);  // should equal 0.0
     if(!is_fabs_less_than_epsilon(schaake_residual,1.0e-12))
                   printf("WARNING: SCHAAKE PARTITIONING MASS BALANCE CHECK FAILED\n");*/
+    direct_residual = cfe_ptr->vol_struct.volin - cfe_ptr->vol_struct.vol_dir_runoff - cfe_ptr->vol_struct.vol_dir_infilt;
+    printf(" DIRECT RUNOFF MASS BALANCE\n");
+    printf("  surface runoff: %8.4lf m\n",cfe_ptr->vol_struct.vol_dir_runoff);
+    printf("    infiltration: %8.4lf m\n",cfe_ptr->vol_struct.vol_dir_infilt);
+    printf("direct residual: %6.4e m\n",direct_residual);  // should equal 0.0
+    if(!is_fabs_less_than_epsilon(direct_residual,1.0e-12))
+                  printf("WARNING: DIRECT RUNOFF PARTITIONING MASS BALANCE CHECK FAILED\n");*/
     
-    giuh_residual = cfe_ptr->vol_struct.vol_out_giuh - cfe_ptr->vol_struct.vol_sch_runoff - vol_end_giuh;
+    /* xinanjiang_dev
+    giuh_residual = cfe_ptr->vol_struct.vol_out_giuh - cfe_ptr->vol_struct.vol_sch_runoff - vol_end_giuh;   */
+    giuh_residual = cfe_ptr->vol_struct.vol_out_giuh - cfe_ptr->vol_struct.vol_dir_runoff - vol_end_giuh;
+
     printf(" GIUH MASS BALANCE\n");
-    printf("  vol. into giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_sch_runoff);
+
+    /* xinanjiang_dev
+    printf("  vol. into giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_sch_runoff);    */
+    printf("  vol. into giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_dir_runoff);
+
     printf("   vol. out giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_out_giuh);
     printf(" vol. end giuh q: %8.4lf m\n",vol_end_giuh);
     printf("   giuh residual: %6.4e m\n",giuh_residual);  // should equal zero
     if(!is_fabs_less_than_epsilon(giuh_residual,1.0e-12))
                   printf("WARNING: GIUH MASS BALANCE CHECK FAILED\n");
-    
-    soil_residual=cfe_ptr->vol_struct.vol_soil_start + cfe_ptr->vol_struct.vol_sch_infilt -
+
+    /* xinanjiang_dev 
+    soil_residual=cfe_ptr->vol_struct.vol_soil_start + cfe_ptr->vol_struct.vol_sch_infilt -      */
+    soil_residual=cfe_ptr->vol_struct.vol_soil_start + cfe_ptr->vol_struct.vol_dir_infilt -
+
                   cfe_ptr->vol_struct.vol_soil_to_lat_flow - vol_soil_end - cfe_ptr->vol_struct.vol_to_gw;
     printf(" SOIL WATER CONCEPTUAL RESERVOIR MASS BALANCE\n");
     printf("   init soil vol: %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_start);     
-    printf("  vol. into soil: %8.4lf m\n",cfe_ptr->vol_struct.vol_sch_infilt);
+
+    /* xinanjiang_dev
+    printf("  vol. into soil: %8.4lf m\n",cfe_ptr->vol_struct.vol_sch_infilt);    */
+    printf("  vol. into soil: %8.4lf m\n",cfe_ptr->vol_struct.vol_dir_infilt);
+
     printf("vol.soil2latflow: %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_to_lat_flow);
     printf(" vol. soil to gw: %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_to_gw);
     printf(" final vol. soil: %8.4lf m\n",vol_soil_end);   
