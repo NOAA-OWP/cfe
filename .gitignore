@@ -8,6 +8,7 @@ run_cfe_bmi
 run_cfe_bmi_pass_forcings
 run_cfe_aorc_et_bmi
 ./original_author_code/run_cfe
+./test/run_cfe_bmi_test
 
 # TRASH BUCKETS #
 #################
