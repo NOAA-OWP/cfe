@@ -10,8 +10,9 @@ New BMI components introduced are categorized as follows,
 To run the BMI component unit test, 
 ```
 $ cd test
-$ make_and_run_bmi_unit_test
+$ ./make_and_run_bmi_unit_test.sh
 ```
-Console output will show results from `BMI_SUCCESS` or simply print `BMI_FAILURE`. Note that the actual testing loop is much smaller the the number of timsteps or end time defined via configuration file. 
+The script uses a catchment-89 configuration found (here)[../configs/cat_89_bmi_config_cfe.txt].
+Note that the actual testing loop is much smaller than the number of time steps or end time generated via configuration file.
 Recall that BMI guides interoperability for model-coupling, where model components (i.e. inputs and outputs) are easily shared amongst each other.
 When testing outside of a true framework, we consider the behavior of BMI function definitions, rather than any expected values they produce.
