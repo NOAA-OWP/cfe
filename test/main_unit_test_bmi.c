@@ -239,7 +239,7 @@ main(int argc, const char *argv[]){
 
     // Test BMI: GET VALUE FUNCTIONS
     printf("\nTEST BMI GETTER SETTER FUNCTIONS\n********************************\n");
-    int test_nstep=10;
+    int test_nstep=1;
     double now;
     printf(" updating... timesteps in test loop: %i\n", test_nstep);
     for (int n=1;n<=test_nstep;n++) // shorter time loop for testing
