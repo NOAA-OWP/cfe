@@ -111,9 +111,29 @@ static int Get_start_time (Bmi *self, double * time)
 
 static int Get_end_time (Bmi *self, double * time)
 {
-    Get_start_time(self, time);
+/*    Get_start_time(self, time);
     *time += (((cfe_state_struct *) self->data)->num_timesteps * ((cfe_state_struct *) self->data)->time_step_size);
-    return BMI_SUCCESS;
+    return BMI_SUCCESS;*/
+
+    // JG EDIT 09.22.2021
+    cfe_state_struct *cfe;
+    cfe = (cfe_state_struct *) self->data;
+    Get_start_time(self, time);
+    
+    // see if forcings read in or via BMI (framework to set)
+    if (cfe->is_forcing_from_bmi == TRUE){
+        // if BMI, set to FLT_MAX macro via float.h
+        // See https://bmi.readthedocs.io/en/latest/#get-end-time
+        *time += FLT_MAX;
+        return BMI_SUCCESS;
+    }
+    else {
+        // otherwise, set via numsteps as usual
+        *time += cfe->num_timesteps * cfe->time_step_size;
+        return BMI_SUCCESS;
+    }
+
+    return BMI_FAILURE;
 }
 
 // TODO: document that this will get the size of the current time step (the getter can access the full array)
