@@ -115,9 +115,29 @@ static int Get_start_time (Bmi *self, double * time)
 
 static int Get_end_time (Bmi *self, double * time)
 {
-    Get_start_time(self, time);
+/*    Get_start_time(self, time);
     *time += (((cfe_state_struct *) self->data)->num_timesteps * ((cfe_state_struct *) self->data)->time_step_size);
-    return BMI_SUCCESS;
+    return BMI_SUCCESS;*/
+
+    // JG EDIT 09.22.2021
+    cfe_state_struct *cfe;
+    cfe = (cfe_state_struct *) self->data;
+    Get_start_time(self, time);
+    
+    // see if forcings read in or via BMI (framework to set)
+    if (cfe->is_forcing_from_bmi == TRUE){
+        // if BMI, set to FLT_MAX macro via float.h
+        // See https://bmi.readthedocs.io/en/latest/#get-end-time
+        *time += FLT_MAX;
+        return BMI_SUCCESS;
+    }
+    else {
+        // otherwise, set via numsteps as usual
+        *time += cfe->num_timesteps * cfe->time_step_size;
+        return BMI_SUCCESS;
+    }
+
+    return BMI_FAILURE;
 }
 
 // TODO: document that this will get the size of the current time step (the getter can access the full array)
@@ -961,14 +981,6 @@ static int Get_adjusted_index_for_variable(const char *name)
 
 static int Get_var_grid(Bmi *self, const char *name, int *grid)
 {
-/* jonathan frame. I am trying to run the CFE BMI outside the framework
- I am just going to comment this out, because I don't want to troubleshoot,
- but the error is:
- warning: assignment makes integer from pointer without a cast [enabled by default]
- ./src/bmi_cfe.c:826:19:   *grid = input_var_grids[i];
-*/
-
-/*
     // Check to see if in output array first
     for (i = 0; i < OUTPUT_VAR_NAME_COUNT; i++) {
         if (strcmp(name, output_var_names[i]) == 0) {
@@ -985,8 +997,7 @@ static int Get_var_grid(Bmi *self, const char *name, int *grid)
     }
     // If we get here, it means the variable name wasn't recognized
     grid[0] = '\0';
-*/
-
+    
     return BMI_FAILURE;
 }
 
