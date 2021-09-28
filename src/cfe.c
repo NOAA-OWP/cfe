@@ -128,9 +128,7 @@ extern void cfe(
                                        &direct_output_runoff_m, &infiltration_depth_m);
     
       } else {
-          Schaake_partitioning_scheme(timestep_h, direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type,
-                                  soil_reservoir_storage_deficit_m, timestep_rainfall_input_m,
-                                  &direct_output_runoff_m, &infiltration_depth_m);
+            printf("ERROR: Direct runoff method not specified in Config File\n");
       }
     }
   else // No need to call the Schaake function.
@@ -642,20 +640,20 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
     // the pervious_runoff_m equation will need to be adjusted by the fraction of pervious area.
     if ((tension_water_m/max_tension_water_m) <= (0.5 - parms->a_Xinanjiang_inflection_point_parameter)) {
       pervious_runoff_m = water_input_depth_m * (pow((0.5 - parms->a_Xinanjiang_inflection_point_parameter), 
-                                                     (1 - parms->b_Xinanjiang_shape_parameter)) *
-                                                 pow((1 - (tension_water_m/max_tension_water_m)),
+                                                     (1.0 - parms->b_Xinanjiang_shape_parameter)) *
+                                                 pow((1.0 - (tension_water_m/max_tension_water_m)),
                                                      parms->b_Xinanjiang_shape_parameter));
 
     } else {
-      pervious_runoff_m = water_input_depth_m * (1 - pow((0.5 + parms->a_Xinanjiang_inflection_point_parameter), 
-                                                         (1 - parms->b_Xinanjiang_shape_parameter)) * 
-                                                     pow((1 - (tension_water_m/max_tension_water_m)),
+      pervious_runoff_m = water_input_depth_m * (1.0 - pow((0.5 + parms->a_Xinanjiang_inflection_point_parameter), 
+                                                         (1.0 - parms->b_Xinanjiang_shape_parameter)) * 
+                                                     pow((1.0 - (tension_water_m/max_tension_water_m)),
                                                          (parms->b_Xinanjiang_shape_parameter)));
     }
     // Separate the surface water from the pervious runoff 
     // NOTE: If impervious runoff is added to this subroutine, impervious runoff should be added to
     // the surface_runoff_depth_m.
-    *surface_runoff_depth_m = pervious_runoff_m * (1 - pow((1 - (free_water_m/max_free_water_m)),parms->x_Xinanjiang_shape_parameter));
+    *surface_runoff_depth_m = pervious_runoff_m * (1.0 - pow((1.0 - (free_water_m/max_free_water_m)),parms->x_Xinanjiang_shape_parameter));
     // The surface runoff depth is bounded by a minimum of 0 and a maximum of the water input depth.
     // Check that the estimated surface runoff is not less than 0.0 and if so, change the value to 0.0.
     if(*surface_runoff_depth_m < 0.0) *surface_runoff_depth_m = 0.0;
