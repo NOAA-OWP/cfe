@@ -247,6 +247,7 @@ extern void cfe(
   giuh_runoff_m = convolution_integral(direct_output_runoff_m,num_giuh_ordinates,
                                        giuh_ordinates_arr,runoff_queue_m_per_timestep_arr);
   vol_out_giuh+=giuh_runoff_m;
+  printf("vol_out_giuh %lf, giuh_runoff_m", vol_out_giuh, giuh_runoff_m);
 
   volout+=giuh_runoff_m;
   volout+=flux_from_deep_gw_to_chan_m;
@@ -263,37 +264,37 @@ extern void cfe(
 
   Qout_m = giuh_runoff_m + nash_lateral_runoff_m + flux_from_deep_gw_to_chan_m;
     
-    // #### COPY BACK STATE VALUES BY POINTER REFERENCE SO VISIBLE TO FRAMEWORK    ####    
-    *soil_reservoir_storage_deficit_m_ptr = soil_reservoir_storage_deficit_m;
-    
-    /* xinanjiang_dev
-    *Schaake_output_runoff_m_ptr          = Schaake_output_runoff_m;    */
-    *direct_output_runoff_m_ptr          = direct_output_runoff_m;
+  // #### COPY BACK STATE VALUES BY POINTER REFERENCE SO VISIBLE TO FRAMEWORK    ####    
+  *soil_reservoir_storage_deficit_m_ptr = soil_reservoir_storage_deficit_m;
+  
+  /* xinanjiang_dev
+  *Schaake_output_runoff_m_ptr          = Schaake_output_runoff_m;    */
+  *direct_output_runoff_m_ptr          = direct_output_runoff_m;
 
-    *infiltration_depth_m_ptr             = infiltration_depth_m;
+  *infiltration_depth_m_ptr             = infiltration_depth_m;
 
-    /* xinanjiang_dev
-    *vol_sch_runoff_ptr                   = vol_sch_runoff;
-    *vol_sch_infilt_ptr                   = vol_sch_infilt;    */
-    *vol_dir_runoff_ptr                   = vol_dir_runoff;
-    *vol_dir_infilt_ptr                   = vol_dir_infilt;
+  /* xinanjiang_dev
+  *vol_sch_runoff_ptr                   = vol_sch_runoff;
+  *vol_sch_infilt_ptr                   = vol_sch_infilt;    */
+  *vol_dir_runoff_ptr                   = vol_dir_runoff;
+  *vol_dir_infilt_ptr                   = vol_dir_infilt;
 
-    *flux_perc_m_ptr                      = flux_perc_m;
-    *vol_to_soil_ptr                      = vol_to_soil;
-    *flux_lat_m_ptr                       = flux_lat_m;
-    *gw_reservoir_storage_deficit_m_ptr   = gw_reservoir_storage_deficit_m;
-    *vol_to_gw_ptr                        = vol_to_gw;
-    *vol_soil_to_gw_ptr                   = vol_soil_to_gw;
-    *vol_soil_to_lat_flow_ptr             = vol_soil_to_lat_flow;
-    *volout_ptr                           = volout;
-    *flux_from_deep_gw_to_chan_m_ptr      = flux_from_deep_gw_to_chan_m;
-    *vol_from_gw_ptr                      = vol_from_gw;
-    *giuh_runoff_m_ptr                    = giuh_runoff_m;
-    *vol_out_giuh_ptr                     = vol_out_giuh;
-    *nash_lateral_runoff_m_ptr            = nash_lateral_runoff_m;
-    *vol_in_nash_ptr                      = vol_in_nash;
-    *vol_out_nash_ptr                     = vol_out_nash;
-    *Qout_m_ptr                           = Qout_m;
+  *flux_perc_m_ptr                      = flux_perc_m;
+  *vol_to_soil_ptr                      = vol_to_soil;
+  *flux_lat_m_ptr                       = flux_lat_m;
+  *gw_reservoir_storage_deficit_m_ptr   = gw_reservoir_storage_deficit_m;
+  *vol_to_gw_ptr                        = vol_to_gw;
+  *vol_soil_to_gw_ptr                   = vol_soil_to_gw;
+  *vol_soil_to_lat_flow_ptr             = vol_soil_to_lat_flow;
+  *volout_ptr                           = volout;
+  *flux_from_deep_gw_to_chan_m_ptr      = flux_from_deep_gw_to_chan_m;
+  *vol_from_gw_ptr                      = vol_from_gw;
+  *giuh_runoff_m_ptr                    = giuh_runoff_m;
+  *vol_out_giuh_ptr                     = vol_out_giuh;
+  *nash_lateral_runoff_m_ptr            = nash_lateral_runoff_m;
+  *vol_in_nash_ptr                      = vol_in_nash;
+  *vol_out_nash_ptr                     = vol_out_nash;
+  *Qout_m_ptr                           = Qout_m;
 
 
 

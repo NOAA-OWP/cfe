@@ -466,7 +466,7 @@ double oldval;
 //############################      TIME LOOP       #################################
 //###################################################################################
 
-num_timesteps=num_rain_dat+279;  // run a little bit beyond the rain data to see what happens.
+num_timesteps=num_rain_dat+1;//279;  // run a little bit beyond the rain data to see what happens.
 for(tstep=0;tstep<num_timesteps;tstep++)
   {
   
@@ -492,9 +492,9 @@ for(tstep=0;tstep<num_timesteps;tstep++)
     infiltration_depth_m=soil_reservoir_storage_deficit_m;
     soil_reservoir.storage_m=soil_reservoir.storage_max_m;
     }
-  printf("After Schaake function: rain:%8.5lf mm  runoff:%8.5lf mm  infiltration:%8.5lf mm  residual:%e m\n",
-                                 rain_rate[tstep],Schaake_output_runoff_m*1000.0,infiltration_depth_m*1000.0,
-                                 timestep_rainfall_input_m-Schaake_output_runoff_m-infiltration_depth_m);
+  //printf("After Schaake function: rain:%8.5lf mm  runoff:%8.5lf mm  infiltration:%8.5lf mm  residual:%e m\n",
+  //                               rain_rate[tstep],Schaake_output_runoff_m*1000.0,infiltration_depth_m*1000.0,
+  //                               timestep_rainfall_input_m-Schaake_output_runoff_m-infiltration_depth_m);
 
   flux_overland_m=Schaake_output_runoff_m;
 
@@ -571,6 +571,7 @@ for(tstep=0;tstep<num_timesteps;tstep++)
   giuh_runoff_m = convolution_integral(Schaake_output_runoff_m,num_giuh_ordinates,
                                               giuh_ordinates,runoff_queue_m_per_timestep);
   vol_out_giuh+=giuh_runoff_m;
+  printf("vol_out_giuh %lf, giuh_runoff_m %lf\n", vol_out_giuh, giuh_runoff_m);
 
   volout+=giuh_runoff_m;
   volout+=flux_from_deep_gw_to_chan_m;
@@ -792,11 +793,11 @@ if(reservoir->is_exponential==TRUE)  // single outlet reservoir like the NWM V1.
   *primary_flux_m=reservoir->coeff_primary*
                     (exp(reservoir->exponent_primary*reservoir->storage_m/reservoir->storage_max_m)-1.0);
   *secondary_flux_m=0.0;
-  printf("da_reservoir->coeff_primary: %lf\n", reservoir->coeff_primary);
-  printf("da_reservoir->exponent_primary: %lf\n", reservoir->exponent_primary);
-  printf("da_reservoir->storage_m: %lf\n", reservoir->storage_m);
-  printf("da_reservoir->storage_max_m: %lf\n", reservoir->storage_max_m);
-  printf("EXPONENTIAL FUNCTION primary_flux: %lf, secondary_flux: %lf\n", *primary_flux_m, *secondary_flux_m);
+  //printf("da_reservoir->coeff_primary: %lf\n", reservoir->coeff_primary);
+  //printf("da_reservoir->exponent_primary: %lf\n", reservoir->exponent_primary);
+  //printf("da_reservoir->storage_m: %lf\n", reservoir->storage_m);
+  //printf("da_reservoir->storage_max_m: %lf\n", reservoir->storage_max_m);
+  //printf("EXPONENTIAL FUNCTION primary_flux: %lf, secondary_flux: %lf\n", *primary_flux_m, *secondary_flux_m);
   return;
   }
 // code goes past here iff it is not a single outlet exponential deep groundwater reservoir of the NWM variety

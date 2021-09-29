@@ -802,7 +802,8 @@ static int Update (Bmi *self)
     // Two modes to get forcing data... 1) read from file, 2) pass with bmi    
     if (cfe_ptr->is_forcing_from_bmi)
       // BMI sets the precipitation to the aorc structure.
-      cfe_ptr->timestep_rainfall_input_m = cfe_ptr->aorc.precip_kg_per_m2 /1000; // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+      // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+      cfe_ptr->timestep_rainfall_input_m = cfe_ptr->aorc.precip_kg_per_m2 /1000;
     else
       // Set the current rainfall input to the right place in the forcing array.
       // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
@@ -867,7 +868,7 @@ static int Update_until (Bmi *self, double t)
             cfe_ptr->current_time_step += 1;
         
             // Set the current rainfall input to the right place in the forcing.
-            // convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+            // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
             cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step] /1000;
 
             self->get_current_time(self, &current_time);
@@ -1827,7 +1828,6 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     /* xinanjiang_dev
     printf("  vol. into giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_sch_runoff);    */
     printf("  vol. into giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_dir_runoff);
-
     printf("   vol. out giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_out_giuh);
     printf(" vol. end giuh q: %8.4lf m\n",vol_end_giuh);
     printf("   giuh residual: %6.4e m\n",giuh_residual);  // should equal zero
@@ -1837,8 +1837,8 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     /* xinanjiang_dev 
     soil_residual=cfe_ptr->vol_struct.vol_soil_start + cfe_ptr->vol_struct.vol_sch_infilt -      */
     soil_residual=cfe_ptr->vol_struct.vol_soil_start + cfe_ptr->vol_struct.vol_dir_infilt -
-
                   cfe_ptr->vol_struct.vol_soil_to_lat_flow - vol_soil_end - cfe_ptr->vol_struct.vol_to_gw;
+                  
     printf(" SOIL WATER CONCEPTUAL RESERVOIR MASS BALANCE\n");
     printf("   init soil vol: %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_start);     
 
