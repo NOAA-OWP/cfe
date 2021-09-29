@@ -367,7 +367,8 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             double parsed_value = strtod(param_value, &trailing_chars);
             *is_soil_storage_ratio = strcmp(trailing_chars, "%") == 0 ? TRUE : FALSE;
             *soil_storage = *is_soil_storage_ratio == TRUE ? (parsed_value / 100.0) : parsed_value;
-            is_soil_storage_set = TRUE;
+            is_soil_storage_set = TRUE; 
+            printf("DELETEME: soil_storage %lf\n", *soil_storage);
             continue;
         }
         if (strcmp(param_key, "number_nash_reservoirs") == 0 || strcmp(param_key, "N_nash") == 0) {
@@ -563,9 +564,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     printf("All CFE config params present\n");
 #endif
 
-    /* xinanjiang_dev*/
-    if(model->direct_runoff_params_struct.method == 1) 
-        model->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = refkdt * model->NWM_soil_params.satdk / 0.000002;
+    model->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = refkdt * model->NWM_soil_params.satdk / 0.000002;
     
     // Used for parsing strings representing arrays of values below
     char *copy, *value;
@@ -1656,12 +1655,54 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, doub
 #define STANDARD_ATMOSPHERIC_PRESSURE_PASCALS 101325
     // This may need to be changed as follows later, but for now, use the constant value
     //double Omega = (alpha_fc * cfe->forcing_data_surface_pressure_Pa[0] / WATER_SPECIFIC_WEIGHT) - 0.5;
-    double Omega = (alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS / WATER_SPECIFIC_WEIGHT) - 0.5;
-    double lower_lim = pow(Omega, (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb)) / 
-                                  (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb);
-    double upper_lim = pow(Omega + cfe_ptr->NWM_soil_params.D, 
-                                       (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb)) /
-                       (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb);
+
+/////////////////////////////////////////////////    
+//JMFRAME: Putting Fred's code in here instead.
+/////////////////////////////////////////////////
+
+//    double Omega = (alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS / WATER_SPECIFIC_WEIGHT) - 0.5;
+//    double lower_lim = pow(Omega, (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb)) / 
+//                                  (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb);
+//    double upper_lim = pow(Omega + cfe_ptr->NWM_soil_params.D, 
+//                                       (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb)) /
+//                       (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb);
+
+    double field_capacity_storage_threshold_m;
+    double field_capacity_atm_press_fraction; // [-]
+    double soil_water_content_at_field_capacity; // [V/V]
+    double atm_press_Pa;
+    double upper_lim;
+    double lower_lim;
+    double unit_weight_water_N_per_m3; 
+    double H_water_table_m;  // Hwt in NWM/t-shirt parameter equiv. doc  discussed between Eqn's 4 and 5.
+                             // this is the distance down to a fictitious water table from the point there the 
+                             // soil water content is assumed equal to field capacity at the middle of lowest discretizatio
+    double trigger_z_m;      // this is the distance up from the bottom of the soil that triggers lateral flow when 
+                             // the soil water content equals field capacity.   0.5 for center of bottom discretization
+    double Omega;            // The limits of integration used in Eqn. 5 of the parameter equivalence document.
+
+    trigger_z_m=0.5;   // distance from the bottom of the soil column to the center of the lowest discretization
+    atm_press_Pa=101300.0;
+    unit_weight_water_N_per_m3=9810.0;
+    
+    // calculate the activation storage ffor the secondary lateral flow outlet in the soil nonlinear reservoir.
+    // following the method in the NWM/t-shirt parameter equivalence document, assuming field capacity soil
+    // suction pressure = 1/3 atm= field_capacity_atm_press_fraction * atm_press_Pa.
+    
+    field_capacity_atm_press_fraction=0.33;  //alpha in Eqn. 3.
+    
+    // equation 3 from NWM/t-shirt parameter equivalence document
+    H_water_table_m=field_capacity_atm_press_fraction*atm_press_Pa/unit_weight_water_N_per_m3; 
+    soil_water_content_at_field_capacity=cfe_ptr->NWM_soil_params.smcmax*
+                                         pow(H_water_table_m/cfe_ptr->NWM_soil_params.satpsi,(1.0/cfe_ptr->NWM_soil_params.bb));
+
+    Omega=H_water_table_m-trigger_z_m;
+    lower_lim= pow(Omega,(1.0-1.0/cfe_ptr->NWM_soil_params.bb))/(1.0-1.0/cfe_ptr->NWM_soil_params.bb);
+    upper_lim= pow(Omega+cfe_ptr->NWM_soil_params.D,(1.0-1.0/cfe_ptr->NWM_soil_params.bb))/(1.0-1.0/cfe_ptr->NWM_soil_params.bb);
+    field_capacity_storage_threshold_m=cfe_ptr->NWM_soil_params.smcmax*pow(1.0/cfe_ptr->NWM_soil_params.satpsi,(-1.0/cfe_ptr->NWM_soil_params.bb))*
+                                    (upper_lim-lower_lim);
+
+    printf("field capacity storage threshold = %lf m\n", field_capacity_storage_threshold_m);
 
     // JMFRAME adding this, not sure if is correct. Ask FRED OGDEN
     cfe_ptr->NWM_soil_params.wilting_point_m = cfe_ptr->NWM_soil_params.wltsmc * cfe_ptr->NWM_soil_params.D;
@@ -1687,7 +1728,12 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, doub
     cfe_ptr->soil_reservoir.exponent_secondary = 1.0;
     // making them the same, but they don't have 2B
     cfe_ptr->soil_reservoir.storage_threshold_secondary_m = cfe_ptr->soil_reservoir.storage_threshold_primary_m;
-    cfe_ptr->soil_reservoir.storage_m = init_reservoir_storage(is_storage_ratios, storage, max_storage);
+
+    // JMFRAME: I guess this is neccessary in case the configuration file has a percentage?
+    //cfe_ptr->soil_reservoir.storage_m = init_reservoir_storage(is_storage_ratios, storage, max_storage);
+    cfe_ptr->soil_reservoir.storage_m = cfe_ptr->soil_reservoir.storage_max_m * storage;
+    printf("DELETEME: cfe_ptr->soil_reservoir.storage_max_m %lf\n", cfe_ptr->soil_reservoir.storage_max_m);
+    printf("DELETEME: cfe_ptr->soil_reservoir.storage_m %lf\n", cfe_ptr->soil_reservoir.storage_m);
 }
 
 extern double init_reservoir_storage(int is_ratio, double amount, double max_amount) {

@@ -247,7 +247,6 @@ extern void cfe(
   giuh_runoff_m = convolution_integral(direct_output_runoff_m,num_giuh_ordinates,
                                        giuh_ordinates_arr,runoff_queue_m_per_timestep_arr);
   vol_out_giuh+=giuh_runoff_m;
-  printf("vol_out_giuh %lf, giuh_runoff_m", vol_out_giuh, giuh_runoff_m);
 
   volout+=giuh_runoff_m;
   volout+=flux_from_deep_gw_to_chan_m;

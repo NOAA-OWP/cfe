@@ -378,6 +378,8 @@ soil_reservoir.storage_max_m=NWM_soil_params.smcmax*NWM_soil_params.D;
     soil_reservoir.storage_threshold_secondary_m=lateral_flow_threshold_storage_m;
     
 soil_reservoir.storage_m=soil_reservoir.storage_max_m*0.667;  // INITIALIZE SOIL STORAGE
+printf("DELETEME: soil_reservoir.storage_max_m %lf\n", soil_reservoir.storage_max_m);
+printf("DELETEME: soil_reservoir.storage_m %lf\n", soil_reservoir.storage_m);
 //-------------------------------------------------------------------------------------------------------------
 
 volstart          += soil_reservoir.storage_m;    // initial mass balance checks in soil reservoir
