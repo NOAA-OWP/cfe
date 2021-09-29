@@ -301,7 +301,7 @@ NWM_soil_params.slop=0.01;       // [-] hydraulic gradient varies from 0 (no flo
 NWM_soil_params.D=2.0;          // [m] soil thickness assumed in the NWM not from SOILPARM.TBL
 NWM_soil_params.mult=1000.0;     // not from SOILPARM.TBL, This is actually calibration parameter: LKSATFAC
 
-trigger_z_m=0.5;   // distance from the bottom of the soil column to the center of the lowest discretization
+trigger_z_m=1.3;   // distance from the bottom of the soil column to the center of the lowest discretization
 
 // calculate the activation storage ffor the secondary lateral flow outlet in the soil nonlinear reservoir.
 // following the method in the NWM/t-shirt parameter equivalence document, assuming field capacity soil
@@ -312,7 +312,7 @@ field_capacity_atm_press_fraction=0.33;  //alpha in Eqn. 3.
 // equation 3 from NWM/t-shirt parameter equivalence document
 H_water_table_m=field_capacity_atm_press_fraction*atm_press_Pa/unit_weight_water_N_per_m3; 
 soil_water_content_at_field_capacity=NWM_soil_params.smcmax*
-                                     pow(H_water_table_m/NWM_soil_params.satpsi,(1.0/NWM_soil_params.bb));
+                                     pow(H_water_table_m/NWM_soil_params.satpsi,(-1.0/NWM_soil_params.bb));
 
 // solve the integral given by Eqn. 5 in the parameter equivalence document.
 // this equation calculates the amount of water stored in the 2 m thick soil column when the water content 
