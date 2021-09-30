@@ -368,7 +368,6 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             *is_soil_storage_ratio = strcmp(trailing_chars, "%") == 0 ? TRUE : FALSE;
             *soil_storage = *is_soil_storage_ratio == TRUE ? (parsed_value / 100.0) : parsed_value;
             is_soil_storage_set = TRUE; 
-            printf("DELETEME: soil_storage %lf\n", *soil_storage);
             continue;
         }
         if (strcmp(param_key, "number_nash_reservoirs") == 0 || strcmp(param_key, "N_nash") == 0) {
@@ -1702,8 +1701,6 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, doub
     field_capacity_storage_threshold_m=cfe_ptr->NWM_soil_params.smcmax*pow(1.0/cfe_ptr->NWM_soil_params.satpsi,(-1.0/cfe_ptr->NWM_soil_params.bb))*
                                     (upper_lim-lower_lim);
 
-    printf("field capacity storage threshold = %lf m\n", field_capacity_storage_threshold_m);
-
     // JMFRAME adding this, not sure if is correct. Ask FRED OGDEN
     cfe_ptr->NWM_soil_params.wilting_point_m = cfe_ptr->NWM_soil_params.wltsmc * cfe_ptr->NWM_soil_params.D;
 
@@ -1732,8 +1729,6 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, doub
     // JMFRAME: I guess this is neccessary in case the configuration file has a percentage?
     //cfe_ptr->soil_reservoir.storage_m = init_reservoir_storage(is_storage_ratios, storage, max_storage);
     cfe_ptr->soil_reservoir.storage_m = cfe_ptr->soil_reservoir.storage_max_m * storage;
-    printf("DELETEME: cfe_ptr->soil_reservoir.storage_max_m %lf\n", cfe_ptr->soil_reservoir.storage_max_m);
-    printf("DELETEME: cfe_ptr->soil_reservoir.storage_m %lf\n", cfe_ptr->soil_reservoir.storage_m);
 }
 
 extern double init_reservoir_storage(int is_ratio, double amount, double max_amount) {

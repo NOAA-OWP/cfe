@@ -222,7 +222,7 @@ double volout   =0.0;
 double volend   =0.0;
 
 
-if((out_fptr=fopen("test.out","w"))==NULL)
+if((out_fptr=fopen("test_driver.out","w"))==NULL)
   {printf("Can't open output file\n");exit(0);}
 
 #ifdef DEBUG
@@ -276,9 +276,6 @@ lower_lim= pow(Omega,(1.0-1.0/NWM_soil_params.bb))/(1.0-1.0/NWM_soil_params.bb);
 upper_lim= pow(Omega+NWM_soil_params.D,(1.0-1.0/NWM_soil_params.bb))/(1.0-1.0/NWM_soil_params.bb);
 field_capacity_storage_threshold_m=NWM_soil_params.smcmax*pow(1.0/NWM_soil_params.satpsi,(-1.0/NWM_soil_params.bb))*
                                 (upper_lim-lower_lim);
-    
-printf("field capacity storage threshold = %lf m\n", field_capacity_storage_threshold_m);
-
 
 // initialize giuh parameters.  These would come from another source.
 //------------------------------------------------------------------

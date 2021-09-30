@@ -234,7 +234,7 @@ double volout   =0.0;
 double volend   =0.0;
 
 
-if((out_fptr=fopen("test.out","w"))==NULL)
+if((out_fptr=fopen("test_cfe_driver.out","w"))==NULL)
   {printf("Can't open output file\n");exit(0);}
 
 #ifdef DEBUG
@@ -288,9 +288,6 @@ lower_lim= pow(Omega,(1.0-1.0/NWM_soil_params.bb))/(1.0-1.0/NWM_soil_params.bb);
 upper_lim= pow(Omega+NWM_soil_params.D,(1.0-1.0/NWM_soil_params.bb))/(1.0-1.0/NWM_soil_params.bb);
 field_capacity_storage_threshold_m=NWM_soil_params.smcmax*pow(1.0/NWM_soil_params.satpsi,(-1.0/NWM_soil_params.bb))*
                                 (upper_lim-lower_lim);
-    
-printf("field capacity storage threshold = %lf m\n", field_capacity_storage_threshold_m);
-
 
 // initialize giuh parameters.  These would come from another source.
 //------------------------------------------------------------------
@@ -315,7 +312,7 @@ direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type=refkdt*
 direct_runoff_params_struct.a_Xinanjiang_inflection_point_parameter = 0;
 direct_runoff_params_struct.b_Xinanjiang_shape_parameter = 1;
 direct_runoff_params_struct.x_Xinanjiang_shape_parameter = 5;
-direct_runoff_params_struct.method = 2;
+direct_runoff_params_struct.method = 1;
 
 // initialize lateral flow function parameters
 //---------------------------------------------
@@ -378,8 +375,6 @@ soil_reservoir.storage_max_m=NWM_soil_params.smcmax*NWM_soil_params.D;
     soil_reservoir.storage_threshold_secondary_m=lateral_flow_threshold_storage_m;
     
 soil_reservoir.storage_m=soil_reservoir.storage_max_m*0.667;  // INITIALIZE SOIL STORAGE
-printf("DELETEME: soil_reservoir.storage_max_m %lf\n", soil_reservoir.storage_max_m);
-printf("DELETEME: soil_reservoir.storage_m %lf\n", soil_reservoir.storage_m);
 //-------------------------------------------------------------------------------------------------------------
 
 volstart          += soil_reservoir.storage_m;    // initial mass balance checks in soil reservoir
@@ -437,7 +432,7 @@ double oldval;
 //############################      TIME LOOP       #################################
 //###################################################################################
 
-num_timesteps=num_rain_dat+279;  // run a little bit beyond the rain data to see what happens.
+num_timesteps=45;//DELETEMEnum_rain_dat+279;  // run a little bit beyond the rain data to see what happens.
 for(tstep=0;tstep<num_timesteps;tstep++)
   {
   
