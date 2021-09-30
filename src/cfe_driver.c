@@ -541,7 +541,7 @@ double soil_residual;
 double nash_residual;
 double gw_residual;
 
-global_residual=volstart+volin-volout-volend;
+global_residual=volstart+volin-volout-volend-vol_end_giuh;
 fprintf(stderr,"GLOBAL MASS BALANCE\n");
 fprintf(stderr,"  initial volume: %8.4lf m\n",volstart);
 fprintf(stderr,"    volume input: %8.4lf m\n",volin);
@@ -571,7 +571,7 @@ if(!is_fabs_less_than_epsilon(direct_residual,1.0e-12))
 
 /* xinanjiang_dev
 giuh_residual=vol_out_giuh-vol_sch_runoff-vol_end_giuh;    */
-giuh_residual=vol_out_giuh-vol_dir_runoff-vol_end_giuh;
+giuh_residual=vol_dir_runoff-vol_out_giuh-vol_end_giuh;
 
 fprintf(stderr," GIUH MASS BALANCE\n");
 

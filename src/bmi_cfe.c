@@ -1832,7 +1832,8 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     double nash_residual;
     double gw_residual;
     
-    global_residual = cfe_ptr->vol_struct.volstart + cfe_ptr->vol_struct.volin - cfe_ptr->vol_struct.volout - volend;
+    global_residual = cfe_ptr->vol_struct.volstart + cfe_ptr->vol_struct.volin - 
+                      cfe_ptr->vol_struct.volout - volend - vol_end_giuh;
     printf("GLOBAL MASS BALANCE\n");
     printf("  initial volume: %8.4lf m\n",cfe_ptr->vol_struct.volstart);
     printf("    volume input: %8.4lf m\n",cfe_ptr->vol_struct.volin);
@@ -1862,7 +1863,7 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     
     /* xinanjiang_dev
     giuh_residual = cfe_ptr->vol_struct.vol_out_giuh - cfe_ptr->vol_struct.vol_sch_runoff - vol_end_giuh;   */
-    giuh_residual = cfe_ptr->vol_struct.vol_out_giuh - cfe_ptr->vol_struct.vol_dir_runoff - vol_end_giuh;
+    giuh_residual = cfe_ptr->vol_struct.vol_dir_runoff - cfe_ptr->vol_struct.vol_out_giuh - vol_end_giuh;
 
     printf(" GIUH MASS BALANCE\n");
 
