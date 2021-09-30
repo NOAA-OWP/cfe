@@ -387,7 +387,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             double parsed_value = strtod(param_value, &trailing_chars);
             *is_soil_storage_ratio = strcmp(trailing_chars, "%") == 0 ? TRUE : FALSE;
             *soil_storage = *is_soil_storage_ratio == TRUE ? (parsed_value / 100.0) : parsed_value;
-            is_soil_storage_set = TRUE;
+            is_soil_storage_set = TRUE; 
             continue;
         }
         if (strcmp(param_key, "number_nash_reservoirs") == 0 || strcmp(param_key, "N_nash") == 0) {
@@ -583,9 +583,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     printf("All CFE config params present\n");
 #endif
 
-    /* xinanjiang_dev*/
-    if(model->direct_runoff_params_struct.method == 1) 
-        model->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = refkdt * model->NWM_soil_params.satdk / 0.000002;
+    model->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = refkdt * model->NWM_soil_params.satdk / 0.000002;
     
     // Used for parsing strings representing arrays of values below
     char *copy, *value;
@@ -761,7 +759,7 @@ static int Initialize (Bmi *self, const char *file)
             printf("Forcing data: [%s]\n", line_str);
             printf("Forcing details - s_time: %ld | precip: %f\n", forcings.time, forcings.precip_kg_per_m2);
     #endif
-            cfe_bmi_data_ptr->forcing_data_precip_kg_per_m2[i] = forcings.precip_kg_per_m2 * ((double)cfe_bmi_data_ptr->time_step_size);
+            cfe_bmi_data_ptr->forcing_data_precip_kg_per_m2[i] = forcings.precip_kg_per_m2; //* ((double)cfe_bmi_data_ptr->time_step_size);
             cfe_bmi_data_ptr->forcing_data_time[i] = forcings.time;
 
             // TODO: make sure some kind of conversion isn't needed for the rain rate data
@@ -772,7 +770,8 @@ static int Initialize (Bmi *self, const char *file)
         cfe_bmi_data_ptr->epoch_start_time = cfe_bmi_data_ptr->forcing_data_time[0];
     } // end if is_forcing_from_bmi
     
-    cfe_bmi_data_ptr->timestep_rainfall_input_m = cfe_bmi_data_ptr->forcing_data_precip_kg_per_m2[0];
+    // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+    cfe_bmi_data_ptr->timestep_rainfall_input_m = cfe_bmi_data_ptr->forcing_data_precip_kg_per_m2[0] / 1000; 
 
     // Initialize the rest of the groundwater conceptual reservoir (some was done when reading in the config)
     cfe_bmi_data_ptr->gw_reservoir.is_exponential = TRUE;
@@ -821,10 +820,12 @@ static int Update (Bmi *self)
     // Two modes to get forcing data... 1) read from file, 2) pass with bmi    
     if (cfe_ptr->is_forcing_from_bmi)
       // BMI sets the precipitation to the aorc structure.
-      cfe_ptr->timestep_rainfall_input_m = cfe_ptr->aorc.precip_kg_per_m2;
+      // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+      cfe_ptr->timestep_rainfall_input_m = cfe_ptr->aorc.precip_kg_per_m2 /1000;
     else
       // Set the current rainfall input to the right place in the forcing array.
-      cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step];
+      // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+      cfe_ptr->timestep_rainfall_input_m = (double)cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step] /1000;
     
     cfe_ptr->vol_struct.volin += cfe_ptr->timestep_rainfall_input_m;
     // Delete me...    printf("_______PRECIP IN  CFE UPDATE FUNCTION________: %lf\n", cfe_ptr->aorc.precip_kg_per_m2);
@@ -885,7 +886,8 @@ static int Update_until (Bmi *self, double t)
             cfe_ptr->current_time_step += 1;
         
             // Set the current rainfall input to the right place in the forcing.
-            cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step];
+            // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+            cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step] /1000;
 
             self->get_current_time(self, &current_time);
 
@@ -906,7 +908,8 @@ static int Update_until (Bmi *self, double t)
         for (i = 0; i < t_int; i++)
             
             // Set the current rainfall input to the right place in the forcing.
-            cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[i];
+            // convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+            cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[i] /1000;
 
             run_cfe(cfe_ptr);
 
@@ -1662,12 +1665,52 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, doub
 #define STANDARD_ATMOSPHERIC_PRESSURE_PASCALS 101325
     // This may need to be changed as follows later, but for now, use the constant value
     //double Omega = (alpha_fc * cfe->forcing_data_surface_pressure_Pa[0] / WATER_SPECIFIC_WEIGHT) - 0.5;
-    double Omega = (alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS / WATER_SPECIFIC_WEIGHT) - 0.5;
-    double lower_lim = pow(Omega, (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb)) / 
-                                  (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb);
-    double upper_lim = pow(Omega + cfe_ptr->NWM_soil_params.D, 
-                                       (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb)) /
-                       (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb);
+
+/////////////////////////////////////////////////    
+//JMFRAME: Putting Fred's code in here instead.
+/////////////////////////////////////////////////
+
+//    double Omega = (alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS / WATER_SPECIFIC_WEIGHT) - 0.5;
+//    double lower_lim = pow(Omega, (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb)) / 
+//                                  (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb);
+//    double upper_lim = pow(Omega + cfe_ptr->NWM_soil_params.D, 
+//                                       (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb)) /
+//                       (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb);
+
+    double field_capacity_storage_threshold_m;
+    double field_capacity_atm_press_fraction; // [-]
+    double soil_water_content_at_field_capacity; // [V/V]
+    double atm_press_Pa;
+    double upper_lim;
+    double lower_lim;
+    double unit_weight_water_N_per_m3; 
+    double H_water_table_m;  // Hwt in NWM/t-shirt parameter equiv. doc  discussed between Eqn's 4 and 5.
+                             // this is the distance down to a fictitious water table from the point there the 
+                             // soil water content is assumed equal to field capacity at the middle of lowest discretizatio
+    double trigger_z_m;      // this is the distance up from the bottom of the soil that triggers lateral flow when 
+                             // the soil water content equals field capacity.   0.5 for center of bottom discretization
+    double Omega;            // The limits of integration used in Eqn. 5 of the parameter equivalence document.
+
+    trigger_z_m=0.5;   // distance from the bottom of the soil column to the center of the lowest discretization
+    atm_press_Pa=101300.0;
+    unit_weight_water_N_per_m3=9810.0;
+    
+    // calculate the activation storage ffor the secondary lateral flow outlet in the soil nonlinear reservoir.
+    // following the method in the NWM/t-shirt parameter equivalence document, assuming field capacity soil
+    // suction pressure = 1/3 atm= field_capacity_atm_press_fraction * atm_press_Pa.
+    
+    field_capacity_atm_press_fraction=0.33;  //alpha in Eqn. 3.
+    
+    // equation 3 from NWM/t-shirt parameter equivalence document
+    H_water_table_m=field_capacity_atm_press_fraction*atm_press_Pa/unit_weight_water_N_per_m3; 
+    soil_water_content_at_field_capacity=cfe_ptr->NWM_soil_params.smcmax*
+                                         pow(H_water_table_m/cfe_ptr->NWM_soil_params.satpsi,(1.0/cfe_ptr->NWM_soil_params.bb));
+
+    Omega=H_water_table_m-trigger_z_m;
+    lower_lim= pow(Omega,(1.0-1.0/cfe_ptr->NWM_soil_params.bb))/(1.0-1.0/cfe_ptr->NWM_soil_params.bb);
+    upper_lim= pow(Omega+cfe_ptr->NWM_soil_params.D,(1.0-1.0/cfe_ptr->NWM_soil_params.bb))/(1.0-1.0/cfe_ptr->NWM_soil_params.bb);
+    field_capacity_storage_threshold_m=cfe_ptr->NWM_soil_params.smcmax*pow(1.0/cfe_ptr->NWM_soil_params.satpsi,(-1.0/cfe_ptr->NWM_soil_params.bb))*
+                                    (upper_lim-lower_lim);
 
     // JMFRAME adding this, not sure if is correct. Ask FRED OGDEN
     cfe_ptr->NWM_soil_params.wilting_point_m = cfe_ptr->NWM_soil_params.wltsmc * cfe_ptr->NWM_soil_params.D;
@@ -1693,7 +1736,10 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, doub
     cfe_ptr->soil_reservoir.exponent_secondary = 1.0;
     // making them the same, but they don't have 2B
     cfe_ptr->soil_reservoir.storage_threshold_secondary_m = cfe_ptr->soil_reservoir.storage_threshold_primary_m;
-    cfe_ptr->soil_reservoir.storage_m = init_reservoir_storage(is_storage_ratios, storage, max_storage);
+
+    // JMFRAME: I guess this is neccessary in case the configuration file has a percentage?
+    //cfe_ptr->soil_reservoir.storage_m = init_reservoir_storage(is_storage_ratios, storage, max_storage);
+    cfe_ptr->soil_reservoir.storage_m = cfe_ptr->soil_reservoir.storage_max_m * storage;
 }
 
 extern double init_reservoir_storage(int is_ratio, double amount, double max_amount) {
@@ -1752,7 +1798,8 @@ extern void print_cfe_flux_header(){
     printf("# (h),             (mm)   ,  (mm) ,   (mm) , (mm)  ,  (mm),    (mm)\n");
 }
 extern void print_cfe_flux_at_timestep(cfe_state_struct* cfe_ptr){
-    printf("%16.8lf %lf %lf %lf %lf %lf %lf\n",
+//    printf("%16.8lf %lf %lf %lf %lf %lf %lf\n",
+    printf(" %d %lf %lf %lf %lf %lf %lf\n",
                            cfe_ptr->current_time_step,
                            cfe_ptr->timestep_rainfall_input_m*1000.0,
                            
@@ -1796,7 +1843,8 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     double nash_residual;
     double gw_residual;
     
-    global_residual = cfe_ptr->vol_struct.volstart + cfe_ptr->vol_struct.volin - cfe_ptr->vol_struct.volout - volend;
+    global_residual = cfe_ptr->vol_struct.volstart + cfe_ptr->vol_struct.volin - 
+                      cfe_ptr->vol_struct.volout - volend - vol_end_giuh;
     printf("GLOBAL MASS BALANCE\n");
     printf("  initial volume: %8.4lf m\n",cfe_ptr->vol_struct.volstart);
     printf("    volume input: %8.4lf m\n",cfe_ptr->vol_struct.volin);
@@ -1826,14 +1874,13 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     
     /* xinanjiang_dev
     giuh_residual = cfe_ptr->vol_struct.vol_out_giuh - cfe_ptr->vol_struct.vol_sch_runoff - vol_end_giuh;   */
-    giuh_residual = cfe_ptr->vol_struct.vol_out_giuh - cfe_ptr->vol_struct.vol_dir_runoff - vol_end_giuh;
+    giuh_residual = cfe_ptr->vol_struct.vol_dir_runoff - cfe_ptr->vol_struct.vol_out_giuh - vol_end_giuh;
 
     printf(" GIUH MASS BALANCE\n");
 
     /* xinanjiang_dev
     printf("  vol. into giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_sch_runoff);    */
     printf("  vol. into giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_dir_runoff);
-
     printf("   vol. out giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_out_giuh);
     printf(" vol. end giuh q: %8.4lf m\n",vol_end_giuh);
     printf("   giuh residual: %6.4e m\n",giuh_residual);  // should equal zero
@@ -1843,8 +1890,8 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     /* xinanjiang_dev 
     soil_residual=cfe_ptr->vol_struct.vol_soil_start + cfe_ptr->vol_struct.vol_sch_infilt -      */
     soil_residual=cfe_ptr->vol_struct.vol_soil_start + cfe_ptr->vol_struct.vol_dir_infilt -
-
                   cfe_ptr->vol_struct.vol_soil_to_lat_flow - vol_soil_end - cfe_ptr->vol_struct.vol_to_gw;
+                  
     printf(" SOIL WATER CONCEPTUAL RESERVOIR MASS BALANCE\n");
     printf("   init soil vol: %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_start);     
 
@@ -1895,83 +1942,140 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
 void parse_aorc_line_cfe(char *theString,long *year,long *month, long *day,long *hour,long *minute, double *second,
                 struct aorc_forcing_data_cfe *aorc)
 {
-
-    /*   JMFRAME: Something was wrong with the AORC reading code from the frameork, 
-                  because I didn't have the correct libraries, that I assume are part of the framework.
-                  so I paseted in the AORC reading code from the ET function.
-    */
-
     char str[20];
-    long yr, mo, da, hr, mi;
-    double mm, julian, se;
-    double val;
-    int i, start, end, len;
-    int yes_pm, wordlen;
+    long yr,mo,da,hr,mi;
+    double mm,julian,se;
+    float val;
+    int i,start,end,len;
+    int yes_pm,wordlen;
     char theWord[150];
-
-    len = strlen(theString);
-
-    char *copy, *copy_to_free, *value;
-    copy_to_free = copy = strdup(theString);
-
-    // time
-    value = strsep(&copy, ",");
-    // TODO: handle this
-    struct tm{
-      int tm_year;
-      int tm_mon; 
-      int tm_mday; 
-      int tm_hour; 
-      int tm_min; 
-      int tm_sec; 
-      int tm_isdst;
-    };
-    struct tm t;
-    time_t t_of_day;
-
-    t.tm_year = (int)strtol(strsep(&value, "-"), NULL, 10) - 1900;
-    t.tm_mon = (int)strtol(strsep(&value, "-"), NULL, 10);
-    t.tm_mday = (int)strtol(strsep(&value, " "), NULL, 10);
-    t.tm_hour = (int)strtol(strsep(&value, ":"), NULL, 10);
-    t.tm_min = (int)strtol(strsep(&value, ":"), NULL, 10);
-    t.tm_sec = (int)strtol(value, NULL, 10);
-    t.tm_isdst = -1;        // Is DST on? 1 = yes, 0 = no, -1 = unknown
-//    aorc->time = mktime(t);
-
-    // APCP_surface
-    value = strsep(&copy, ",");
-    // Not sure what this is
-
-    // DLWRF_surface
-    value = strsep(&copy, ",");
-    aorc->incoming_longwave_W_per_m2 = strtof(value, NULL);
-    // DSWRF_surface
-    value = strsep(&copy, ",");
-    aorc->incoming_shortwave_W_per_m2 = strtof(value, NULL);
-    // PRES_surface
-    value = strsep(&copy, ",");
-    aorc->surface_pressure_Pa = strtof(value, NULL);
-    // SPFH_2maboveground
-    value = strsep(&copy, ",");
-    aorc->specific_humidity_2m_kg_per_kg = strtof(value, NULL);;
-    // TMP_2maboveground
-    value = strsep(&copy, ",");
-    aorc->air_temperature_2m_K = strtof(value, NULL);
-    // UGRD_10maboveground
-    value = strsep(&copy, ",");
-    aorc->u_wind_speed_10m_m_per_s = strtof(value, NULL);
-    // VGRD_10maboveground
-    value = strsep(&copy, ",");
-    aorc->v_wind_speed_10m_m_per_s = strtof(value, NULL);
-    // precip_rate
-    value = strsep(&copy, ",");
-    aorc->precip_kg_per_m2 = strtof(value, NULL);
-
-    // Go ahead and free the duplicate copy now
-    free(copy_to_free);
-
+    
+    len=strlen(theString);
+    
+    start=0; /* begin at the beginning of theString */
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    *year=atol(theWord);
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    *month=atol(theWord);
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    *day=atol(theWord);
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    *hour=atol(theWord);
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    *minute=atol(theWord);
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    *second=(double)atof(theWord);
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    aorc->precip_kg_per_m2=atof(theWord);
+    //printf("%s, %s, %lf, %lf\n", theString, theWord, (double)atof(theWord), aorc->precip_kg_per_m2);
+                  
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    aorc->incoming_longwave_W_per_m2=(double)atof(theWord);   
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    aorc->incoming_shortwave_W_per_m2=(double)atof(theWord);   
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    aorc->surface_pressure_Pa=(double)atof(theWord);           
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    aorc->specific_humidity_2m_kg_per_kg=(double)atof(theWord);
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    aorc->air_temperature_2m_K=(double)atof(theWord);          
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    aorc->u_wind_speed_10m_m_per_s=(double)atof(theWord);      
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    aorc->v_wind_speed_10m_m_per_s=(double)atof(theWord);      
+    
+      
     return;
-}
+    }
+
+//    /*   JMFRAME: Something was wrong with the AORC reading code from the frameork, 
+//                  because I didn't have the correct libraries, that I assume are part of the framework.
+//                  so I paseted in the AORC reading code from the ET function.
+//    */
+//
+//    char str[20];
+//    long yr, mo, da, hr, mi;
+//    double mm, julian, se;
+//    double val;
+//    int i, start, end, len;
+//    int yes_pm, wordlen;
+//    char theWord[150];
+//
+//    len = strlen(theString);
+//
+//    char *copy, *copy_to_free, *value;
+//    copy_to_free = copy = strdup(theString);
+//
+//    // time
+//    value = strsep(&copy, ",");
+//    // TODO: handle this
+//    struct tm{
+//      int tm_year;
+//      int tm_mon; 
+//      int tm_mday; 
+//      int tm_hour; 
+//      int tm_min; 
+//      int tm_sec; 
+//      int tm_isdst;
+//    };
+//    struct tm t;
+//    time_t t_of_day;
+//
+//    t.tm_year = (int)strtol(strsep(&value, "-"), NULL, 10) - 1900;
+//    t.tm_mon = (int)strtol(strsep(&value, "-"), NULL, 10);
+//    t.tm_mday = (int)strtol(strsep(&value, " "), NULL, 10);
+//    t.tm_hour = (int)strtol(strsep(&value, ":"), NULL, 10);
+//    t.tm_min = (int)strtol(strsep(&value, ":"), NULL, 10);
+//    t.tm_sec = (int)strtol(value, NULL, 10);
+//    t.tm_isdst = -1;        // Is DST on? 1 = yes, 0 = no, -1 = unknown
+//    aorc->time = mktime(&t);
+//
+//    // APCP_surface
+//    value = strsep(&copy, ",");
+//    // Not sure what this is
+//
+//    // DLWRF_surface
+//    value = strsep(&copy, ",");
+//    aorc->incoming_longwave_W_per_m2 = strtof(value, NULL);
+//    // DSWRF_surface
+//    value = strsep(&copy, ",");
+//    aorc->incoming_shortwave_W_per_m2 = strtof(value, NULL);
+//    // PRES_surface
+//    value = strsep(&copy, ",");
+//    aorc->surface_pressure_Pa = strtof(value, NULL);
+//    // SPFH_2maboveground
+//    value = strsep(&copy, ",");
+//    aorc->specific_humidity_2m_kg_per_kg = strtof(value, NULL);;
+//    // TMP_2maboveground
+//    value = strsep(&copy, ",");
+//    aorc->air_temperature_2m_K = strtof(value, NULL);
+//    // UGRD_10maboveground
+//    value = strsep(&copy, ",");
+//    aorc->u_wind_speed_10m_m_per_s = strtof(value, NULL);
+//    // VGRD_10maboveground
+//    value = strsep(&copy, ",");
+//    aorc->v_wind_speed_10m_m_per_s = strtof(value, NULL);
+//    // precip_rate
+//    value = strsep(&copy, ",");
+//    aorc->precip_kg_per_m2 = strtof(value, NULL);
+//
+//    // Go ahead and free the duplicate copy now
+//    free(copy_to_free);
+//
+//    return;
+//}
 
 /*####################################################################*/
 /*############################## GET WORD ############################*/
