@@ -4,8 +4,6 @@
 #include <float.h>
 #include <string.h>
 
-#include "../include/cfe.h"
-
 #define TRUE 1
 #define FALSE 0
 #define DEBUG 1
@@ -67,6 +65,38 @@
 // define data structures
 //--------------------------
 
+struct conceptual_reservoir
+{
+// this data structure describes a nonlinear reservoir having two outlets, one primary with an activation
+// threshold that may be zero, and a secondary outlet with a threshold that may be zero
+// this will also simulate a linear reservoir by setting the exponent parameter to 1.0 iff is_exponential==FALSE
+// iff is_exponential==TRUE, then it uses the exponential discharge function from the NWM V2.0 forumulation
+// as the primary discharge with a zero threshold, and does not calculate a secondary discharge.
+//--------------------------------------------------------------------------------------------------
+int    is_exponential;  // set this true TRUE to use the exponential form of the discharge equation
+double storage_max_m;   // maximum storage in this reservoir
+double storage_m;       // state variable.
+double coeff_primary;    // the primary outlet
+double exponent_primary;
+double storage_threshold_primary_m;
+double storage_threshold_secondary_m;
+double coeff_secondary;
+double exponent_secondary;
+};
+
+struct NWM_soil_parameters
+{
+// using same variable names as used in NWM.  <sorry>
+double smcmax;  // effective porosity [V/V]
+double wltsmc;  // wilting point soil moisture content [V/V]
+double satdk;   // saturated hydraulic conductivity [m s-1]
+double satpsi;	// saturated capillary head [m]
+double bb;      // beta exponent on Clapp-Hornberger (1978) soil water relations [-]
+double mult;    // the multiplier applied to satdk to route water rapidly downslope
+double slop;   // this factor (0-1) modifies the gradient of the hydraulic head at the soil bottom.  0=no-flow.
+double D;       // soil depth [m]
+};
+
 //DATA STRUCTURE TO HOLD AORC FORCING DATA
 struct aorc_forcing_data
 {
@@ -87,6 +117,20 @@ long int time; //TODO: type?           // seconds since 1970-01-01 00:00:00.0 0:
 
 // function prototypes
 // --------------------------------
+extern void Schaake_partitioning_scheme(double dt, double magic_number, double deficit, double qinsur,
+                                        double *runsrf, double *pddum);
+
+extern void conceptual_reservoir_flux_calc(struct conceptual_reservoir *da_reservoir,
+                                           double *primary_flux,double *secondary_flux);
+
+extern double convolution_integral(double runoff_m, int num_giuh_ordinates, 
+                                   double *giuh_ordinates, double *runoff_queue_m_per_timestep);
+                                   
+extern double nash_cascade(double flux_lat_m,int num_lateral_flow_nash_reservoirs,
+                           double K_nash,double *nash_storage);
+
+
+extern int is_fabs_less_than_epsilon(double a,double epsilon);  // returns TRUE iff fabs(a)<epsilon
 
 extern double greg_2_jul(long year, long mon, long day, long h, long mi,
                          double se);
@@ -121,6 +165,7 @@ int i;
 int tstep;
 double upper_lim;
 double lower_lim;
+double diff;
 char theString[513];   // dangerously hard coded string size... TODO fixme.
 long year,month,day,hour,minute;
 double dsec;
@@ -140,13 +185,8 @@ int yes_aorc=TRUE;                  // change to TRUE to read in entire AORC pre
 
 //Schaake partitioning function parameters
 
-/* xinanjiang_dev
-double Schaake_adjusted_magic_constant_by_soil_type; */
-
-/* xinanjiang_dev:
-double Schaake_output_runoff_m;*/
-double flux_output_direct_runoff_m;
-
+double Schaake_adjusted_magic_constant_by_soil_type;
+double Schaake_output_runoff_m;
 double infiltration_depth_m;
 
 // GIUH state & parameters
@@ -170,10 +210,12 @@ double assumed_near_channel_water_table_slope; // [L/L]
 double nash_lateral_runoff_m;
 
 // calculated flux variables
+double flux_overland_m;                // flux of surface runoff that goes through the GIUH convolution process
 double flux_perc_m=0.0;                // flux from soil to deeper groundwater reservoir
 double flux_lat_m;                     // lateral flux in the subsurface to the Nash cascade
 double flux_from_deep_gw_to_chan_m;    // flux from the deep reservoir into the channels
 double gw_reservoir_storage_deficit_m; // the available space in the conceptual groundwater reservoir
+double primary_flux,secondary_flux;    // temporary vars.
 
 double field_capacity_atm_press_fraction; // [-]
 double soil_water_content_at_field_capacity; // [V/V]
@@ -192,10 +234,6 @@ struct conceptual_reservoir soil_reservoir;
 struct conceptual_reservoir gw_reservoir;
 struct NWM_soil_parameters NWM_soil_params;
 struct aorc_forcing_data aorc_data;
-struct evapotranspiration_structure evap_struct;
-
-/* xinanjiang_dev:*/
-struct direct_runoff_parameters_structure direct_runoff_params_struct;
 
 double refkdt=3.0;   // in Sugar Creek WRF-Hydro calibration this value was 0.15  3.0 is the default from noah-mp.
 
@@ -203,12 +241,8 @@ double refkdt=3.0;   // in Sugar Creek WRF-Hydro calibration this value was 0.15
 //-----------------------
 
 double volstart =0.0;
-
-/* xinanjiang_dev
 double vol_sch_runoff   =0.0;
-double vol_sch_infilt   =0.0;   */
-double vol_dir_runoff   =0.0;
-double vol_dir_infilt   =0.0; 
+double vol_sch_infilt   =0.0;
 
 double vol_out_giuh     =0.0;
 double vol_end_giuh     =0.0;
@@ -234,7 +268,7 @@ double volout   =0.0;
 double volend   =0.0;
 
 
-if((out_fptr=fopen("test_cfe_driver.out","w"))==NULL)
+if((out_fptr=fopen("test.out","w"))==NULL)
   {printf("Can't open output file\n");exit(0);}
 
 #ifdef DEBUG
@@ -267,7 +301,7 @@ NWM_soil_params.slop=0.01;       // [-] hydraulic gradient varies from 0 (no flo
 NWM_soil_params.D=2.0;          // [m] soil thickness assumed in the NWM not from SOILPARM.TBL
 NWM_soil_params.mult=1000.0;     // not from SOILPARM.TBL, This is actually calibration parameter: LKSATFAC
 
-trigger_z_m=0.5;   // distance from the bottom of the soil column to the center of the lowest discretization
+trigger_z_m=1.3;   // distance from the bottom of the soil column to the center of the lowest discretization
 
 // calculate the activation storage ffor the secondary lateral flow outlet in the soil nonlinear reservoir.
 // following the method in the NWM/t-shirt parameter equivalence document, assuming field capacity soil
@@ -278,7 +312,7 @@ field_capacity_atm_press_fraction=0.33;  //alpha in Eqn. 3.
 // equation 3 from NWM/t-shirt parameter equivalence document
 H_water_table_m=field_capacity_atm_press_fraction*atm_press_Pa/unit_weight_water_N_per_m3; 
 soil_water_content_at_field_capacity=NWM_soil_params.smcmax*
-                                     pow(H_water_table_m/NWM_soil_params.satpsi,(1.0/NWM_soil_params.bb));
+                                     pow(H_water_table_m/NWM_soil_params.satpsi,(-1.0/NWM_soil_params.bb));
 
 // solve the integral given by Eqn. 5 in the parameter equivalence document.
 // this equation calculates the amount of water stored in the 2 m thick soil column when the water content 
@@ -288,6 +322,9 @@ lower_lim= pow(Omega,(1.0-1.0/NWM_soil_params.bb))/(1.0-1.0/NWM_soil_params.bb);
 upper_lim= pow(Omega+NWM_soil_params.D,(1.0-1.0/NWM_soil_params.bb))/(1.0-1.0/NWM_soil_params.bb);
 field_capacity_storage_threshold_m=NWM_soil_params.smcmax*pow(1.0/NWM_soil_params.satpsi,(-1.0/NWM_soil_params.bb))*
                                 (upper_lim-lower_lim);
+    
+printf("field capacity storage threshold = %lf m\n", field_capacity_storage_threshold_m);
+
 
 // initialize giuh parameters.  These would come from another source.
 //------------------------------------------------------------------
@@ -305,14 +342,9 @@ giuh_ordinates[4]=0.03;
 
 // initialize Schaake parameters
 //--------------------------------
-// in noah-mp refkdt=3.0.
-/* xinanjiang_dev: 
-Schaake_adjusted_magic_constant_by_soil_type=refkdt*NWM_soil_params.satdk/2.0e-06; // 2.0e-06 is used in noah-mp         */
-direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type=refkdt*NWM_soil_params.satdk/2.0e-06;
-direct_runoff_params_struct.a_Xinanjiang_inflection_point_parameter = 0;
-direct_runoff_params_struct.b_Xinanjiang_shape_parameter = 1;
-direct_runoff_params_struct.x_Xinanjiang_shape_parameter = 5;
-direct_runoff_params_struct.method = 1;
+// in noah-mp refkdt=3.0. 
+Schaake_adjusted_magic_constant_by_soil_type=refkdt*NWM_soil_params.satdk/2.0e-06; // 2.0e-06 is used in noah-mp
+
 
 // initialize lateral flow function parameters
 //---------------------------------------------
@@ -388,7 +420,7 @@ d_alloc(&rain_rate,MAX_NUM_RAIN_DATA);
 //########################################################################################################
 if(yes_aorc==TRUE)  // reading a csv file containing all the AORC meteorological/radiation and rainfall
   {
-  if((in_fptr=fopen("./forcings/cat87_01Dec2015.csv","r"))==NULL)
+  if((in_fptr=fopen("cat87_01Dec2015.csv","r"))==NULL)
     {printf("Can't open input file\n");exit(0);}
 
   num_rain_dat=720;  // hard coded number of lines in the forcing input file.
@@ -404,7 +436,7 @@ if(yes_aorc==TRUE)  // reading a csv file containing all the AORC meteorological
   }
 else  // reading a single column txt file that contains only rainfall (mm/h) 
   {
-  if((in_fptr=fopen("./forcings/cat87_01Dec2015_rain_only.dat","r"))==NULL)
+  if((in_fptr=fopen("cat87_01Dec2015_rain_only.dat","r"))==NULL)
     {printf("Can't open input file\n");exit(0);}
 
   num_rain_dat=720;  // hard coded number of lines in the forcing input file.
@@ -426,13 +458,15 @@ fprintf(out_fptr,"# (h),             (mm)   ,  (mm) ,   (mm) , (mm)  ,  (mm),   
 // run the model for num_timesteps+500
 //---------------------------------------
 
+double lateral_flux;      // flux from soil to lateral flow Nash cascade +to cascade
+double percolation_flux;  // flux from soil to gw nonlinear researvoir, +downward
 double oldval;
 
 //###################################################################################
 //############################      TIME LOOP       #################################
 //###################################################################################
 
-num_timesteps=45;//DELETEMEnum_rain_dat+279;  // run a little bit beyond the rain data to see what happens.
+num_timesteps=num_rain_dat+279;  // run a little bit beyond the rain data to see what happens.
 for(tstep=0;tstep<num_timesteps;tstep++)
   {
   
@@ -441,71 +475,125 @@ for(tstep=0;tstep<num_timesteps;tstep++)
   else                    timestep_rainfall_input_m=0.0;
   volin+=timestep_rainfall_input_m;
   
-  //##################################################//
-  // run the cfe code                                 //
-  //##################################################//
-cfe(                                                  //
-        &soil_reservoir_storage_deficit_m,            //
-        NWM_soil_params,                              //
-        &soil_reservoir,                               //
-        timestep_h,                                   //
-        
-        /* xinanjiang_dev:
-        Schaake_adjusted_magic_constant_by_soil_type, //    */
-        direct_runoff_params_struct,
-        
-        timestep_rainfall_input_m,                    //
+  //##################################################
+  // partition rainfall using Schaake function
+  //##################################################
 
-        /*/* xinanjiang_dev
-        &Schaake_output_runoff_m,                     //     */
-        &flux_output_direct_runoff_m,
+  soil_reservoir_storage_deficit_m=(NWM_soil_params.smcmax*NWM_soil_params.D-soil_reservoir.storage_m);
+  
+  Schaake_partitioning_scheme(timestep_h,Schaake_adjusted_magic_constant_by_soil_type,soil_reservoir_storage_deficit_m,
+                              timestep_rainfall_input_m,&Schaake_output_runoff_m,&infiltration_depth_m);
+  
+  // check to make sure that there is storage available in soil to hold the water that does not runoff
+  //--------------------------------------------------------------------------------------------------
+  if(soil_reservoir_storage_deficit_m<infiltration_depth_m)
+    {
+    Schaake_output_runoff_m+=(infiltration_depth_m-soil_reservoir_storage_deficit_m);  // put won't fit back into runoff
+    infiltration_depth_m=soil_reservoir_storage_deficit_m;
+    soil_reservoir.storage_m=soil_reservoir.storage_max_m;
+    }
+  printf("After Schaake function: rain:%8.5lf mm  runoff:%8.5lf mm  infiltration:%8.5lf mm  residual:%e m\n",
+                                 rain_rate[tstep],Schaake_output_runoff_m*1000.0,infiltration_depth_m*1000.0,
+                                 timestep_rainfall_input_m-Schaake_output_runoff_m-infiltration_depth_m);
 
-        &infiltration_depth_m,                        //
+  flux_overland_m=Schaake_output_runoff_m;
 
-        /* xinanjiang_dev
-        &vol_sch_runoff,                              //
-        &vol_sch_infilt,                              */
-        &vol_dir_runoff,                              //
-        &vol_dir_infilt,                              //
+  vol_sch_runoff   += flux_overland_m;
+  vol_sch_infilt   += infiltration_depth_m;
+  
+  // put infiltration flux into soil conceptual reservoir.  If not enough room
+  // limit amount transferred to deficit
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  //  REDUNDANT soil_reservoir_storage_deficit_m=soil_reservoir.storage_max_m-soil_reservoir.storage_m;  <- commented out by FLO based on comments from Bartel
+  
+  if(flux_perc_m>soil_reservoir_storage_deficit_m)
+    {
+    diff=flux_perc_m-soil_reservoir_storage_deficit_m;  // the amount that there is not capacity ffor
+    infiltration_depth_m=soil_reservoir_storage_deficit_m;  
+    vol_sch_runoff+=diff;  // send excess water back to GIUH runoff
+    vol_sch_infilt-=diff;  // correct overprediction of infilt.
+    flux_overland_m+=diff; // bug found by Nels.  This was missing and fixes it.
+    }
 
-        &flux_perc_m,                                 // 
-        &vol_to_soil,                                 //
-        &flux_lat_m,                                  //
-        &gw_reservoir_storage_deficit_m,              //
-        &gw_reservoir,                                 //
-        &vol_to_gw,                                   //
-        &vol_soil_to_gw,                              //
-        &vol_soil_to_lat_flow,                        //
-        &volout,                                      //
-        &flux_from_deep_gw_to_chan_m,                 //
-        &vol_from_gw,                                 //
-        &giuh_runoff_m,                               //
-        num_giuh_ordinates,                           //
-        giuh_ordinates,                               //
-        runoff_queue_m_per_timestep,                  //
-        &vol_out_giuh,                                //
-        &nash_lateral_runoff_m,                       //
-        num_lateral_flow_nash_reservoirs,             //
-        K_nash,                                       //
-        nash_storage,                                 //
-        &vol_in_nash,                                 //
-        &vol_out_nash,                                //
-        &evap_struct,
-        &Qout_m                                       //
-    );                                                // 
-    // ###############################################//
-    // run the cfe code                               //
-    //################################################//
+  vol_to_soil              += infiltration_depth_m; 
+  soil_reservoir.storage_m += infiltration_depth_m;  // put the infiltrated water in the soil.
+
+  
+  // calculate fluxes from the soil storage into the deep groundwater (percolation) and to lateral subsurface flow
+  //--------------------------------------------------------------------------------------------------------------
+  conceptual_reservoir_flux_calc(&soil_reservoir,&percolation_flux,&lateral_flux);
+
+  flux_perc_m=percolation_flux;  // m/h   <<<<<<<<<<<  flux of percolation from soil to g.w. reservoir >>>>>>>>>
+  
+  flux_lat_m=lateral_flux;  // m/h        <<<<<<<<<<<  flux into the lateral flow Nash cascade >>>>>>>>
+  
+
+  // calculate flux of base flow from deep groundwater reservoir to channel
+  //--------------------------------------------------------------------------
+  //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  gw_reservoir_storage_deficit_m= gw_reservoir.storage_max_m-gw_reservoir.storage_m;
+  
+  // limit amount transferred to deficit iff there is insuffienct avail. storage
+  if(flux_perc_m>gw_reservoir_storage_deficit_m)
+    {
+    diff=flux_perc_m-gw_reservoir_storage_deficit_m;
+    flux_perc_m=gw_reservoir_storage_deficit_m;
+    vol_sch_runoff+=diff;  // send excess water back to GIUH runoff
+    vol_sch_infilt-=diff;  // correct overprediction of infilt.
+    }
+    
+  vol_to_gw                +=flux_perc_m;
+  vol_soil_to_gw           +=flux_perc_m;
+  
+  gw_reservoir.storage_m   += flux_perc_m;
+  soil_reservoir.storage_m -= flux_perc_m;
+  soil_reservoir.storage_m -= flux_lat_m;
+  vol_soil_to_lat_flow     += flux_lat_m;  //TODO add this to nash cascade as input
+  volout=volout+flux_lat_m;
+  
+  conceptual_reservoir_flux_calc(&gw_reservoir,&primary_flux,&secondary_flux);
+
+  flux_from_deep_gw_to_chan_m=primary_flux;  // m/h   <<<<<<<<<< BASE FLOW FLUX >>>>>>>>>
+  vol_from_gw+=flux_from_deep_gw_to_chan_m;
+  
+  // in the instance of calling the gw reservoir the secondary flux should be zero- verify
+  if(is_fabs_less_than_epsilon(secondary_flux,1.0e-09)==FALSE) printf("problem with nonzero flux point 1\n");
+
+  
+  // adjust state of deep groundwater conceptual nonlinear reservoir
+  //-----------------------------------------------------------------
+  
+  gw_reservoir.storage_m -= flux_from_deep_gw_to_chan_m;
+
+  
+  // Solve the convolution integral ffor this time step 
+
+  giuh_runoff_m = convolution_integral(Schaake_output_runoff_m,num_giuh_ordinates,
+                                              giuh_ordinates,runoff_queue_m_per_timestep);
+  vol_out_giuh+=giuh_runoff_m;
+
+  volout+=giuh_runoff_m;
+  volout+=flux_from_deep_gw_to_chan_m;
+  
+  // Route lateral flow through the Nash cascade.
+  nash_lateral_runoff_m = nash_cascade(flux_lat_m,num_lateral_flow_nash_reservoirs,
+                                       K_nash,nash_storage);
+  vol_in_nash   += flux_lat_m;
+  vol_out_nash  += nash_lateral_runoff_m;
+
+#ifdef DEBUG
+        fprintf(out_debug_fptr,"%d %lf %lf\n",tstep,flux_lat_m,nash_lateral_runoff_m);
+#endif
+
+  Qout_m = giuh_runoff_m + nash_lateral_runoff_m + flux_from_deep_gw_to_chan_m;
 
   // <<<<<<<<NOTE>>>>>>>>>
   // These fluxs are all in units of meters per time step.   Multiply them by the "catchment_area_km2" variable
   // to convert them into cubic meters per time step.
   
   // WRITE OUTPUTS IN mm/h ffor aiding in interpretation
-                           
   fprintf(out_fptr,"%16.8lf %lf %lf %lf %lf %lf %lf\n",jdate_start+(double)tstep*1.0/24.0,
-                           timestep_rainfall_input_m*1000.0,
-                           flux_output_direct_runoff_m*1000, /* xinanjiang_dev: Schaake_output_runoff_m*1000.0,     */
+                           timestep_rainfall_input_m*1000.0,Schaake_output_runoff_m*1000.0,
                            giuh_runoff_m*1000.0,nash_lateral_runoff_m*1000.0, flux_from_deep_gw_to_chan_m*1000.0,
                            Qout_m*1000.0 );
   }  // END OF TIME LOOP
@@ -531,17 +619,13 @@ for(i=0;i<num_lateral_flow_nash_reservoirs;i++)  vol_in_nash_end+=nash_storage[i
 vol_soil_end=soil_reservoir.storage_m;
 
 double global_residual;
-
-/*/* xinanjiang_dev
-double schaake_residual;     */
-double direct_residual;
-
+double schaake_residual;
 double giuh_residual;
 double soil_residual;
 double nash_residual;
 double gw_residual;
 
-global_residual=volstart+volin-volout-volend-vol_end_giuh;
+global_residual=volstart+volin-volout-volend;
 fprintf(stderr,"GLOBAL MASS BALANCE\n");
 fprintf(stderr,"  initial volume: %8.4lf m\n",volstart);
 fprintf(stderr,"    volume input: %8.4lf m\n",volin);
@@ -553,49 +637,27 @@ else          fprintf(stderr,"global pct. err: %6.4e percent of initial\n",globa
 if(!is_fabs_less_than_epsilon(global_residual,1.0e-12)) 
               fprintf(stderr, "WARNING: GLOBAL MASS BALANCE CHECK FAILED\n");
 
-/* xinanjiang_dev
 schaake_residual=volin-vol_sch_runoff-vol_sch_infilt;
 fprintf(stderr," SCHAAKE MASS BALANCE\n");
 fprintf(stderr,"  surface runoff: %8.4lf m\n",vol_sch_runoff);
 fprintf(stderr,"    infiltration: %8.4lf m\n",vol_sch_infilt);
 fprintf(stderr,"schaake residual: %6.4e m\n",schaake_residual);  // should equal 0.0
 if(!is_fabs_less_than_epsilon(schaake_residual,1.0e-12))
-              fprintf(stderr,"WARNING: SCHAAKE PARTITIONING MASS BALANCE CHECK FAILED\n");    */
-direct_residual=volin-vol_dir_runoff-vol_dir_infilt;
-fprintf(stderr," DIRECT RUNOFF MASS BALANCE\n");
-fprintf(stderr,"  surface runoff: %8.4lf m\n",vol_dir_runoff);
-fprintf(stderr,"    infiltration: %8.4lf m\n",vol_dir_infilt);
-fprintf(stderr,"direct residual: %6.4e m\n",direct_residual);  // should equal 0.0
-if(!is_fabs_less_than_epsilon(direct_residual,1.0e-12))
-              fprintf(stderr,"WARNING: DIRECT RUNOFF PARTITIONING MASS BALANCE CHECK FAILED\n");
+              fprintf(stderr,"WARNING: SCHAAKE PARTITIONING MASS BALANCE CHECK FAILED\n");
 
-/* xinanjiang_dev
-giuh_residual=vol_out_giuh-vol_sch_runoff-vol_end_giuh;    */
-giuh_residual=vol_dir_runoff-vol_out_giuh-vol_end_giuh;
-
+giuh_residual=vol_out_giuh-vol_sch_runoff-vol_end_giuh;
 fprintf(stderr," GIUH MASS BALANCE\n");
-
-/* xinanjiang_dev
-fprintf(stderr,"  vol. into giuh: %8.4lf m\n",vol_sch_runoff);    */
-fprintf(stderr,"  vol. into giuh: %8.4lf m\n",vol_dir_runoff);
-
+fprintf(stderr,"  vol. into giuh: %8.4lf m\n",vol_sch_runoff);
 fprintf(stderr,"   vol. out giuh: %8.4lf m\n",vol_out_giuh);
 fprintf(stderr," vol. end giuh q: %8.4lf m\n",vol_end_giuh);
 fprintf(stderr,"   giuh residual: %6.4e m\n",giuh_residual);  // should equal zero
 if(!is_fabs_less_than_epsilon(giuh_residual,1.0e-12))
               fprintf(stderr,"WARNING: GIUH MASS BALANCE CHECK FAILED\n");
 
-/* xinanjiang_dev
-soil_residual=vol_soil_start+vol_sch_infilt-vol_soil_to_lat_flow-vol_soil_end-vol_to_gw;    */
-soil_residual=vol_soil_start+vol_dir_infilt-vol_soil_to_lat_flow-vol_soil_end-vol_to_gw;
-
+soil_residual=vol_soil_start+vol_sch_infilt-vol_soil_to_lat_flow-vol_soil_end-vol_to_gw;
 fprintf(stderr," SOIL WATER CONCEPTUAL RESERVOIR MASS BALANCE\n");
-fprintf(stderr,"   init soil vol: %8.4lf m\n",vol_soil_start);
-
-/* xinanjiang_dev
-fprintf(stderr,"  vol. into soil: %8.4lf m\n",vol_sch_infilt); */
-fprintf(stderr,"  vol. into soil: %8.4lf m\n",vol_dir_infilt);
-
+fprintf(stderr,"   init soil vol: %8.4lf m\n",vol_soil_start);     
+fprintf(stderr,"  vol. into soil: %8.4lf m\n",vol_sch_infilt);
 fprintf(stderr,"vol.soil2latflow: %8.4lf m\n",vol_soil_to_lat_flow);
 fprintf(stderr," vol. soil to gw: %8.4lf m\n",vol_soil_to_gw);
 fprintf(stderr," final vol. soil: %8.4lf m\n",vol_soil_end);   
@@ -626,6 +688,229 @@ if(!is_fabs_less_than_epsilon(gw_residual,1.0e-12))
 fclose(out_fptr);
 
 }  //<<<<<<<<<<<<  END OF MAIN PROGRAM
+
+//##############################################################
+//###################   NASH CASCADE   #########################
+//##############################################################
+extern double nash_cascade(double flux_lat_m,int num_lateral_flow_nash_reservoirs,
+                           double K_nash,double *nash_storage)
+{
+//##############################################################
+// Solve for the flow through the Nash cascade to delay the 
+// arrival of the lateral flow into the channel
+//##############################################################
+// local vars
+int i;
+double outflow_m;
+static double Q[MAX_NUM_NASH_CASCADE];
+
+//Loop through reservoirs
+for(i = 0; i < num_lateral_flow_nash_reservoirs; i++)
+  {
+  Q[i] = K_nash*nash_storage[i];
+  nash_storage[i]  -= Q[i];
+
+  if (i==0) nash_storage[i] += flux_lat_m; 
+  else      nash_storage[i] +=  Q[i-1];
+  }
+
+/*  Get Qout */
+outflow_m = Q[num_lateral_flow_nash_reservoirs-1];
+
+//Return the flow output
+return (outflow_m);
+
+}
+
+//##############################################################
+//############### GIUH CONVOLUTION INTEGRAL   ##################
+//##############################################################
+extern double convolution_integral(double runoff_m,int num_giuh_ordinates, 
+                                   double *giuh_ordinates, double *runoff_queue_m_per_timestep)
+{
+//##############################################################
+// This function solves the convolution integral involving N
+//  GIUH ordinates.
+//##############################################################
+double runoff_m_now;
+int N,i;
+
+N=num_giuh_ordinates;
+runoff_queue_m_per_timestep[N]=0.0;
+
+for(i=0;i<N;i++)
+  {
+  runoff_queue_m_per_timestep[i]+=giuh_ordinates[i]*runoff_m;
+  }
+runoff_m_now=runoff_queue_m_per_timestep[0];
+
+for(i=1;i<N;i++)  // shift all the entries in preperation ffor the next timestep
+  {
+  runoff_queue_m_per_timestep[i-1]=runoff_queue_m_per_timestep[i];
+  }
+runoff_queue_m_per_timestep[N-1]=0.0;
+
+return(runoff_m_now);
+}
+
+//##############################################################
+//########## SINGLE OUTLET EXPONENTIAL RESERVOIR ###############
+//##########                -or-                 ###############
+//##########    TWO OUTLET NONLINEAR RESERVOIR   ###############
+//################################################################
+// This function calculates the flux from a linear, or nonlinear 
+// conceptual reservoir with one or two outlets, or from an
+// exponential nonlinear conceptual reservoir with only one outlet.
+// In the non-exponential instance, each outlet can have its own
+// activation storage threshold.  Flow from the second outlet is 
+// turned off by setting the discharge coeff. to 0.0.
+//################################################################
+extern void conceptual_reservoir_flux_calc(struct conceptual_reservoir *reservoir,
+                                           double *primary_flux_m,double *secondary_flux_m)
+{
+//struct conceptual_reservoir  <<<<INCLUDED HERE FOR REFERENCE.>>>>
+//{
+// int    is_exponential;  // set this true TRUE to use the exponential form of the discharge equation
+// double storage_max_m;
+// double storage_m;
+// double coeff_primary;
+// double exponent_secondary;
+// double storage_threshold_primary_m;
+// double storage_threshold_secondary_m;
+// double coeff_secondary;
+// double exponent_secondary;
+// };
+// THIS FUNCTION CALCULATES THE FLUXES FROM A CONCEPTUAL NON-LINEAR (OR LINEAR) RESERVOIR WITH TWO OUTLETS
+// all fluxes calculated by this routine are instantaneous with units of the coefficient.
+
+//local variables
+double storage_above_threshold_m;
+
+if(reservoir->is_exponential==TRUE)  // single outlet reservoir like the NWM V1.2 exponential conceptual gw reservoir
+  {
+  // calculate the one flux and return.
+  *primary_flux_m=reservoir->coeff_primary*
+                    (exp(reservoir->exponent_primary*reservoir->storage_m/reservoir->storage_max_m)-1.0);
+  *secondary_flux_m=0.0;
+  return;
+  }
+// code goes past here iff it is not a single outlet exponential deep groundwater reservoir of the NWM variety
+// The vertical outlet is assumed to be primary and satisfied first.
+
+*primary_flux_m=0.0;
+storage_above_threshold_m=reservoir->storage_m-reservoir->storage_threshold_primary_m;
+if(storage_above_threshold_m>0.0)
+  {
+  // flow is possible from the primary outlet
+  *primary_flux_m=reservoir->coeff_primary*
+                pow(storage_above_threshold_m/(reservoir->storage_max_m-reservoir->storage_threshold_primary_m),
+                    reservoir->exponent_primary);
+  if(*primary_flux_m > storage_above_threshold_m) 
+                    *primary_flux_m=storage_above_threshold_m;  // limit to max. available
+  }
+*secondary_flux_m=0.0;
+storage_above_threshold_m=reservoir->storage_m-reservoir->storage_threshold_secondary_m;
+if(storage_above_threshold_m>0.0)
+  {
+  // flow is possible from the secondary outlet
+  *secondary_flux_m=reservoir->coeff_secondary*
+                  pow(storage_above_threshold_m/(reservoir->storage_max_m-reservoir->storage_threshold_secondary_m),
+                      reservoir->exponent_secondary);
+  if(*secondary_flux_m > (storage_above_threshold_m-(*primary_flux_m))) 
+                    *secondary_flux_m=storage_above_threshold_m-(*primary_flux_m);  // limit to max. available
+  }
+return;
+}
+
+
+//##############################################################
+//#########   SCHAAKE RUNOFF PARTITIONING SCHEME   #############
+//##############################################################
+void Schaake_partitioning_scheme(double timestep_h, double Schaake_adjusted_magic_constant_by_soil_type, 
+           double column_total_soil_moisture_deficit_m,
+           double water_input_depth_m,double *surface_runoff_depth_m,double *infiltration_depth_m)
+{
+
+
+/*! ===============================================================================
+  This subtroutine takes water_input_depth_m and partitions it into surface_runoff_depth_m and
+  infiltration_depth_m using the scheme from Schaake et al. 1996. 
+! --------------------------------------------------------------------------------
+! ! modified by FLO April 2020 to eliminate reference to ice processes, 
+! ! and to de-obfuscate and use descriptive and dimensionally consistent variable names.
+! --------------------------------------------------------------------------------
+    IMPLICIT NONE
+! --------------------------------------------------------------------------------
+! inputs
+  double timestep_h
+  double Schaake_adjusted_magic_constant_by_soil_type = C*Ks(soiltype)/Ks_ref, where C=3, and Ks_ref=2.0E-06 m/s
+  double column_total_soil_moisture_deficit_m
+  double water_input_depth_m  amount of water input to soil surface this time step [m]
+
+! outputs
+  double surface_runoff_depth_m      amount of water partitioned to surface water this time step [m]
+
+
+--------------------------------------------------------------------------------*/
+int k;
+double timestep_d,Schaake_parenthetical_term,Ic,Px,infilt_dep_m;
+
+
+if(0.0 < water_input_depth_m) 
+  {
+  if (0.0 > column_total_soil_moisture_deficit_m)
+    {
+    *surface_runoff_depth_m=water_input_depth_m;
+    *infiltration_depth_m=0.0;
+    }
+  else
+    {
+    // partition time-step total applied water as per Schaake et al. 1996.
+                                         // change from dt in [s] to dt1 in [d] because kdt has units of [d^(-1)] 
+    timestep_d = timestep_h /24.0;    // timestep_d is the time step in days.
+      
+    // calculate the parenthetical part of Eqn. 34 from Schaake et al. Note the magic constant has units of [d^(-1)]
+    
+    Schaake_parenthetical_term = (1.0 - exp ( - Schaake_adjusted_magic_constant_by_soil_type * timestep_d));      
+    
+    // From Schaake et al. Eqn. 2., using the column total moisture deficit 
+    // BUT the way it is used here, it is the cumulative soil moisture deficit in the entire soil profile. 
+    // "Layer" info not used in this subroutine in noah-mp, except to sum up the total soil moisture storage.
+    // NOTE: when column_total_soil_moisture_deficit_m becomes zero, which occurs when the soil column is saturated, 
+    // then Ic=0, where Ic in the Schaake paper is called the "spatially averaged infiltration capacity", 
+    // and is defined in Eqn. 12. 
+
+    Ic = column_total_soil_moisture_deficit_m * Schaake_parenthetical_term; 
+                                     
+    Px=water_input_depth_m;   // Total water input to partitioning scheme this time step [m]
+  
+    // This is eqn 24 from Schaake et al.  NOTE: this is 0 in the case of a saturated soil column, when Ic=0.  
+    // Physically happens only if soil has no-flow lower b.c.
+    
+    *infiltration_depth_m = (Px * (Ic / (Px + Ic)));  
+
+
+    if( 0.0 < (water_input_depth_m-(*infiltration_depth_m)) )
+      {
+      *surface_runoff_depth_m = water_input_depth_m - (*infiltration_depth_m);
+      }
+    else  *surface_runoff_depth_m=0.0;
+    *infiltration_depth_m =  water_input_depth_m - (*surface_runoff_depth_m);
+    }
+  }
+else
+  {
+  *surface_runoff_depth_m = 0.0;
+  *infiltration_depth_m = 0.0;
+  }
+return;
+}
+
+extern int is_fabs_less_than_epsilon(double a,double epsilon)  // returns true if fabs(a)<epsilon
+{
+if(fabs(a)<epsilon) return(TRUE);
+else                return(FALSE);
+}
 
 
 
