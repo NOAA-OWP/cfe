@@ -625,7 +625,7 @@ double soil_residual;
 double nash_residual;
 double gw_residual;
 
-global_residual=volstart+volin-volout-volend-vol_end_giuh;
+global_residual=volstart+volin-volout-volend;//-vol_end_giuh;
 fprintf(stderr,"GLOBAL MASS BALANCE\n");
 fprintf(stderr,"  initial volume: %8.4lf m\n",volstart);
 fprintf(stderr,"    volume input: %8.4lf m\n",volin);
@@ -645,8 +645,8 @@ fprintf(stderr,"schaake residual: %6.4e m\n",schaake_residual);  // should equal
 if(!is_fabs_less_than_epsilon(schaake_residual,1.0e-12))
               fprintf(stderr,"WARNING: SCHAAKE PARTITIONING MASS BALANCE CHECK FAILED\n");
 
-//giuh_residual=vol_out_giuh-vol_sch_runoff-vol_end_giuh;
-giuh_residual=vol_sch_runoff-vol_out_giuh-vol_end_giuh;
+giuh_residual=vol_out_giuh-vol_sch_runoff-vol_end_giuh;
+//giuh_residual=vol_sch_runoff-vol_out_giuh-vol_end_giuh;
 fprintf(stderr," GIUH MASS BALANCE\n");
 fprintf(stderr,"  vol. into giuh: %8.4lf m\n",vol_sch_runoff);
 fprintf(stderr,"   vol. out giuh: %8.4lf m\n",vol_out_giuh);
