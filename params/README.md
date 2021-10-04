@@ -28,11 +28,13 @@ The "others" folder contains functions to plot the outputs.
 
 # Software Requirements:
 1) TauDEM (which requires gdal, mpiexec,... see https://github.com/dtarb/TauDEM)
-2) Python if the TWI histogram per basin will be created. Anaconda distribution was used but is not a requirement. The following libraries are used in python: 
- 	- osgeo (gdal,ogr)
- 	- numpy
- 	- agparse
- 	- pandas
+2) Python is required to generate TWI histogram and the width function per basin. Running this model requires python and the libraries listed in the environment file: environment.yml. To install anaconda see https://docs.anaconda.com/. To create an environment in anaconda, open the anaconda console and run: 
+
+conda env create --file environment.yml
+conda activate params
+
+ 	
+Anaconda is not required, as long as all requirements listed in environment.yml are available in the python installation. 
  	
 3) Curl to download the HAND DEM data
 
