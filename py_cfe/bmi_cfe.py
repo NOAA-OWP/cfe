@@ -3,24 +3,83 @@ import numpy as np
 import pandas as pd
 import json
 import matplotlib.pyplot as plt
+import cfe
 
-class CFE():
+class BMI_CFE():
     def __init__(self, cfg_file=None):
-        super(CFE, self).__init__()
+        """Create a Bmi CFE model that is ready for initialization."""
+        super(BMI_CFE, self).__init__()
+        self._values = {}
+        self._var_loc = "node"
+        self._var_grid_id = 0
+        self._start_time = 0.0
+        self._end_time = np.finfo("d").max
         
+        # these need to be initialized here as scale_output() called in update()
+        self.streamflow_cms = 0.0
+        self.streamflow_fms = 0.0
+        self.surface_runoff_mm = 0.0
+
+        #----------------------------------------------
+        # Required, static attributes of the model
+        #----------------------------------------------
+        _att_map = {
+            'model_name':         'Conceptual Functional Equivalent (CFE)',
+            'version':            '1.0',
+            'author_name':        'Jonathan Martin Frame',
+            'grid_type':          'scalar',
+            'time_step_size':      1, 
+            'time_units':         '1 hour' }
+    
+        #---------------------------------------------
+        # Input variable names (CSDMS standard names)
+        #---------------------------------------------
+        _input_var_names = [
+            'atmosphere_water__time_integral_of_precipitation_mass_flux',
+            'water_potential_evaporation_flux']
+    
+        #---------------------------------------------
+        # Output variable names (CSDMS standard names)
+        #---------------------------------------------
+        _output_var_names = ['land_surface_water__runoff_depth', 
+                             'land_surface_water__runoff_volume_flux']
+        
+        #------------------------------------------------------
+        # Create a Python dictionary that maps CSDMS Standard
+        # Names to the model's internal variable names.
+        # This is going to get long, 
+        #     since the input variable names could come from any forcing...
+        #------------------------------------------------------
+        #_var_name_map_long_first = {
+        _var_name_units_map = {
+                                'land_surface_water__runoff_volume_flux':['streamflow_cfs','ft3 s-1'],
+                                'land_surface_water__runoff_depth':['streamflow_mm','mm'],
+                                #--------------   Dynamic inputs --------------------------------
+                                'atmosphere_water__time_integral_of_precipitation_mass_flux':['timestep_rainfall_input_m','kg m-2'],
+                                'water_potential_evaporation_flux':['potential_et_m_per_s','m s-1']
+                          }
+
+        #------------------------------------------------------------
+        # this is the bmi configuration file
         self.cfg_file = cfg_file
+
+    #__________________________________________________________________
+    #__________________________________________________________________
+    # BMI: Model Control Function
+    def initialize(self, current_time_step=0):
+        self.current_time_step=current_time_step
        
         ############################################################
         # ________________________________________________________ #
-        # ________________________________________________________ #
         # GET VALUES FROM CONFIGURATION FILE.                      #
-                                                                   #
         self.config_from_json()                                    #
-                                                                   #
-        # GET VALUES FROM CONFIGURATION FILE.                      #
-        # ________________________________________________________ #
-        # ________________________________________________________ #
-        ############################################################        
+        
+        # ________________________________________________
+        # The configuration should let the BMI know what mode to run in (framework vs standalone)
+        # If it is stand alone, then load in the forcing and read the time from the forcig file
+        if self.stand_alone == 1:
+            self.load_forcing_file()
+            self.current_time = pd.Timestamp(self.forcing_data['time'][self.current_time_step])
 
         # ________________________________________________
         # In order to check mass conservation at any time
@@ -59,14 +118,12 @@ class CFE():
         # Evapotranspiration
         self.potential_et_m_per_timestep = 0
         self.actual_et_m_per_timestep    = 0
-        
          
         # ________________________________________________________
         # Set these values now that we have the information from the configuration file.
         self.runoff_queue_m_per_timestep = np.zeros(len(self.giuh_ordinates))
         self.num_giuh_ordinates = len(self.runoff_queue_m_per_timestep)
         self.num_lateral_flow_nash_reservoirs = len(self.nash_storage)
-
         
         # ________________________________________________
         # Local values to be used in setting up soil reservoir
@@ -92,7 +149,6 @@ class CFE():
         field_capacity_power = np.power(1.0/self.soil_params['satpsi'],(-1.0/self.soil_params['bb']))
 
         field_capacity_storage_threshold_m = self.soil_params['smcmax'] * field_capacity_power * lim_diff
-        
         
         # ________________________________________________
         # lateral flow function parameters
@@ -131,7 +187,6 @@ class CFE():
         self.volstart                   += self.soil_reservoir['storage_m']
         self.vol_soil_start              = self.soil_reservoir['storage_m']
         
-        
         # ________________________________________________
         # Schaake
         self.refkdt = 3.0
@@ -139,375 +194,47 @@ class CFE():
         self.Schaake_output_runoff_m = 0
         self.infiltration_depth_m = 0
         
-        
         # ________________________________________________
         # Nash cascade        
-        self.K_nash = 0.03        
-        
-    # __________________________________________________________________________________________________________
-    # MAIN MODEL FUNCTION
-    def run_cfe(self):
-        
-        # ________________________________________________
-        self.volin += self.timestep_rainfall_input_m
-        
-        # ________________________________________________
-        self.potential_et_m_per_timestep = self.potential_et_m_per_s * self.time_step_size
-        
-        # ________________________________________________
-        # timestep_rainfall_input_m = f(timestep_rainfall_input_m, potential_et_m_per_timestep)
-        self.et_from_rainfall()
-        
-        # ________________________________________________        
-        self.soil_reservoir_storage_deficit_m = (self.soil_params['smcmax'] * \
-                                                 self.soil_params['D'] - \
-                                                 self.soil_reservoir['storage_m'])
-        
-        # ________________________________________________
-        # Calculates the value for surface_runoff_depth_m
-        self.Schaake_partitioning_scheme()
+        self.K_nash = 0.03
 
-        # ________________________________________________
-        self.et_from_soil()
+        ####################################################################
+        # ________________________________________________________________ #
+        # ________________________________________________________________ #
+        # CREATE AN INSTANCE OF THE CONCEPTUAL FUNCTIONAL EQUIVALENT MODEL #
+        self.cfe_model = cfe.CFE()
+        # ________________________________________________________________ #
+        # ________________________________________________________________ #
+        ####################################################################
         
-        # ________________________________________________
-        if self.soil_reservoir_storage_deficit_m < self.infiltration_depth_m:
-            # put won't fit back into runoff
-            self.surface_runoff_depth_m += (self.infiltration_depth_m - soil_reservoir_storage_deficit_m)
-            self.infiltration_depth_m = self.soil_reservoir_storage_deficit_m
-            self.soil_reservoir['storage_m'] = self.soil_reservoir['storage_max_m']
-
-        # ________________________________________________
-        self.vol_sch_runoff += self.surface_runoff_depth_m
-        self.vol_sch_infilt += self.infiltration_depth_m
-
-        # ________________________________________________
-        if self.current_time_step == 0:
-            self.previous_flux_perc_m = self.flux_perc_m
-            
-        # ________________________________________________
-        if self.previous_flux_perc_m > self.soil_reservoir_storage_deficit_m:
-            diff = self.previous_flux_perc_m - self.soil_reservoir_storage_deficit
-            self.infiltration_depth_m = self.soil_reservoir_storage_deficit_m
-            self.vol_sch_runoff += diff
-            self.vol_sch_infilt -= diff
-            self.surface_runoff_depth_m += diff
-            
-        # ________________________________________________
-        self.vol_to_soil += self.infiltration_depth_m
-        self.soil_reservoir['storage_m'] += self.infiltration_depth_m
-
-        # ________________________________________________
-        # primary_flux, secondary_flux = f(reservoir)
-        self.conceptual_reservoir_flux_calc( self.soil_reservoir )
-
-        # ________________________________________________
-        self.flux_perc_m = self.primary_flux
-        self.flux_lat_m = self.secondary_flux
-
-        # ________________________________________________
-        self.gw_reservoir_storage_deficit_m = self.gw_reservoir['storage_max_m'] - self.gw_reservoir['storage_m']
-        
-        # ________________________________________________
-        if self.flux_perc_m > self.gw_reservoir_storage_deficit_m:
-            diff = self.flux_perc_m - self.gw_reservoir_storage_deficit_m
-            self.flux_perc_m = self.gw_reservoir_storage_deficit_m
-            self.vol_sch_runoff+=diff 
-            self.vol_sch_infilt-=diff 
-            
-        # ________________________________________________
-        self.vol_to_gw                += self.flux_perc_m
-        self.vol_soil_to_gw           += self.flux_perc_m
-
-        self.gw_reservoir['storage_m']   += self.flux_perc_m
-        self.soil_reservoir['storage_m'] -= self.flux_perc_m
-        self.soil_reservoir['storage_m'] -= self.flux_lat_m
-        self.vol_soil_to_lat_flow        += self.flux_lat_m  #TODO add this to nash cascade as input
-        self.volout                       = self.volout + self.flux_lat_m;
-
-            
-        # ________________________________________________
-        # primary_flux, secondary_flux = f(reservoir)
-        self.conceptual_reservoir_flux_calc( self.gw_reservoir )
-            
-        # ________________________________________________
-        self.flux_from_deep_gw_to_chan_m = self.primary_flux
-        self.vol_from_gw += self.flux_from_deep_gw_to_chan_m
-        
-        # ________________________________________________        
-        if not self.is_fabs_less_than_epsilon(self.secondary_flux, 1.0e-09):
-            print("problem with nonzero flux point 1\n")
-                        
-        # ________________________________________________                               
-        self.gw_reservoir['storage_m'] -= self.flux_from_deep_gw_to_chan_m
-        
-        # ________________________________________________
-        # giuh_runoff_m = f(Schaake_output, giuh_ordinates, runoff_queue_m_per_timestep)
-        self.convolution_integral()
-        
-        # ________________________________________________
-        self.vol_out_giuh += self.flux_giuh_runoff_m
-        self.volout += self.flux_giuh_runoff_m + self.flux_from_deep_gw_to_chan_m
-        
-        # ________________________________________________
-        self.nash_cascade()
-
-        # ________________________________________________
-        self.vol_in_nash += self.flux_lat_m
-        self.vol_out_nash += self.flux_nash_lateral_runoff_m
-        
-        # ________________________________________________
-        self.flux_Qout_m = self.flux_giuh_runoff_m + self.flux_nash_lateral_runoff_m + self.flux_from_deep_gw_to_chan_m
-        self.total_discharge = self.flux_Qout_m * self.catchment_area_km2 * 1000000.0 / 3600.0
-        
-        # ________________________________________________
-        self.current_time_step += 1
-        self.current_time      += pd.Timedelta(value=self.time_step_size, unit='s')
-
-        return
-    
     
     # __________________________________________________________________________________________________________
-    def nash_cascade(self):
-        """
-            Solve for the flow through the Nash cascade to delay the 
-            arrival of the lateral flow into the channel
-        """
-        Q = np.zeros(self.num_lateral_flow_nash_reservoirs)
-        
-        for i in range(self.num_lateral_flow_nash_reservoirs):
-            
-            Q[i] = self.K_nash * self.nash_storage[i]
-            
-            self.nash_storage[i] -= Q[i]
-            
-            if i == 0:
-                
-                self.nash_storage[i] += self.flux_lat_m
-                
-            else:
-                
-                self.nash_storage[i] += Q[i-1]
-        
-        self.flux_nash_lateral_runoff_m = Q[self.num_lateral_flow_nash_reservoirs - 1]
-        
-        return
-    
-                               
     # __________________________________________________________________________________________________________
-    def convolution_integral(self):
-        """
-            This function solves the convolution integral involving N GIUH ordinates.
-            
-            Inputs:
-                Schaake_output_runoff_m
-                num_giuh_ordinates
-                giuh_ordinates
-            Outputs:
-                runoff_queue_m_per_timestep
-        """
-
-#        self.runoff_queue_m_per_timestep[-1] = 0
-        
-        for i in range(self.num_giuh_ordinates): 
-
-            self.runoff_queue_m_per_timestep[i] += self.giuh_ordinates[i] * self.surface_runoff_depth_m
-            
-        self.flux_giuh_runoff_m = self.runoff_queue_m_per_timestep[0]
-        
-        # __________________________________________________________________
-        # shift all the entries in preperation for the next timestep
-        
-        for i in range(1, self.num_giuh_ordinates):  
-            
-            self.runoff_queue_m_per_timestep[i-1] = self.runoff_queue_m_per_timestep[i]
-
-        self.runoff_queue_m_per_timestep[-1] = 0
-
-        return
-    
+    # BMI: Model Control Function
+    def update(self):
+        self.cfe_model.run_cfe(self)
 
     # __________________________________________________________________________________________________________
-    def et_from_rainfall(self):
-        
-        """
-            iff it is raining, take PET from rainfall first.  Wet veg. is efficient evaporator.
-        """
-        
-        if self.timestep_rainfall_input_m >0.0:
-
-            if self.timestep_rainfall_input_m > self.potential_et_m_per_timestep:
-        
-                self.actual_et_m_per_timestep = self.potential_et_m_per_timestep
-                self.timestep_rainfall_input_m -= self.actual_et_m_per_timestep
-
-            else: 
-
-                self.potential_et_m_per_timestep -= self.timestep_rainfall_input_m
-                self.timestep_rainfall_input_m=0.0
-        return
-                
-                
     # __________________________________________________________________________________________________________
-    ########## SINGLE OUTLET EXPONENTIAL RESERVOIR ###############
-    ##########                -or-                 ###############
-    ##########    TWO OUTLET NONLINEAR RESERVOIR   ###############                        
-    def conceptual_reservoir_flux_calc(self, reservoir):
-        """
-            This function calculates the flux from a linear, or nonlinear 
-            conceptual reservoir with one or two outlets, or from an
-            exponential nonlinear conceptual reservoir with only one outlet.
-            In the non-exponential instance, each outlet can have its own
-            activation storage threshold.  Flow from the second outlet is 
-            turned off by setting the discharge coeff. to 0.0.
-        """
-
-        if reservoir['is_exponential'] == True: 
-            flux_exponential = np.exp(reservoir['exponent_primary'] * \
-                                      reservoir['storage_m'] / \
-                                      reservoir['storage_max_m']) - 1.0
-            self.primary_flux_m = reservoir['coeff_primary'] * flux_exponential
-            self.secondary_flux_m=0.0
-            return
-    
-        self.primary_flux_m=0.0
+    # BMI: Model Control Function
+    def update_until(self, until, verbose=True):
+        for i in range(self.current_time_step, until):
+            self.cfe_model.run_cfe()
+            print("total discharge: {}".format(self.total_discharge))
+            print("at time: {}".format(self.current_time))
         
-        storage_above_threshold_m = reservoir['storage_m'] - reservoir['storage_threshold_primary_m']
-        
-        if storage_above_threshold_m > 0.0:
-                               
-            storage_diff = reservoir['storage_max_m'] - reservoir['storage_threshold_primary_m']
-            storage_ratio = storage_above_threshold_m / storage_diff
-            storage_power = np.power(storage_ratio, reservoir['exponent_primary'])
-            
-            self.primary_flux_m = reservoir['coeff_primary'] * storage_power
-
-            if self.primary_flux_m > storage_above_threshold_m:
-                self.primary_flux_m = storage_above_threshold_m
-                
-        self.secondary_flux_m = 0.0;
-            
-        storage_above_threshold_m = reservoir['storage_m'] - reservoir['storage_threshold_secondary_m']
-        
-        if storage_above_threshold_m > 0.0:
-            
-            storage_diff = reservoir['storage_max_m'] - reservoir['storage_threshold_secondary_m']
-            storage_ratio = storage_above_threshold_m / storage_diff
-            storage_power = np.power(storage_ratio, reservoir['exponent_secondary'])
-            
-            self.secondary_flux_m = reservoir['coeff_secondary'] * storage_power
-            
-            if self.secondary_flux_m > (storage_above_threshold_m - self.primary_flux_m):
-                self.secondary_flux_m = storage_above_threshold_m - self.primary_flux_m
-                
-        return
-    
-    
     # __________________________________________________________________________________________________________
-    #  SCHAAKE RUNOFF PARTITIONING SCHEME
-    def Schaake_partitioning_scheme(self):
-        """
-            This subtroutine takes water_input_depth_m and partitions it into surface_runoff_depth_m and
-            infiltration_depth_m using the scheme from Schaake et al. 1996. 
-            !--------------------------------------------------------------------------------
-            modified by FLO April 2020 to eliminate reference to ice processes, 
-            and to de-obfuscate and use descriptive and dimensionally consistent variable names.
-            
-            inputs:
-              timestep_d
-              Schaake_adjusted_magic_constant_by_soil_type = C*Ks(soiltype)/Ks_ref, where C=3, and Ks_ref=2.0E-06 m/s
-              column_total_soil_moisture_deficit_m (soil_reservoir_storage_deficit_m)
-              water_input_depth_m (timestep_rainfall_input_m) amount of water input to soil surface this time step [m]
-            outputs:
-              surface_runoff_depth_m      amount of water partitioned to surface water this time step [m]
-              infiltration_depth_m
-        """
-        
-        if 0 < self.timestep_rainfall_input_m:
-            
-            if 0 > self.soil_reservoir_storage_deficit_m:
-                
-                self.surface_runoff_depth_m = self.timestep_rainfall_input_m
-                
-                self.infiltration_depth_m = 0.0
-                
-            else:
-                
-                schaake_exp_term = np.exp( - self.Schaake_adjusted_magic_constant_by_soil_type * self.timestep_d)
-                
-                Schaake_parenthetical_term = (1.0 - schaake_exp_term)
-                
-                Ic = self.soil_reservoir_storage_deficit_m * Schaake_parenthetical_term
-                
-                Px = self.timestep_rainfall_input_m
-                
-                self.infiltration_depth_m = (Px * (Ic / (Px + Ic)))
-                
-                if 0.0 < (self.timestep_rainfall_input_m - self.infiltration_depth_m):
-                    
-                    self.surface_runoff_depth_m = self.timestep_rainfall_input_m - self.infiltration_depth_m
-                    
-                else:
-                    
-                    self.surface_runoff_depth_m = 0.0
-                    
-                    self.infiltration_depth_m =  self.timestep_rainfall_input_m - self.surface_runoff_depth_m
-                    
-        else:
-            
-            self.surface_runoff_depth_m = 0.0
-            
-            self.infiltration_depth_m = 0.0
-            
-        return
-            
-                               
     # __________________________________________________________________________________________________________
-    def et_from_soil(self):
-        """
-            take AET from soil moisture storage, 
-            using Budyko type curve to limit PET if wilting<soilmoist<field_capacity
-        """
-        
-        if self.potential_et_m_per_timestep > 0:
-            
-            print("this should not happen yet. Still debugging the other functions.")
-            
-            if self.soil_reservoir['storage_m'] >= self.soil_reservoir['storage_threshold_primary_m']:
-            
-                self.actual_et_m_per_timestep = np.min(self.potential_et_m_per_timestep, 
-                                                       self.soil_reservoir['storage_m'])
+    # BMI: Model Control Function
+    def finalize(self):
 
-                self.soil_reservoir['storage_m'] -= self.actual_et_m_per_timestep
+        self.finalize_mass_balance(verbose=True)
+        self.reset_volume_tracking()
 
-                self.et_struct['potential_et_m_per_timestep'] = 0.0
-                               
-            elif (self.soil_reservoir['storage_m'] > self.soil_reservoir['wilting_point_m'] and 
-                  self.soil_reservoir['storage_m'] < self.soil_reservoir['storage_threshold_primary_m']):
-            
-                Budyko_numerator = self.soil_reservoir['storage_m'] - self.soil_reservoir['wilting_point_m']
-                Budyko_denominator = self.soil_reservoir['storage_threshold_primary_m'] - \
-                                     self.soil_reservoir['wilting_point_m']
-                Budyki = Budyko_numerator / Budyko_denominator
-                               
-                self.actual_et_m_per_timestep = Budyko * self.potential_et_m_per_timestep
-                               
-                self.soil_reservoir['storage_m'] -= self.actual_et_m_per_timestep
-        return
-            
-            
-    # __________________________________________________________________________________________________________
-    def is_fabs_less_than_epsilon(self,a,epsilon):
-        
-        if np.abs(a) < epsilon:
-            
-            return True
-        
-        else:
-            
-            return False 
+        """Finalize model."""
+        self.cfe_model = None
+        self.cfe_state = None
     
-
     # ________________________________________________
     # Mass balance tracking
     def reset_volume_tracking(self):
@@ -589,9 +316,8 @@ class CFE():
 
         self.vol_soil_end = self.soil_reservoir['storage_m']
         
-        self.global_residual  = self.volstart + self.volin - self.volout - self.volend -self.vol_end_giuh # jframe adding vol_end_giuh to residual
+        self.global_residual  = self.volstart + self.volin - self.volout - self.volend -self.vol_end_giuh
         self.schaake_residual = self.volin - self.vol_sch_runoff - self.vol_sch_infilt
-#       self.giuh_residual    = self.vol_out_giuh - self.vol_sch_runoff - self.vol_end_giuh
         self.giuh_residual    = self.vol_sch_runoff - self.vol_out_giuh - self.vol_end_giuh
         self.soil_residual    = self.vol_soil_start + self.vol_sch_infilt - \
                                 self.vol_soil_to_lat_flow - self.vol_soil_end - self.vol_to_gw
@@ -667,7 +393,7 @@ class CFE():
             self.cfe_output_data.loc[t,'Time Step'] = self.current_time_step
             self.cfe_output_data.loc[t,'Rainfall']  = self.timestep_rainfall_input_m
 
-            self.run_cfe()
+            self.cfe_model.run_cfe(self)
             
             self.cfe_output_data.loc[t,'Direct Runoff']   = self.surface_runoff_depth_m
             self.cfe_output_data.loc[t,'GIUH Runoff']     = self.flux_giuh_runoff_m
@@ -685,25 +411,3 @@ class CFE():
             plt.legend()
             plt.show()
             plt.close()
-    
-    # __________________________________________________________________________________________________________
-    ########## BMI FUNCTIONS BELOW ###############
-    def initialize(self, current_time_step=0):
-        self.current_time_step=current_time_step
-        if self.stand_alone == 1:
-            self.load_forcing_file()
-            self.current_time = pd.Timestamp(self.forcing_data['time'][self.current_time_step])
-        return
-        
-    def update(self):
-        self.run_cfe()
-        
-    def update_until(self, until, verbose=True):
-        for i in range(self.current_time_step, until):
-            self.run_cfe()
-            print("total discharge: {}".format(self.total_discharge))
-            print("at time: {}".format(self.current_time))
-        
-    def finalize(self):
-        self.finalize_mass_balance(verbose=True)
-        self.reset_volume_tracking()

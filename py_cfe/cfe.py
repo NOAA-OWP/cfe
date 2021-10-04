@@ -1,171 +1,170 @@
 import time
 import numpy as np
 import pandas as pd
-import json
-import matplotlib.pyplot as plt
 
 class CFE():
-    def __init__(self, cfe_state):
+    def __init__(self):
         super(CFE, self).__init__()
         
-        self.timestep_rainfall_input_m = cfe_state.timestep_rainfall_input_m
-gw_reservoir
-soil_reservoir
-
-        self.volin
-
     # __________________________________________________________________________________________________________
     # MAIN MODEL FUNCTION
-    def run_cfe(self):
+    def run_cfe(self, cfe_state):
         
         # ________________________________________________
-        self.volin += self.timestep_rainfall_input_m
+        cfe_state.volin += cfe_state.timestep_rainfall_input_m
         
         # ________________________________________________
-        self.potential_et_m_per_timestep = self.potential_et_m_per_s * self.time_step_size
+        cfe_state.potential_et_m_per_timestep = cfe_state.potential_et_m_per_s * cfe_state.time_step_size
         
         # ________________________________________________
+        # SUBROUTINE
         # timestep_rainfall_input_m = f(timestep_rainfall_input_m, potential_et_m_per_timestep)
-        self.et_from_rainfall()
+        self.et_from_rainfall(cfe_state)
         
         # ________________________________________________        
-        self.soil_reservoir_storage_deficit_m = (self.soil_params['smcmax'] * \
-                                                 self.soil_params['D'] - \
-                                                 self.soil_reservoir['storage_m'])
+        cfe_state.soil_reservoir_storage_deficit_m = (cfe_state.soil_params['smcmax'] * \
+                                                 cfe_state.soil_params['D'] - \
+                                                 cfe_state.soil_reservoir['storage_m'])
         
         # ________________________________________________
+        # SUBROUTINE
         # Calculates the value for surface_runoff_depth_m
-        self.Schaake_partitioning_scheme()
+        self.Schaake_partitioning_scheme(cfe_state)
 
         # ________________________________________________
-        self.et_from_soil()
+        # SUBROUTINE
+        self.et_from_soil(cfe_state)
         
         # ________________________________________________
-        if self.soil_reservoir_storage_deficit_m < self.infiltration_depth_m:
+        if cfe_state.soil_reservoir_storage_deficit_m < cfe_state.infiltration_depth_m:
             # put won't fit back into runoff
-            self.surface_runoff_depth_m += (self.infiltration_depth_m - soil_reservoir_storage_deficit_m)
-            self.infiltration_depth_m = self.soil_reservoir_storage_deficit_m
-            self.soil_reservoir['storage_m'] = self.soil_reservoir['storage_max_m']
+            cfe_state.surface_runoff_depth_m += (cfe_state.infiltration_depth_m - soil_reservoir_storage_deficit_m)
+            cfe_state.infiltration_depth_m = cfe_state.soil_reservoir_storage_deficit_m
+            cfe_state.soil_reservoir['storage_m'] = cfe_state.soil_reservoir['storage_max_m']
 
         # ________________________________________________
-        self.vol_sch_runoff += self.surface_runoff_depth_m
-        self.vol_sch_infilt += self.infiltration_depth_m
+        cfe_state.vol_sch_runoff += cfe_state.surface_runoff_depth_m
+        cfe_state.vol_sch_infilt += cfe_state.infiltration_depth_m
 
         # ________________________________________________
-        if self.current_time_step == 0:
-            self.previous_flux_perc_m = self.flux_perc_m
+        if cfe_state.current_time_step == 0:
+            cfe_state.previous_flux_perc_m = cfe_state.flux_perc_m
             
         # ________________________________________________
-        if self.previous_flux_perc_m > self.soil_reservoir_storage_deficit_m:
-            diff = self.previous_flux_perc_m - self.soil_reservoir_storage_deficit
-            self.infiltration_depth_m = self.soil_reservoir_storage_deficit_m
-            self.vol_sch_runoff += diff
-            self.vol_sch_infilt -= diff
-            self.surface_runoff_depth_m += diff
+        if cfe_state.previous_flux_perc_m > cfe_state.soil_reservoir_storage_deficit_m:
+            diff = cfe_state.previous_flux_perc_m - cfe_state.soil_reservoir_storage_deficit
+            cfe_state.infiltration_depth_m = cfe_state.soil_reservoir_storage_deficit_m
+            cfe_state.vol_sch_runoff += diff
+            cfe_state.vol_sch_infilt -= diff
+            cfe_state.surface_runoff_depth_m += diff
             
         # ________________________________________________
-        self.vol_to_soil += self.infiltration_depth_m
-        self.soil_reservoir['storage_m'] += self.infiltration_depth_m
+        cfe_state.vol_to_soil += cfe_state.infiltration_depth_m
+        cfe_state.soil_reservoir['storage_m'] += cfe_state.infiltration_depth_m
 
         # ________________________________________________
+        # SUBROUTINE
         # primary_flux, secondary_flux = f(reservoir)
-        self.conceptual_reservoir_flux_calc( self.soil_reservoir )
+        self.conceptual_reservoir_flux_calc(cfe_state, cfe_state.soil_reservoir)
 
         # ________________________________________________
-        self.flux_perc_m = self.primary_flux
-        self.flux_lat_m = self.secondary_flux
+        cfe_state.flux_perc_m = cfe_state.primary_flux
+        cfe_state.flux_lat_m = cfe_state.secondary_flux
 
         # ________________________________________________
-        self.gw_reservoir_storage_deficit_m = self.gw_reservoir['storage_max_m'] - self.gw_reservoir['storage_m']
+        cfe_state.gw_reservoir_storage_deficit_m = cfe_state.gw_reservoir['storage_max_m'] - cfe_state.gw_reservoir['storage_m']
         
         # ________________________________________________
-        if self.flux_perc_m > self.gw_reservoir_storage_deficit_m:
-            diff = self.flux_perc_m - self.gw_reservoir_storage_deficit_m
-            self.flux_perc_m = self.gw_reservoir_storage_deficit_m
-            self.vol_sch_runoff+=diff 
-            self.vol_sch_infilt-=diff 
+        if cfe_state.flux_perc_m > cfe_state.gw_reservoir_storage_deficit_m:
+            diff = cfe_state.flux_perc_m - cfe_state.gw_reservoir_storage_deficit_m
+            cfe_state.flux_perc_m = cfe_state.gw_reservoir_storage_deficit_m
+            cfe_state.vol_sch_runoff+=diff 
+            cfe_state.vol_sch_infilt-=diff 
             
         # ________________________________________________
-        self.vol_to_gw                += self.flux_perc_m
-        self.vol_soil_to_gw           += self.flux_perc_m
+        cfe_state.vol_to_gw                += cfe_state.flux_perc_m
+        cfe_state.vol_soil_to_gw           += cfe_state.flux_perc_m
 
-        self.gw_reservoir['storage_m']   += self.flux_perc_m
-        self.soil_reservoir['storage_m'] -= self.flux_perc_m
-        self.soil_reservoir['storage_m'] -= self.flux_lat_m
-        self.vol_soil_to_lat_flow        += self.flux_lat_m  #TODO add this to nash cascade as input
-        self.volout                       = self.volout + self.flux_lat_m;
+        cfe_state.gw_reservoir['storage_m']   += cfe_state.flux_perc_m
+        cfe_state.soil_reservoir['storage_m'] -= cfe_state.flux_perc_m
+        cfe_state.soil_reservoir['storage_m'] -= cfe_state.flux_lat_m
+        cfe_state.vol_soil_to_lat_flow        += cfe_state.flux_lat_m  #TODO add this to nash cascade as input
+        cfe_state.volout                       = cfe_state.volout + cfe_state.flux_lat_m;
 
             
         # ________________________________________________
+        # SUBROUTINE
         # primary_flux, secondary_flux = f(reservoir)
-        self.conceptual_reservoir_flux_calc( self.gw_reservoir )
+        self.conceptual_reservoir_flux_calc(cfe_state, cfe_state.gw_reservoir) 
             
         # ________________________________________________
-        self.flux_from_deep_gw_to_chan_m = self.primary_flux
-        self.vol_from_gw += self.flux_from_deep_gw_to_chan_m
+        cfe_state.flux_from_deep_gw_to_chan_m = cfe_state.primary_flux
+        cfe_state.vol_from_gw += cfe_state.flux_from_deep_gw_to_chan_m
         
         # ________________________________________________        
-        if not self.is_fabs_less_than_epsilon(self.secondary_flux, 1.0e-09):
+        if not self.is_fabs_less_than_epsilon(cfe_state.secondary_flux, 1.0e-09):
             print("problem with nonzero flux point 1\n")
                         
         # ________________________________________________                               
-        self.gw_reservoir['storage_m'] -= self.flux_from_deep_gw_to_chan_m
+        cfe_state.gw_reservoir['storage_m'] -= cfe_state.flux_from_deep_gw_to_chan_m
         
         # ________________________________________________
+        # SUBROUTINE
         # giuh_runoff_m = f(Schaake_output, giuh_ordinates, runoff_queue_m_per_timestep)
-        self.convolution_integral()
+        self.convolution_integral(cfe_state)
         
         # ________________________________________________
-        self.vol_out_giuh += self.flux_giuh_runoff_m
-        self.volout += self.flux_giuh_runoff_m + self.flux_from_deep_gw_to_chan_m
+        cfe_state.vol_out_giuh += cfe_state.flux_giuh_runoff_m
+        cfe_state.volout += cfe_state.flux_giuh_runoff_m + cfe_state.flux_from_deep_gw_to_chan_m
         
         # ________________________________________________
-        self.nash_cascade()
+        # SUBROUTINE
+        self.nash_cascade(cfe_state)
 
         # ________________________________________________
-        self.vol_in_nash += self.flux_lat_m
-        self.vol_out_nash += self.flux_nash_lateral_runoff_m
+        cfe_state.vol_in_nash += cfe_state.flux_lat_m
+        cfe_state.vol_out_nash += cfe_state.flux_nash_lateral_runoff_m
         
         # ________________________________________________
-        self.flux_Qout_m = self.flux_giuh_runoff_m + self.flux_nash_lateral_runoff_m + self.flux_from_deep_gw_to_chan_m
-        self.total_discharge = self.flux_Qout_m * self.catchment_area_km2 * 1000000.0 / 3600.0
+        cfe_state.flux_Qout_m = cfe_state.flux_giuh_runoff_m + cfe_state.flux_nash_lateral_runoff_m + cfe_state.flux_from_deep_gw_to_chan_m
+        cfe_state.total_discharge = cfe_state.flux_Qout_m * cfe_state.catchment_area_km2 * 1000000.0 / 3600.0
         
         # ________________________________________________
-        self.current_time_step += 1
-        self.current_time      += pd.Timedelta(value=self.time_step_size, unit='s')
+        cfe_state.current_time_step += 1
+        cfe_state.current_time      += pd.Timedelta(value=cfe_state.time_step_size, unit='s')
 
         return
     
     
     # __________________________________________________________________________________________________________
-    def nash_cascade(self):
+    def nash_cascade(self,cfe_state):
         """
             Solve for the flow through the Nash cascade to delay the 
             arrival of the lateral flow into the channel
         """
-        Q = np.zeros(self.num_lateral_flow_nash_reservoirs)
+        Q = np.zeros(cfe_state.num_lateral_flow_nash_reservoirs)
         
-        for i in range(self.num_lateral_flow_nash_reservoirs):
+        for i in range(cfe_state.num_lateral_flow_nash_reservoirs):
             
-            Q[i] = self.K_nash * self.nash_storage[i]
+            Q[i] = cfe_state.K_nash * cfe_state.nash_storage[i]
             
-            self.nash_storage[i] -= Q[i]
+            cfe_state.nash_storage[i] -= Q[i]
             
             if i == 0:
                 
-                self.nash_storage[i] += self.flux_lat_m
+                cfe_state.nash_storage[i] += cfe_state.flux_lat_m
                 
             else:
                 
-                self.nash_storage[i] += Q[i-1]
+                cfe_state.nash_storage[i] += Q[i-1]
         
-        self.flux_nash_lateral_runoff_m = Q[self.num_lateral_flow_nash_reservoirs - 1]
+        cfe_state.flux_nash_lateral_runoff_m = Q[cfe_state.num_lateral_flow_nash_reservoirs - 1]
         
         return
     
                                
     # __________________________________________________________________________________________________________
-    def convolution_integral(self):
+    def convolution_integral(self,cfe_state):
         """
             This function solves the convolution integral involving N GIUH ordinates.
             
@@ -177,44 +176,44 @@ soil_reservoir
                 runoff_queue_m_per_timestep
         """
 
-#        self.runoff_queue_m_per_timestep[-1] = 0
+#        cfe_state.runoff_queue_m_per_timestep[-1] = 0
         
-        for i in range(self.num_giuh_ordinates): 
+        for i in range(cfe_state.num_giuh_ordinates): 
 
-            self.runoff_queue_m_per_timestep[i] += self.giuh_ordinates[i] * self.surface_runoff_depth_m
+            cfe_state.runoff_queue_m_per_timestep[i] += cfe_state.giuh_ordinates[i] * cfe_state.surface_runoff_depth_m
             
-        self.flux_giuh_runoff_m = self.runoff_queue_m_per_timestep[0]
+        cfe_state.flux_giuh_runoff_m = cfe_state.runoff_queue_m_per_timestep[0]
         
         # __________________________________________________________________
         # shift all the entries in preperation for the next timestep
         
-        for i in range(1, self.num_giuh_ordinates):  
+        for i in range(1, cfe_state.num_giuh_ordinates):  
             
-            self.runoff_queue_m_per_timestep[i-1] = self.runoff_queue_m_per_timestep[i]
+            cfe_state.runoff_queue_m_per_timestep[i-1] = cfe_state.runoff_queue_m_per_timestep[i]
 
-        self.runoff_queue_m_per_timestep[-1] = 0
+        cfe_state.runoff_queue_m_per_timestep[-1] = 0
 
         return
     
 
     # __________________________________________________________________________________________________________
-    def et_from_rainfall(self):
+    def et_from_rainfall(self,cfe_state):
         
         """
             iff it is raining, take PET from rainfall first.  Wet veg. is efficient evaporator.
         """
         
-        if self.timestep_rainfall_input_m >0.0:
+        if cfe_state.timestep_rainfall_input_m >0.0:
 
-            if self.timestep_rainfall_input_m > self.potential_et_m_per_timestep:
+            if cfe_state.timestep_rainfall_input_m > cfe_state.potential_et_m_per_timestep:
         
-                self.actual_et_m_per_timestep = self.potential_et_m_per_timestep
-                self.timestep_rainfall_input_m -= self.actual_et_m_per_timestep
+                cfe_state.actual_et_m_per_timestep = cfe_state.potential_et_m_per_timestep
+                cfe_state.timestep_rainfall_input_m -= cfe_state.actual_et_m_per_timestep
 
             else: 
 
-                self.potential_et_m_per_timestep -= self.timestep_rainfall_input_m
-                self.timestep_rainfall_input_m=0.0
+                cfe_state.potential_et_m_per_timestep -= cfe_state.timestep_rainfall_input_m
+                cfe_state.timestep_rainfall_input_m=0.0
         return
                 
                 
@@ -222,7 +221,7 @@ soil_reservoir
     ########## SINGLE OUTLET EXPONENTIAL RESERVOIR ###############
     ##########                -or-                 ###############
     ##########    TWO OUTLET NONLINEAR RESERVOIR   ###############                        
-    def conceptual_reservoir_flux_calc(self, reservoir):
+    def conceptual_reservoir_flux_calc(self,cfe_state,reservoir):
         """
             This function calculates the flux from a linear, or nonlinear 
             conceptual reservoir with one or two outlets, or from an
@@ -236,11 +235,11 @@ soil_reservoir
             flux_exponential = np.exp(reservoir['exponent_primary'] * \
                                       reservoir['storage_m'] / \
                                       reservoir['storage_max_m']) - 1.0
-            self.primary_flux_m = reservoir['coeff_primary'] * flux_exponential
-            self.secondary_flux_m=0.0
+            cfe_state.primary_flux_m = reservoir['coeff_primary'] * flux_exponential
+            cfe_state.secondary_flux_m=0.0
             return
     
-        self.primary_flux_m=0.0
+        cfe_state.primary_flux_m=0.0
         
         storage_above_threshold_m = reservoir['storage_m'] - reservoir['storage_threshold_primary_m']
         
@@ -250,12 +249,12 @@ soil_reservoir
             storage_ratio = storage_above_threshold_m / storage_diff
             storage_power = np.power(storage_ratio, reservoir['exponent_primary'])
             
-            self.primary_flux_m = reservoir['coeff_primary'] * storage_power
+            cfe_state.primary_flux_m = reservoir['coeff_primary'] * storage_power
 
-            if self.primary_flux_m > storage_above_threshold_m:
-                self.primary_flux_m = storage_above_threshold_m
+            if cfe_state.primary_flux_m > storage_above_threshold_m:
+                cfe_state.primary_flux_m = storage_above_threshold_m
                 
-        self.secondary_flux_m = 0.0;
+        cfe_state.secondary_flux_m = 0.0
             
         storage_above_threshold_m = reservoir['storage_m'] - reservoir['storage_threshold_secondary_m']
         
@@ -265,17 +264,17 @@ soil_reservoir
             storage_ratio = storage_above_threshold_m / storage_diff
             storage_power = np.power(storage_ratio, reservoir['exponent_secondary'])
             
-            self.secondary_flux_m = reservoir['coeff_secondary'] * storage_power
+            cfe_state.secondary_flux_m = reservoir['coeff_secondary'] * storage_power
             
-            if self.secondary_flux_m > (storage_above_threshold_m - self.primary_flux_m):
-                self.secondary_flux_m = storage_above_threshold_m - self.primary_flux_m
+            if cfe_state.secondary_flux_m > (storage_above_threshold_m - cfe_state.primary_flux_m):
+                cfe_state.secondary_flux_m = storage_above_threshold_m - cfe_state.primary_flux_m
                 
         return
     
     
     # __________________________________________________________________________________________________________
     #  SCHAAKE RUNOFF PARTITIONING SCHEME
-    def Schaake_partitioning_scheme(self):
+    def Schaake_partitioning_scheme(self,cfe_state):
         """
             This subtroutine takes water_input_depth_m and partitions it into surface_runoff_depth_m and
             infiltration_depth_m using the scheme from Schaake et al. 1996. 
@@ -293,76 +292,76 @@ soil_reservoir
               infiltration_depth_m
         """
         
-        if 0 < self.timestep_rainfall_input_m:
+        if 0 < cfe_state.timestep_rainfall_input_m:
             
-            if 0 > self.soil_reservoir_storage_deficit_m:
+            if 0 > cfe_state.soil_reservoir_storage_deficit_m:
                 
-                self.surface_runoff_depth_m = self.timestep_rainfall_input_m
+                cfe_state.surface_runoff_depth_m = cfe_state.timestep_rainfall_input_m
                 
-                self.infiltration_depth_m = 0.0
+                cfe_state.infiltration_depth_m = 0.0
                 
             else:
                 
-                schaake_exp_term = np.exp( - self.Schaake_adjusted_magic_constant_by_soil_type * self.timestep_d)
+                schaake_exp_term = np.exp( - cfe_state.Schaake_adjusted_magic_constant_by_soil_type * cfe_state.timestep_d)
                 
                 Schaake_parenthetical_term = (1.0 - schaake_exp_term)
                 
-                Ic = self.soil_reservoir_storage_deficit_m * Schaake_parenthetical_term
+                Ic = cfe_state.soil_reservoir_storage_deficit_m * Schaake_parenthetical_term
                 
-                Px = self.timestep_rainfall_input_m
+                Px = cfe_state.timestep_rainfall_input_m
                 
-                self.infiltration_depth_m = (Px * (Ic / (Px + Ic)))
+                cfe_state.infiltration_depth_m = (Px * (Ic / (Px + Ic)))
                 
-                if 0.0 < (self.timestep_rainfall_input_m - self.infiltration_depth_m):
+                if 0.0 < (cfe_state.timestep_rainfall_input_m - cfe_state.infiltration_depth_m):
                     
-                    self.surface_runoff_depth_m = self.timestep_rainfall_input_m - self.infiltration_depth_m
+                    cfe_state.surface_runoff_depth_m = cfe_state.timestep_rainfall_input_m - cfe_state.infiltration_depth_m
                     
                 else:
                     
-                    self.surface_runoff_depth_m = 0.0
+                    cfe_state.surface_runoff_depth_m = 0.0
                     
-                    self.infiltration_depth_m =  self.timestep_rainfall_input_m - self.surface_runoff_depth_m
+                    cfe_state.infiltration_depth_m =  cfe_state.timestep_rainfall_input_m - cfe_state.surface_runoff_depth_m
                     
         else:
             
-            self.surface_runoff_depth_m = 0.0
+            cfe_state.surface_runoff_depth_m = 0.0
             
-            self.infiltration_depth_m = 0.0
+            cfe_state.infiltration_depth_m = 0.0
             
         return
             
                                
     # __________________________________________________________________________________________________________
-    def et_from_soil(self):
+    def et_from_soil(self,cfe_state):
         """
             take AET from soil moisture storage, 
             using Budyko type curve to limit PET if wilting<soilmoist<field_capacity
         """
         
-        if self.potential_et_m_per_timestep > 0:
+        if cfe_state.potential_et_m_per_timestep > 0:
             
             print("this should not happen yet. Still debugging the other functions.")
             
-            if self.soil_reservoir['storage_m'] >= self.soil_reservoir['storage_threshold_primary_m']:
+            if cfe_state.soil_reservoir['storage_m'] >= cfe_state.soil_reservoir['storage_threshold_primary_m']:
             
-                self.actual_et_m_per_timestep = np.min(self.potential_et_m_per_timestep, 
-                                                       self.soil_reservoir['storage_m'])
+                cfe_state.actual_et_m_per_timestep = np.min(cfe_state.potential_et_m_per_timestep, 
+                                                       cfe_state.soil_reservoir['storage_m'])
 
-                self.soil_reservoir['storage_m'] -= self.actual_et_m_per_timestep
+                cfe_state.soil_reservoir['storage_m'] -= cfe_state.actual_et_m_per_timestep
 
-                self.et_struct['potential_et_m_per_timestep'] = 0.0
+                cfe_state.et_struct['potential_et_m_per_timestep'] = 0.0
                                
-            elif (self.soil_reservoir['storage_m'] > self.soil_reservoir['wilting_point_m'] and 
-                  self.soil_reservoir['storage_m'] < self.soil_reservoir['storage_threshold_primary_m']):
+            elif (cfe_state.soil_reservoir['storage_m'] > cfe_state.soil_reservoir['wilting_point_m'] and 
+                  cfe_state.soil_reservoir['storage_m'] < cfe_state.soil_reservoir['storage_threshold_primary_m']):
             
-                Budyko_numerator = self.soil_reservoir['storage_m'] - self.soil_reservoir['wilting_point_m']
-                Budyko_denominator = self.soil_reservoir['storage_threshold_primary_m'] - \
-                                     self.soil_reservoir['wilting_point_m']
+                Budyko_numerator = cfe_state.soil_reservoir['storage_m'] - cfe_state.soil_reservoir['wilting_point_m']
+                Budyko_denominator = cfe_state.soil_reservoir['storage_threshold_primary_m'] - \
+                                     cfe_state.soil_reservoir['wilting_point_m']
                 Budyki = Budyko_numerator / Budyko_denominator
                                
-                self.actual_et_m_per_timestep = Budyko * self.potential_et_m_per_timestep
+                cfe_state.actual_et_m_per_timestep = Budyko * cfe_state.potential_et_m_per_timestep
                                
-                self.soil_reservoir['storage_m'] -= self.actual_et_m_per_timestep
+                cfe_state.soil_reservoir['storage_m'] -= cfe_state.actual_et_m_per_timestep
         return
             
             
