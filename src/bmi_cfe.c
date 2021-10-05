@@ -262,7 +262,6 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     char* nash_storage_string_val;
     int is_nash_storage_string_val_set = FALSE;
     // Similarly as for Nash, track stuff for GIUH ordinates
-    int num_giuh_ordinates = 1;
     char* giuh_originates_string_val;
 
 
@@ -521,10 +520,16 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
 #endif
         return BMI_FAILURE;
     }
-    if (is_num_timesteps_set == FALSE && model->forcing_file == "BMI") {
+    if (is_num_timesteps_set == FALSE && strcmp(model->forcing_file, "BMI")) {
 #if CFE_DEGUG >= 1
         printf("Config param 'num_timesteps' not found in config file\n");
 #endif
+        return BMI_FAILURE;
+    }
+    if (is_verbosity_set == FALSE) {
+        printf("Config param 'verbosity' not found in config file\n");
+        printf("setting verbosity to a high value\n");
+        model->verbosity = 10;
         return BMI_FAILURE;
     }
 
@@ -708,7 +713,7 @@ static int Initialize (Bmi *self, const char *file)
             printf("Forcing data: [%s]\n", line_str);
             printf("Forcing details - s_time: %ld | precip: %f\n", forcings.time, forcings.precip_kg_per_m2);
     #endif
-            cfe_bmi_data_ptr->forcing_data_precip_kg_per_m2[i] = forcings.precip_kg_per_m2 * ((double)cfe_bmi_data_ptr->time_step_size);
+            cfe_bmi_data_ptr->forcing_data_precip_kg_per_m2[i] = forcings.precip_kg_per_m2; //* ((double)cfe_bmi_data_ptr->time_step_size);
             cfe_bmi_data_ptr->forcing_data_time[i] = forcings.time;
 
             // TODO: make sure some kind of conversion isn't needed for the rain rate data
@@ -719,7 +724,8 @@ static int Initialize (Bmi *self, const char *file)
         cfe_bmi_data_ptr->epoch_start_time = cfe_bmi_data_ptr->forcing_data_time[0];
     } // end if is_forcing_from_bmi
     
-    cfe_bmi_data_ptr->timestep_rainfall_input_m = cfe_bmi_data_ptr->forcing_data_precip_kg_per_m2[0];
+    // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+    cfe_bmi_data_ptr->timestep_rainfall_input_m = cfe_bmi_data_ptr->forcing_data_precip_kg_per_m2[0] / 1000;
 
     // Initialize the rest of the groundwater conceptual reservoir (some was done when reading in the config)
     cfe_bmi_data_ptr->gw_reservoir.is_exponential = TRUE;
@@ -768,10 +774,12 @@ static int Update (Bmi *self)
     // Two modes to get forcing data... 1) read from file, 2) pass with bmi    
     if (cfe_ptr->is_forcing_from_bmi)
       // BMI sets the precipitation to the aorc structure.
-      cfe_ptr->timestep_rainfall_input_m = cfe_ptr->aorc.precip_kg_per_m2;
+      // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+      cfe_ptr->timestep_rainfall_input_m = cfe_ptr->aorc.precip_kg_per_m2 /1000;
     else
       // Set the current rainfall input to the right place in the forcing array.
-      cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step];
+      // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+      cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step] /1000;
     
     cfe_ptr->vol_struct.volin += cfe_ptr->timestep_rainfall_input_m;
     // Delete me...    printf("_______PRECIP IN  CFE UPDATE FUNCTION________: %lf\n", cfe_ptr->aorc.precip_kg_per_m2);
@@ -832,7 +840,8 @@ static int Update_until (Bmi *self, double t)
             cfe_ptr->current_time_step += 1;
         
             // Set the current rainfall input to the right place in the forcing.
-            cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step];
+            // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+            cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step] /1000;
 
             self->get_current_time(self, &current_time);
 
@@ -850,12 +859,14 @@ static int Update_until (Bmi *self, double t)
     // Keep in mind the current_time_step hasn't been processed yet (hence, using <= for this test)
     // E.g., if (unprocessed) current_time_step = 0, t = 2, num_timesteps = 2, this is valid a valid t (run 0, run 1)
     if ((cfe_ptr->current_time_step + t_int) <= cfe_ptr->num_timesteps) {
-        for (i = 0; i < t_int; i++)
+        for (i = 0; i < t_int; i++){
             
             // Set the current rainfall input to the right place in the forcing.
-            cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[i];
+            // convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+            cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[i] /1000;
 
             run_cfe(cfe_ptr);
+        }
 
         return BMI_SUCCESS;
     }
@@ -1667,7 +1678,7 @@ extern void print_cfe_flux_header(){
     printf("# (h),             (mm)   ,  (mm) ,   (mm) , (mm)  ,  (mm),    (mm)\n");
 }
 extern void print_cfe_flux_at_timestep(cfe_state_struct* cfe_ptr){
-    printf("%16.8lf %lf %lf %lf %lf %lf %lf\n",
+    printf("%d %lf %lf %lf %lf %lf %lf\n",
                            cfe_ptr->current_time_step,
                            cfe_ptr->timestep_rainfall_input_m*1000.0,
                            *cfe_ptr->flux_Schaake_output_runoff_m*1000.0,
@@ -1703,7 +1714,8 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     double nash_residual;
     double gw_residual;
     
-    global_residual = cfe_ptr->vol_struct.volstart + cfe_ptr->vol_struct.volin - cfe_ptr->vol_struct.volout - volend;
+    global_residual = cfe_ptr->vol_struct.volstart + cfe_ptr->vol_struct.volin - 
+                      cfe_ptr->vol_struct.volout - volend - vol_end_giuh;
     printf("GLOBAL MASS BALANCE\n");
     printf("  initial volume: %8.4lf m\n",cfe_ptr->vol_struct.volstart);
     printf("    volume input: %8.4lf m\n",cfe_ptr->vol_struct.volin);
@@ -1723,7 +1735,7 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     if(!is_fabs_less_than_epsilon(schaake_residual,1.0e-12))
                   printf("WARNING: SCHAAKE PARTITIONING MASS BALANCE CHECK FAILED\n");
     
-    giuh_residual = cfe_ptr->vol_struct.vol_out_giuh - cfe_ptr->vol_struct.vol_sch_runoff - vol_end_giuh;
+    giuh_residual = cfe_ptr->vol_struct.vol_sch_runoff - cfe_ptr->vol_struct.vol_out_giuh - vol_end_giuh;
     printf(" GIUH MASS BALANCE\n");
     printf("  vol. into giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_sch_runoff);
     printf("   vol. out giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_out_giuh);
@@ -1780,83 +1792,59 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
 void parse_aorc_line_cfe(char *theString,long *year,long *month, long *day,long *hour,long *minute, double *second,
                 struct aorc_forcing_data_cfe *aorc)
 {
-
-    /*   JMFRAME: Something was wrong with the AORC reading code from the frameork, 
-                  because I didn't have the correct libraries, that I assume are part of the framework.
-                  so I paseted in the AORC reading code from the ET function.
-    */
-
-    char str[20];
-    long yr, mo, da, hr, mi;
-    double mm, julian, se;
-    double val;
-    int i, start, end, len;
-    int yes_pm, wordlen;
+    int start,end;
+    int wordlen;
     char theWord[150];
-
-    len = strlen(theString);
-
-    char *copy, *copy_to_free, *value;
-    copy_to_free = copy = strdup(theString);
-
-    // time
-    value = strsep(&copy, ",");
-    // TODO: handle this
-    struct tm{
-      int tm_year;
-      int tm_mon; 
-      int tm_mday; 
-      int tm_hour; 
-      int tm_min; 
-      int tm_sec; 
-      int tm_isdst;
-    };
-    struct tm t;
-    time_t t_of_day;
-
-    t.tm_year = (int)strtol(strsep(&value, "-"), NULL, 10) - 1900;
-    t.tm_mon = (int)strtol(strsep(&value, "-"), NULL, 10);
-    t.tm_mday = (int)strtol(strsep(&value, " "), NULL, 10);
-    t.tm_hour = (int)strtol(strsep(&value, ":"), NULL, 10);
-    t.tm_min = (int)strtol(strsep(&value, ":"), NULL, 10);
-    t.tm_sec = (int)strtol(value, NULL, 10);
-    t.tm_isdst = -1;        // Is DST on? 1 = yes, 0 = no, -1 = unknown
-//    aorc->time = mktime(t);
-
-    // APCP_surface
-    value = strsep(&copy, ",");
-    // Not sure what this is
-
-    // DLWRF_surface
-    value = strsep(&copy, ",");
-    aorc->incoming_longwave_W_per_m2 = strtof(value, NULL);
-    // DSWRF_surface
-    value = strsep(&copy, ",");
-    aorc->incoming_shortwave_W_per_m2 = strtof(value, NULL);
-    // PRES_surface
-    value = strsep(&copy, ",");
-    aorc->surface_pressure_Pa = strtof(value, NULL);
-    // SPFH_2maboveground
-    value = strsep(&copy, ",");
-    aorc->specific_humidity_2m_kg_per_kg = strtof(value, NULL);;
-    // TMP_2maboveground
-    value = strsep(&copy, ",");
-    aorc->air_temperature_2m_K = strtof(value, NULL);
-    // UGRD_10maboveground
-    value = strsep(&copy, ",");
-    aorc->u_wind_speed_10m_m_per_s = strtof(value, NULL);
-    // VGRD_10maboveground
-    value = strsep(&copy, ",");
-    aorc->v_wind_speed_10m_m_per_s = strtof(value, NULL);
-    // precip_rate
-    value = strsep(&copy, ",");
-    aorc->precip_kg_per_m2 = strtof(value, NULL);
-
-    // Go ahead and free the duplicate copy now
-    free(copy_to_free);
-
+    
+    //len=strlen(theString);
+    
+    start=0; /* begin at the beginning of theString */
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    *year=atol(theWord);
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    *month=atol(theWord);
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    *day=atol(theWord);
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    *hour=atol(theWord);
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    *minute=atol(theWord);
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    *second=(double)atof(theWord);
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    aorc->precip_kg_per_m2=atof(theWord);
+    //printf("%s, %s, %lf, %lf\n", theString, theWord, (double)atof(theWord), aorc->precip_kg_per_m2);
+                  
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    aorc->incoming_longwave_W_per_m2=(double)atof(theWord);   
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    aorc->incoming_shortwave_W_per_m2=(double)atof(theWord);   
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    aorc->surface_pressure_Pa=(double)atof(theWord);           
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    aorc->specific_humidity_2m_kg_per_kg=(double)atof(theWord);
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    aorc->air_temperature_2m_K=(double)atof(theWord);          
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    aorc->u_wind_speed_10m_m_per_s=(double)atof(theWord);      
+    
+    get_word_cfe(theString,&start,&end,theWord,&wordlen);
+    aorc->v_wind_speed_10m_m_per_s=(double)atof(theWord);      
+    
+      
     return;
-}
+    }
 
 /*####################################################################*/
 /*############################## GET WORD ############################*/
@@ -1900,12 +1888,10 @@ void get_word_cfe(char *theString, int *start, int *end, char *theWord, int *wor
 
 /****************************************/
 void itwo_alloc_cfe(int ***array, int rows, int cols) {
-    int i, frows, fcols, numgood = 0;
-    int error = 0;
+    int i, frows, fcols;
 
     if ((rows == 0) || (cols == 0)) {
         printf("Error: Attempting to allocate array of size 0\n");
-        exit;
     }
 
     frows = rows + 1;  /* added one for FORTRAN numbering */
@@ -1917,8 +1903,6 @@ void itwo_alloc_cfe(int ***array, int rows, int cols) {
         for (i = 0; i < frows; i++) {
             (*array)[i] = (int *) malloc(fcols * sizeof(int));
             if ((*array)[i] == NULL) {
-                error = 1;
-                numgood = i;
                 i = frows;
             } else
                 memset((*array)[i], 0, fcols * sizeof(int));
@@ -1929,12 +1913,10 @@ void itwo_alloc_cfe(int ***array, int rows, int cols) {
 
 
 void dtwo_alloc_cfe(double ***array, int rows, int cols) {
-    int i, frows, fcols, numgood = 0;
-    int error = 0;
+    int i, frows, fcols;
 
     if ((rows == 0) || (cols == 0)) {
         printf("Error: Attempting to allocate array of size 0\n");
-        exit;
     }
 
     frows = rows + 1;  /* added one for FORTRAN numbering */
@@ -1946,8 +1928,6 @@ void dtwo_alloc_cfe(double ***array, int rows, int cols) {
         for (i = 0; i < frows; i++) {
             (*array)[i] = (double *) malloc(fcols * sizeof(double));
             if ((*array)[i] == NULL) {
-                error = 1;
-                numgood = i;
                 i = frows;
             } else
                 memset((*array)[i], 0, fcols * sizeof(double));
@@ -2045,7 +2025,6 @@ double greg_2_jul_cfe(
 */
 void calc_date_cfe(double jd, long *y, long *m, long *d, long *h, long *mi,
                double *sec) {
-    static int ret[4];
 
     long j;
     double tmp;
@@ -2061,7 +2040,6 @@ void calc_date_cfe(double jd, long *y, long *m, long *d, long *h, long *mi,
         frac = frac + 0.5;
     }
 
-    ret[3] = (j + 1L) % 7L;
     j -= 1721119L;
     *y = (4L * j - 1L) / 146097L;
     j = 4L * j - 1L - 146097L * *y;

@@ -1,4 +1,4 @@
-forcing_file=./forcings/cat87_01Dec2015-.csv
+forcing_file=./forcings/cat87_01Dec2015.csv
 soil_params.depth=2.0
 soil_params.b=4.05
 soil_params.mult=1000.0

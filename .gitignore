@@ -4,6 +4,8 @@
 
 # RUN EXECUTABLES #
 ###################
+run_*
+run_cfe
 run_cfe_bmi
 run_cfe_bmi_pass_forcings
 run_cfe_aorc_et_bmi
