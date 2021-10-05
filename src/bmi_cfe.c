@@ -262,7 +262,6 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     char* nash_storage_string_val;
     int is_nash_storage_string_val_set = FALSE;
     // Similarly as for Nash, track stuff for GIUH ordinates
-    int num_giuh_ordinates = 1;
     char* giuh_originates_string_val;
 
 
@@ -521,10 +520,16 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
 #endif
         return BMI_FAILURE;
     }
-    if (is_num_timesteps_set == FALSE && model->forcing_file == "BMI") {
+    if (is_num_timesteps_set == FALSE && strcmp(model->forcing_file, "BMI")) {
 #if CFE_DEGUG >= 1
         printf("Config param 'num_timesteps' not found in config file\n");
 #endif
+        return BMI_FAILURE;
+    }
+    if (is_verbosity_set == FALSE) {
+        printf("Config param 'verbosity' not found in config file\n");
+        printf("setting verbosity to a high value\n");
+        model->verbosity = 10;
         return BMI_FAILURE;
     }
 
@@ -854,13 +859,14 @@ static int Update_until (Bmi *self, double t)
     // Keep in mind the current_time_step hasn't been processed yet (hence, using <= for this test)
     // E.g., if (unprocessed) current_time_step = 0, t = 2, num_timesteps = 2, this is valid a valid t (run 0, run 1)
     if ((cfe_ptr->current_time_step + t_int) <= cfe_ptr->num_timesteps) {
-        for (i = 0; i < t_int; i++)
+        for (i = 0; i < t_int; i++){
             
             // Set the current rainfall input to the right place in the forcing.
             // convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
             cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[i] /1000;
 
             run_cfe(cfe_ptr);
+        }
 
         return BMI_SUCCESS;
     }
@@ -1786,15 +1792,11 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
 void parse_aorc_line_cfe(char *theString,long *year,long *month, long *day,long *hour,long *minute, double *second,
                 struct aorc_forcing_data_cfe *aorc)
 {
-    char str[20];
-    long yr,mo,da,hr,mi;
-    double mm,julian,se;
-    float val;
-    int i,start,end,len;
-    int yes_pm,wordlen;
+    int start,end;
+    int wordlen;
     char theWord[150];
     
-    len=strlen(theString);
+    //len=strlen(theString);
     
     start=0; /* begin at the beginning of theString */
     get_word_cfe(theString,&start,&end,theWord,&wordlen);
@@ -1886,12 +1888,10 @@ void get_word_cfe(char *theString, int *start, int *end, char *theWord, int *wor
 
 /****************************************/
 void itwo_alloc_cfe(int ***array, int rows, int cols) {
-    int i, frows, fcols, numgood = 0;
-    int error = 0;
+    int i, frows, fcols;
 
     if ((rows == 0) || (cols == 0)) {
         printf("Error: Attempting to allocate array of size 0\n");
-        exit;
     }
 
     frows = rows + 1;  /* added one for FORTRAN numbering */
@@ -1903,8 +1903,6 @@ void itwo_alloc_cfe(int ***array, int rows, int cols) {
         for (i = 0; i < frows; i++) {
             (*array)[i] = (int *) malloc(fcols * sizeof(int));
             if ((*array)[i] == NULL) {
-                error = 1;
-                numgood = i;
                 i = frows;
             } else
                 memset((*array)[i], 0, fcols * sizeof(int));
@@ -1915,12 +1913,10 @@ void itwo_alloc_cfe(int ***array, int rows, int cols) {
 
 
 void dtwo_alloc_cfe(double ***array, int rows, int cols) {
-    int i, frows, fcols, numgood = 0;
-    int error = 0;
+    int i, frows, fcols;
 
     if ((rows == 0) || (cols == 0)) {
         printf("Error: Attempting to allocate array of size 0\n");
-        exit;
     }
 
     frows = rows + 1;  /* added one for FORTRAN numbering */
@@ -1932,8 +1928,6 @@ void dtwo_alloc_cfe(double ***array, int rows, int cols) {
         for (i = 0; i < frows; i++) {
             (*array)[i] = (double *) malloc(fcols * sizeof(double));
             if ((*array)[i] == NULL) {
-                error = 1;
-                numgood = i;
                 i = frows;
             } else
                 memset((*array)[i], 0, fcols * sizeof(double));
@@ -2031,7 +2025,6 @@ double greg_2_jul_cfe(
 */
 void calc_date_cfe(double jd, long *y, long *m, long *d, long *h, long *mi,
                double *sec) {
-    static int ret[4];
 
     long j;
     double tmp;
@@ -2047,7 +2040,6 @@ void calc_date_cfe(double jd, long *y, long *m, long *d, long *h, long *mi,
         frac = frac + 0.5;
     }
 
-    ret[3] = (j + 1L) % 7L;
     j -= 1721119L;
     *y = (4L * j - 1L) / 146097L;
     j = 4L * j - 1L - 146097L * *y;

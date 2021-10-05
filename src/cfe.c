@@ -392,9 +392,7 @@ void Schaake_partitioning_scheme(double timestep_h, double Schaake_adjusted_magi
 
 
 --------------------------------------------------------------------------------*/
-int k;
-double timestep_d,Schaake_parenthetical_term,Ic,Px,infilt_dep_m;
-
+double timestep_d,Schaake_parenthetical_term,Ic,Px;
 
 if(0.0 < water_input_depth_m) 
   {
