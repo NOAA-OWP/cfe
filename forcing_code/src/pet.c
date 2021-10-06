@@ -425,7 +425,7 @@ void itwo_alloc_pet(int ***array, int rows, int cols) {
 
     if ((rows == 0) || (cols == 0)) {
         printf("Error: Attempting to allocate array of size 0\n");
-        exit;
+        exit(-9);
     }
 
     frows = rows + 1;  /* added one for FORTRAN numbering */
@@ -454,7 +454,7 @@ void dtwo_alloc_pet(double ***array, int rows, int cols) {
 
     if ((rows == 0) || (cols == 0)) {
         printf("Error: Attempting to allocate array of size 0\n");
-        exit;
+        exit(-9);
     }
 
     frows = rows + 1;  /* added one for FORTRAN numbering */
