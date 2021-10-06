@@ -8,6 +8,19 @@ extern "C" {
 #include "./cfe.h"
 #include "bmi.h"
 
+//--------------------------------------------------
+// Experiment to simplify BMI implementation (SDP)
+//--------------------------------------------------
+typedef struct Variable{
+    unsigned int index;
+    char name[80];
+    char type[80];
+    unsigned int size;
+    // char units[80];
+    // char role[80];
+    // bool is_pointer;
+} Variable;
+
 /** Read number of lines in file and max line length, returning -1 if it does not exist or could not be read. */
 int read_file_line_counts_cfe(const char* file_name, int* line_count, int* max_line_length);
 
@@ -57,12 +70,12 @@ struct cfe_state_struct {
     double soil_reservoir_storage_deficit_m;
     double infiltration_depth_m;
     double gw_reservoir_storage_deficit_m;
-
     double timestep_h;
 
     // ***********************************************************
     // ***************** Non-dynamic allocations *****************
     // ***********************************************************
+    // These structs are defined in cfe.h.
     struct conceptual_reservoir soil_reservoir;
     struct conceptual_reservoir gw_reservoir;
     struct NWM_soil_parameters NWM_soil_params;
