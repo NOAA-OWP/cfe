@@ -42,7 +42,11 @@ class BMI_CFE():
         # Output variable names (CSDMS standard names)
         #---------------------------------------------
         self._output_var_names = ['land_surface_water__runoff_depth', 
-                             'land_surface_water__runoff_volume_flux']
+                                  'land_surface_water__runoff_volume_flux',
+                                  "DIRECT_RUNOFF",
+                                  "GIUH_RUNOFF",
+                                  "NASH_LATERAL_RUNOFF",
+                                  "DEEP_GW_TO_CHANNEL_FLUX"]
         
         #------------------------------------------------------
         # Create a Python dictionary that maps CSDMS Standard
@@ -55,7 +59,11 @@ class BMI_CFE():
                                 'land_surface_water__runoff_depth':['total_discharge','m'],
                                 #--------------   Dynamic inputs --------------------------------
                                 'atmosphere_water__time_integral_of_precipitation_mass_flux':['timestep_rainfall_input_m','kg m-2'],
-                                'water_potential_evaporation_flux':['potential_et_m_per_s','m s-1']
+                                'water_potential_evaporation_flux':['potential_et_m_per_s','m s-1'],
+                                'DIRECT_RUNOFF':['surface_runoff_depth_m','m'],
+                                'GIUH_RUNOFF':['flux_giuh_runoff_m','m'],
+                                'NASH_LATERAL_RUNOFF':['flux_nash_lateral_runoff_m','m'],
+                                'DEEP_GW_TO_CHANNEL_FLUX':['flux_from_deep_gw_to_chan_m','m']
                           }
 
         #------------------------------------------------------------
@@ -75,11 +83,11 @@ class BMI_CFE():
         
         # -------------- Initalize all the variables --------------------------# 
         # -------------- so that they'll be picked up with the get functions --#
-        for var_name in list(self._var_name_units_map.keys()):
+        for long_var_name in list(self._var_name_units_map.keys()):
             # ---------- All the variables are single values ------------------#
             # ---------- so just set to zero for now.        ------------------#
-            self._values[var_name] = 0
-            setattr( self, var_name, 0 )
+            self._values[long_var_name] = 0
+            setattr( self, self.get_var_name(long_var_name), 0 )
 
         ############################################################
         # ________________________________________________________ #
@@ -135,7 +143,7 @@ class BMI_CFE():
         # Set these values now that we have the information from the configuration file.
         self.runoff_queue_m_per_timestep = np.zeros(len(self.giuh_ordinates))
         self.num_giuh_ordinates = len(self.runoff_queue_m_per_timestep)
-        self.num_lateral_flow_nash_reservoirs = len(self.nash_storage)
+        self.num_lateral_flow_nash_reservoirs = self.nash_storage.shape[0]
         
         # ________________________________________________
         # Local values to be used in setting up soil reservoir
@@ -305,8 +313,8 @@ class BMI_CFE():
         self.soil_storage               = data_loaded['soil_storage']
         self.K_lf                       = data_loaded['K_lf']
         self.K_nash                     = data_loaded['K_nash']
-        self.nash_storage               = data_loaded['nash_storage']
-        self.giuh_ordinates             = data_loaded['giuh_ordinates']
+        self.nash_storage               = np.array(data_loaded['nash_storage'])
+        self.giuh_ordinates             = np.array(data_loaded['giuh_ordinates'])
 
         # ___________________________________________________
         # OPTIONAL CONFIGURATIONS
@@ -440,6 +448,10 @@ class BMI_CFE():
 
         self._values['land_surface_water__runoff_volume_flux'] = self.streamflow_cms * (1/35.314)
 
+        self._values["DIRECT_RUNOFF"] = self.surface_runoff_depth_m
+        self._values["GIUH_RUNOFF"] = self.flux_giuh_runoff_m
+        self._values["NASH_LATERAL_RUNOFF"] = self.flux_nash_lateral_runoff_m
+        self._values["DEEP_GW_TO_CHANNEL_FLUX"] = self.flux_from_deep_gw_to_chan_m
 
     #---------------------------------------------------------------------------- 
     def initialize_forcings(self):

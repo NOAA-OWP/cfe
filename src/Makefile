@@ -4,7 +4,7 @@ CC = gcc
 # define any compile-time flags
 # for newer compiler, the right hand side is not needed...
 # ... for instance, remove the flags if using gnu/10.1.0 on Cheyenne.
-CFLAGS = -std=c99
+#CFLAGS = -std=c99
 
 INCLUDES = -I../include
 
