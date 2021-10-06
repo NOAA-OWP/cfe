@@ -77,7 +77,7 @@ Initialize (Bmi *self, const char *cfg_file)
         fgets(line_str, max_forcing_line_length + 1, ffp);
     
         if (pet->bmi.verbose > 2) 
-            printf("the number of time steps from the forcing file is: %8.6e \n", pet->bmi.num_timesteps);
+            printf("the number of time steps from the forcing file is: %8.6ld \n", pet->bmi.num_timesteps);
     
         aorc_forcing_data_pet forcings;
         for (int i = 0; i < pet->bmi.num_timesteps; i++) {
@@ -150,7 +150,7 @@ Update_until(Bmi *self, double t)
     // relative number of time steps into the future, or invalid
 
     if (pet->bmi.verbose >= 1)
-        printf("running update until time %lld \n", t);
+        printf("running update until time %f \n", t);
 
     // Don't support negative parameter values
     if (t < 0.0)
@@ -175,7 +175,7 @@ Update_until(Bmi *self, double t)
 
     // jmframe troubleshooting. Please delete this printout
     if (pet->bmi.verbose > 3){
-        printf("end time %8.6e, please delete this printout\n", &end_time);
+        printf("end time %8.6e, please delete this printout\n", end_time);
         printf("the current time is %8.6e \n", current_time);
         printf("the end time result is %d \n", end_time_result);
     }
@@ -183,7 +183,7 @@ Update_until(Bmi *self, double t)
     if (end_time_result == BMI_FAILURE || current_time >= end_time){
         printf("BMI Failued due to end_time_result OR current time greater than end time \n");
         if (end_time_result == BMI_FAILURE)
-            printf("end_time_result failed %s \n");
+            printf("end_time_result failed \n");
         if (current_time >= end_time)
             printf("current_time %8.6e is greater than end time %8.6e \n", current_time, end_time);
         return BMI_FAILURE;
@@ -231,7 +231,7 @@ Update_until(Bmi *self, double t)
             // jmframe troubleshooting. Please delete
             if (pet->bmi.verbose > 3){
                 printf("current time step %f \n", pet->bmi.current_time_step);
-                printf("current step %f \n", pet->bmi.current_step);
+                printf("current step %ld \n", pet->bmi.current_step);
                 printf("current time %f \n", pet->bmi.current_time);
             }
 
@@ -458,7 +458,7 @@ static int Get_current_time (Bmi *self, double * time)
 {
     Get_start_time(self, time);
     if (((pet_model *) self->data)->bmi.verbose > 2){
-        printf("Current model time step: '%ld'\n", ((pet_model *) self->data)->bmi.current_time_step);
+        printf("Current model time step: '%f'\n", ((pet_model *) self->data)->bmi.current_time_step);
     }
     *time += (((pet_model *) self->data)->bmi.current_step * 
               ((pet_model *) self->data)->bmi.time_step_size_s);
@@ -700,7 +700,7 @@ int read_init_config_pet(pet_model* model, const char* config_file)//,
             model->bmi.num_timesteps = strtod(param_value, NULL);
             if(model->bmi.verbose >=2){
                 printf("num_timesteps from config file \n");
-                printf("%d\n", model->bmi.num_timesteps);
+                printf("%ld\n", model->bmi.num_timesteps);
             }
             continue;
         }
