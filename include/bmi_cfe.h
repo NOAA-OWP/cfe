@@ -70,12 +70,12 @@ struct cfe_state_struct {
     double soil_reservoir_storage_deficit_m;
     double infiltration_depth_m;
     double gw_reservoir_storage_deficit_m;
+
     double timestep_h;
 
     // ***********************************************************
     // ***************** Non-dynamic allocations *****************
     // ***********************************************************
-    // These structs are defined in cfe.h.
     struct conceptual_reservoir soil_reservoir;
     struct conceptual_reservoir gw_reservoir;
     struct NWM_soil_parameters NWM_soil_params;
