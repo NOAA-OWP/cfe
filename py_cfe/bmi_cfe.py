@@ -1,6 +1,7 @@
 import time
 import numpy as np
 import pandas as pd
+import sys
 import json
 import matplotlib.pyplot as plt
 import cfe
@@ -244,10 +245,11 @@ class BMI_CFE():
     # BMI: Model Control Function
     def update_until(self, until, verbose=True):
         for i in range(self.current_time_step, until):
-            self.cfe_model.run_cfe()
+            self.cfe_model.run_cfe(self)
             self.scale_output()
-            print("total discharge: {}".format(self.total_discharge))
-            print("at time: {}".format(self.current_time))
+            if verbose:
+                print("total discharge: {}".format(self.total_discharge))
+                print("at time: {}".format(self.current_time))
         
     # __________________________________________________________________________________________________________
     # __________________________________________________________________________________________________________
@@ -405,7 +407,7 @@ class BMI_CFE():
         self.cfe_output_data = pd.DataFrame().reindex_like(self.unit_test_data)
         
     #________________________________________________________ 
-    def run_unit_test(self, plot_lims=list(range(490, 550))):
+    def run_unit_test(self, plot_lims=list(range(490, 550)), plot=False):
         
         self.load_forcing_file()
         self.load_unit_test_data()
@@ -429,14 +431,15 @@ class BMI_CFE():
             self.cfe_output_data.loc[t,'Flow']            = self.total_discharge
         
         self.finalize_mass_balance()
-        
-        for output_type in ['Direct Runoff', 'GIUH Runoff', 'Lateral Flow', 'Base Flow', 'Total Discharge', 'Flow']:
-            plt.plot(self.cfe_output_data['Rainfall'][plot_lims], label='precipitation', c='gray', lw=.3)
-            plt.plot(self.cfe_output_data[output_type][plot_lims], label='cfe '+output_type)
-            plt.plot(self.unit_test_data[output_type][plot_lims], '--', label='t-shirt '+output_type)
-            plt.legend()
-            plt.show()
-            plt.close()
+
+        if plot: 
+            for output_type in ['Direct Runoff', 'GIUH Runoff', 'Lateral Flow', 'Base Flow', 'Total Discharge', 'Flow']:
+                plt.plot(self.cfe_output_data['Rainfall'][plot_lims], label='precipitation', c='gray', lw=.3)
+                plt.plot(self.cfe_output_data[output_type][plot_lims], label='cfe '+output_type)
+                plt.plot(self.unit_test_data[output_type][plot_lims], '--', label='t-shirt '+output_type)
+                plt.legend()
+                plt.show()
+                plt.close()
     
     
     #------------------------------------------------------------ 
@@ -600,7 +603,7 @@ class BMI_CFE():
     #-------------------------------------------------------------------
     def get_current_time( self ):
 
-        return self.t #JG Edit
+        return self.current_time
 
     #-------------------------------------------------------------------
     def get_time_step( self ):
@@ -653,7 +656,7 @@ class BMI_CFE():
             self.set_value(name, val)
 
     #------------------------------------------------------------ 
-    def get_var_nbytes(self, var_name):
+    def get_var_nbytes(self, long_var_name):
         """Get units of variable.
         Parameters
         ----------
@@ -665,7 +668,7 @@ class BMI_CFE():
             Size of data array in bytes.
         """
         # JMFrame NOTE: Had to import sys for this function
-        return sys.getsizeof(self.get_value_ptr(var_name))
+        return sys.getsizeof(self.get_value_ptr(long_var_name))
 
     #------------------------------------------------------------ 
     def get_value_at_indices(self, var_name, dest, indices):
