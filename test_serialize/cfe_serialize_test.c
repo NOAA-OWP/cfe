@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>   // for access()
 #include "../include/bmi.h"
 #include "../include/bmi_cfe.h"
 #include "../include/serialize_state.h"
@@ -68,10 +69,26 @@ int print_some(void *ptr_list[]){
 }
 
 //------------------------------------------------------------------------
-int main(void)
+// int main(void)
+int main(int argc, const char *argv[])
 {
-  const char *cfg_file = "../configs/cat_89_bmi_config_cfe.txt";
-  const char *ser_file = "./model_state.ser";  // make arg later
+  // Check for config file arg
+  const char *cfg_file;
+  if(argc<=1){
+      printf("WARNING: Missing config file argument.\n");
+      printf("         Using default.\n\n");
+      cfg_file = "./configs/cat_89_bmi_config_cfe.txt";
+  } else {
+      cfg_file = argv[1];
+  }
+  if( access( cfg_file, F_OK ) != 0 ) {
+      printf("ERROR: cfg_file not found.\n");
+      puts( cfg_file);
+      puts("");
+      exit(1);
+  }
+  //--------------------------------------------------------------
+  const char *ser_file = "./test_serialize/model_state.ser";  // make arg later
   int n_steps1  = 10; // n_steps for Model1 before serializing
   int n_steps2  = 50; // n_steps for models after deserializing
   int verbose   = 1;

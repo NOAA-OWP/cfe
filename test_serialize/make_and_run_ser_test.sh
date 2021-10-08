@@ -6,4 +6,5 @@ if test -f "$FILE"; then
 fi
 
 gcc ./cfe_serialize_test.c ./serialize_state.c ../src/bmi_cfe.c ../src/cfe.c -o run_ser_test -lm -lmsgpackc 
-./run_ser_test
+cd ..
+./test_serialize/run_ser_test
