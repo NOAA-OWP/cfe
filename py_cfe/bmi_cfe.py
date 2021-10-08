@@ -254,9 +254,9 @@ class BMI_CFE():
     # __________________________________________________________________________________________________________
     # __________________________________________________________________________________________________________
     # BMI: Model Control Function
-    def finalize(self):
+    def finalize(self,print_mass_balance=False):
 
-        self.finalize_mass_balance(verbose=True)
+        self.finalize_mass_balance(verbose=print_mass_balance)
         self.reset_volume_tracking()
 
         """Finalize model."""
@@ -407,7 +407,7 @@ class BMI_CFE():
         self.cfe_output_data = pd.DataFrame().reindex_like(self.unit_test_data)
         
     #________________________________________________________ 
-    def run_unit_test(self, plot_lims=list(range(490, 550)), plot=False):
+    def run_unit_test(self, plot_lims=list(range(490, 550)), plot=False, print_fluxes=True):
         
         self.load_forcing_file()
         self.load_unit_test_data()
@@ -429,9 +429,12 @@ class BMI_CFE():
             self.cfe_output_data.loc[t,'Base Flow']       = self.flux_from_deep_gw_to_chan_m
             self.cfe_output_data.loc[t,'Total Discharge'] = self.flux_Qout_m
             self.cfe_output_data.loc[t,'Flow']            = self.total_discharge
+            
+            if print_fluxes:
+                print('{},{:.8f},{:.8f},{:.8f},{:.8f},{:.8f},{:.8f},{:.8f},'.format(self.current_time, self.timestep_rainfall_input_m,
+                                           self.surface_runoff_depth_m, self.flux_giuh_runoff_m, self.flux_nash_lateral_runoff_m,
+                                           self.flux_from_deep_gw_to_chan_m, self.flux_Qout_m, self.total_discharge))
         
-        self.finalize_mass_balance()
-
         if plot: 
             for output_type in ['Direct Runoff', 'GIUH Runoff', 'Lateral Flow', 'Base Flow', 'Total Discharge', 'Flow']:
                 plt.plot(self.cfe_output_data['Rainfall'][plot_lims], label='precipitation', c='gray', lw=.3)

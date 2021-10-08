@@ -393,9 +393,9 @@ try:
     # go ahead and print time to show iteration
     # wrap another try/except incase get_current_time() failed
     try: 
-        print (" updating until...  time " + str(bmi.get_current_time()));
+        print (" updating until...  time " + str(bmi.get_current_time()))
     except: 
-        print (" updating until...");
+        print (" updating until...")
     pass_count += 1
 except:
     bmi_except('update_until()')          
