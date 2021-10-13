@@ -4,6 +4,7 @@
 #include "../include/bmi.h"
 #include "../include/bmi_cfe.h"
 #include <time.h>
+#include <float.h>
 #ifndef WATER_SPECIFIC_WEIGHT
 #define WATER_SPECIFIC_WEIGHT 9810
 #endif
