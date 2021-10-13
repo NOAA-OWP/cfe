@@ -1,0 +1,15 @@
+name: bmi_cfe
+channels:
+  - pytorch
+  - defaults
+  - anaconda
+  - conda-forge
+dependencies:
+  - bmipy
+  - bokeh
+  - cpuonly
+  - jupyter
+  - matplotlib
+  - netcdf4
+  - pandas
+  - ruamel.yaml
