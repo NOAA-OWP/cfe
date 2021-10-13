@@ -783,13 +783,13 @@ static int Initialize (Bmi *self, const char *file)
                 2. Get the forcings passed in through BMI
     *******************************************************/
     if (strcmp(cfe_bmi_data_ptr->forcing_file, "BMI") == 0){
-        cfe_bmi_data_ptr->is_forcing_from_bmi = 1;
+        cfe_bmi_data_ptr->is_forcing_from_bmi = TRUE;
         cfe_bmi_data_ptr->forcing_data_precip_kg_per_m2 = malloc(sizeof(double));
         cfe_bmi_data_ptr->forcing_data_time = malloc(sizeof(long));
     }
     else
     {
-        cfe_bmi_data_ptr->is_forcing_from_bmi = 0;
+        cfe_bmi_data_ptr->is_forcing_from_bmi = FALSE;
     
         // Figure out the number of lines first (also char count)
         int forcing_line_count, max_forcing_line_length;
@@ -896,7 +896,7 @@ static int Update (Bmi *self)
     cfe_state_struct* cfe_ptr = ((cfe_state_struct *) self->data);
 
     // Two modes to get forcing data... 1) read from file, 2) pass with bmi    
-    if (cfe_ptr->is_forcing_from_bmi)
+    if (cfe_ptr->is_forcing_from_bmi == TRUE)
       // BMI sets the precipitation to the aorc structure.
       // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
       cfe_ptr->timestep_rainfall_input_m = cfe_ptr->aorc.precip_kg_per_m2 /1000;
@@ -906,7 +906,7 @@ static int Update (Bmi *self)
       cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step] /1000;
     
     cfe_ptr->vol_struct.volin += cfe_ptr->timestep_rainfall_input_m;
-    // Delete me...    printf("_______PRECIP IN  CFE UPDATE FUNCTION________: %lf\n", cfe_ptr->aorc.precip_kg_per_m2);
+    
     run_cfe(cfe_ptr);
 
     // Advance the model time 
@@ -928,9 +928,11 @@ static int Update_until (Bmi *self, double t)
     // Don't continue if current time is at or beyond end time (or we can't determine this)
     double current_time, end_time;
     int current_time_result = self->get_current_time(self, &current_time);
+    printf("___DELETE ME___CURRENT TIME %lf\n", current_time);
     if (current_time_result == BMI_FAILURE)
         return BMI_FAILURE;
     int end_time_result = self->get_end_time(self, &end_time);
+    printf("___DELETE ME___END TIME %lf\n", end_time);
     if (end_time_result == BMI_FAILURE || current_time >= end_time)
         return BMI_FAILURE;
 
@@ -954,18 +956,48 @@ static int Update_until (Bmi *self, double t)
             }
         }
     }
+
+    // jmframe:
+    // If we are trying to advance more that one single time step
+    // then we need to fail because we won't have a new forcing.
+    // To fix this we need to make cfe_ptr->aorc.precip_kg_per_m2 an array
+    // then we need to make sure set_value passes an array
+    // But if we do that then cfe_ptr->aorc.precip_kg_per_m2 needs to be an array of an arbitrary length...?
+    printf("_____DELETEME____ CURRENT TIME STEP: %d \n", cfe_ptr->current_time_step);
+    printf("_____DELETEME____ t: %lf \n", t);
+    printf("_____DELETEME____ cfe_ptr->is_forcing_from_bmi: %d\n", cfe_ptr->is_forcing_from_bmi);
+    if (cfe_ptr->is_forcing_from_bmi == TRUE){
+      printf("FORCING COMES FROM BMI\n");
+      if (t > (cfe_ptr->current_time_step + 1)){
+      printf("****************    RETURNING A FAILURE BECAUSE UPDATE_UNTIL DOESNT WORK WITH BMI FORCING MORE THAN ONE TIMESTEP\n");
+      return BMI_FAILURE;
+      }
+    }
+
     // If it is an exact time, advance to that time step
     if (is_exact_future_time == TRUE) {
         while (current_time < t) {
+        
+            // Two modes to get forcing data... 1) read from file, 2) pass with bmi    
+            if (cfe_ptr->is_forcing_from_bmi == TRUE){
+              // BMI sets the precipitation to the aorc structure.
+              // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+              cfe_ptr->timestep_rainfall_input_m = cfe_ptr->aorc.precip_kg_per_m2 /1000;
+            }
+            else
+              // Set the current rainfall input to the right place in the forcing array.
+              // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+              cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step] /1000;
+            
+            cfe_ptr->vol_struct.volin += cfe_ptr->timestep_rainfall_input_m;
             
             run_cfe(cfe_ptr);
+
+            if (cfe_ptr->verbosity > 0)
+              print_cfe_flux_at_timestep(cfe_ptr);
             
             // Advance the model time 
             cfe_ptr->current_time_step += 1;
-        
-            // Set the current rainfall input to the right place in the forcing.
-            // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
-            cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step] /1000;
 
             self->get_current_time(self, &current_time);
 
@@ -985,11 +1017,26 @@ static int Update_until (Bmi *self, double t)
     if ((cfe_ptr->current_time_step + t_int) <= cfe_ptr->num_timesteps) {
         for (i = 0; i < t_int; i++){
             
-            // Set the current rainfall input to the right place in the forcing.
-            // convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
-            cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[i] /1000;
-
+            // Two modes to get forcing data... 0/FALSE) read from file, 1/TRUE) pass with bmi    
+            if (cfe_ptr->is_forcing_from_bmi == TRUE)
+              // BMI sets the precipitation to the aorc structure.
+              // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+              cfe_ptr->timestep_rainfall_input_m = cfe_ptr->aorc.precip_kg_per_m2 /1000;
+            else
+              // Set the current rainfall input to the right place in the forcing array.
+              // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
+              cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step] /1000;
+            
+            cfe_ptr->vol_struct.volin += cfe_ptr->timestep_rainfall_input_m;
+            
             run_cfe(cfe_ptr);
+
+            if (cfe_ptr->verbosity > 0)
+              print_cfe_flux_at_timestep(cfe_ptr);
+
+            // Advance the model time 
+            cfe_ptr->current_time_step += 1;
+
         }
 
         return BMI_SUCCESS;
@@ -2352,6 +2399,7 @@ extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr){
     cfe_ptr->vol_struct.vol_in_gw_start = cfe_ptr->gw_reservoir.storage_m;  
     cfe_ptr->vol_struct.volstart          += cfe_ptr->soil_reservoir.storage_m;    // initial mass balance checks in soil reservoir
     cfe_ptr->vol_struct.vol_soil_start     = cfe_ptr->soil_reservoir.storage_m;
+    printf("_____DELETEME_____ VOLSTART: %lf\n", cfe_ptr->vol_struct.volstart);
 }
 
 /**************************************************************************/

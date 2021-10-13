@@ -97,7 +97,7 @@ int
   printf("looping through and calling updata\n");
   if (cfe_model_data->verbosity > 0)
     print_cfe_flux_header();
-  for (int i = 0; i < 720; i++){
+  for (int i = 0; i < 45; i++){
     
     aorc_bmi_model->update(aorc_bmi_model);                         // Update model 1
   
@@ -109,7 +109,7 @@ int
       printf("precip value from CFE is %lf\n", cfe_model_data->aorc.precip_kg_per_m2);
     }
 
-    cfe_bmi_model->update(cfe_bmi_model);                           // Update model 2
+    cfe_bmi_model->update_until(cfe_bmi_model, 1);                           // Update model 2
   
     if (cfe_model_data->verbosity > 0)
       print_cfe_flux_at_timestep(cfe_model_data);
