@@ -8,6 +8,19 @@ extern "C" {
 #include "./cfe.h"
 #include "bmi.h"
 
+//--------------------------------------------------
+// Experiment to simplify BMI implementation (SDP)
+//--------------------------------------------------
+typedef struct Variable{
+    unsigned int index;
+    char name[80];
+    char type[80];
+    unsigned int size;
+    // char units[80];
+    // char role[80];
+    // bool is_pointer;
+} Variable;
+
 /** Read number of lines in file and max line length, returning -1 if it does not exist or could not be read. */
 int read_file_line_counts_cfe(const char* file_name, int* line_count, int* max_line_length);
 
@@ -32,13 +45,8 @@ struct aorc_forcing_data_cfe
 typedef struct aorc_forcing_data_cfe aorc_forcing_data_cfe;
 
 struct vol_tracking_struct{
-
-    /* xinanjiang_dev
     double vol_sch_runoff;
-    double vol_sch_infilt;        */
-    double vol_dir_runoff;
-    double vol_dir_infilt;
-
+    double vol_sch_infilt;
     double vol_to_soil;
     double vol_to_gw;
     double vol_soil_to_gw;
@@ -74,9 +82,6 @@ struct cfe_state_struct {
     struct evapotranspiration_structure et_struct;
     struct vol_tracking_struct vol_struct;
 
-    /* xinanjiang_dev */
-    struct direct_runoff_parameters_structure direct_runoff_params_struct;
-
     // Epoch-based start time (BMI start time is considered 0.0)
     long epoch_start_time;
     int num_timesteps;
@@ -88,9 +93,7 @@ struct cfe_state_struct {
 
     char* forcing_file;
 
-    /* xinanjiang_dev
-    double Schaake_adjusted_magic_constant_by_soil_type;    */
-
+    double Schaake_adjusted_magic_constant_by_soil_type;
     int num_lateral_flow_nash_reservoirs;
 
     double K_lf;
@@ -111,11 +114,9 @@ struct cfe_state_struct {
     double* nash_storage;
     double* runoff_queue_m_per_timestep;
 
-    /* xinanjiang_dev
-        changing the name to the more general "direct runoff"
-    double* flux_Schaake_output_runoff_m;*/
-    double* flux_output_direct_runoff_m ;
-
+    // These are likely only single values, but should be allocated as pointers so the pointer can be returned
+//    double* flux_overland_m;   NOT NEEDED, redundant with flux_Schaake_output_runoff_m
+    double* flux_Schaake_output_runoff_m;
     double* flux_giuh_runoff_m;
     double* flux_nash_lateral_runoff_m;
     double* flux_from_deep_gw_to_chan_m;
