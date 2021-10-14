@@ -245,6 +245,9 @@ static int Get_end_time (Bmi *self, double * time)
     Get_start_time(self, time);
     
     // see if forcings read in or via BMI (framework to set)
+    //jmframe: the docs say that "If the model doesn’t define an end time, a large number"
+    //         so even if it is BMI, we should still use num_timesteps
+    //         BMI shouldn't always have a very large end time...
     if (cfe->is_forcing_from_bmi == TRUE){
         // if BMI, set to FLT_MAX macro via float.h
         // See https://bmi.readthedocs.io/en/latest/#get-end-time
@@ -895,7 +898,7 @@ static int Update (Bmi *self)
             
     cfe_state_struct* cfe_ptr = ((cfe_state_struct *) self->data);
 
-    // Two modes to get forcing data... 1) read from file, 2) pass with bmi    
+    // Two modes to get forcing data... 0/FALSE) read from file, 1/TRUE) pass with bmi    
     if (cfe_ptr->is_forcing_from_bmi == TRUE)
       // BMI sets the precipitation to the aorc structure.
       // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
@@ -908,7 +911,7 @@ static int Update (Bmi *self)
     cfe_ptr->vol_struct.volin += cfe_ptr->timestep_rainfall_input_m;
     
     run_cfe(cfe_ptr);
-
+        
     // Advance the model time 
     cfe_ptr->current_time_step += 1;
 
@@ -918,132 +921,23 @@ static int Update (Bmi *self)
 
 static int Update_until (Bmi *self, double t)
 {
-    // Since this model's time units are seconds, it is assumed that the param is either a valid time in seconds, a
-    // relative number of time steps into the future, or invalid
-
-    // Don't support negative parameter values
-    if (t < 0.0)
-        return BMI_FAILURE;
-
-    // Don't continue if current time is at or beyond end time (or we can't determine this)
-    double current_time, end_time;
-    int current_time_result = self->get_current_time(self, &current_time);
-    printf("___DELETE ME___CURRENT TIME %lf\n", current_time);
-    if (current_time_result == BMI_FAILURE)
-        return BMI_FAILURE;
-    int end_time_result = self->get_end_time(self, &end_time);
-    printf("___DELETE ME___END TIME %lf\n", end_time);
-    if (end_time_result == BMI_FAILURE || current_time >= end_time)
-        return BMI_FAILURE;
-
-    // Handle easy case of t == current_time by just returning success
-    if (t == current_time)
-        return BMI_SUCCESS;
-
+    // https://bmi.readthedocs.io/en/latest/#update-until
+    // "the time argument can be a non-integral multiple of time steps"
+    
     cfe_state_struct* cfe_ptr = ((cfe_state_struct *) self->data);
-
-    // First, determine if t is some future time that will be arrived at exactly after some number of future time steps
-    int is_exact_future_time = (t == end_time) ? TRUE : FALSE;
-    // Compare to time step endings unless obvious that t lines up (i.e., t == end_time) or doesn't (t <= current_time)
-    if (is_exact_future_time == FALSE && t > current_time) {
-        int future_time_step = cfe_ptr->current_time_step;
-        double future_time_step_time = current_time;
-        while (future_time_step < cfe_ptr->num_timesteps && future_time_step_time < end_time) {
-            future_time_step_time += cfe_ptr->time_step_size;
-            if (future_time_step_time == t) {
-                is_exact_future_time = TRUE;
-                break;
-            }
-        }
-    }
-
-    // jmframe:
-    // If we are trying to advance more that one single time step
-    // then we need to fail because we won't have a new forcing.
-    // To fix this we need to make cfe_ptr->aorc.precip_kg_per_m2 an array
-    // then we need to make sure set_value passes an array
-    // But if we do that then cfe_ptr->aorc.precip_kg_per_m2 needs to be an array of an arbitrary length...?
-    printf("_____DELETEME____ CURRENT TIME STEP: %d \n", cfe_ptr->current_time_step);
-    printf("_____DELETEME____ t: %lf \n", t);
-    printf("_____DELETEME____ cfe_ptr->is_forcing_from_bmi: %d\n", cfe_ptr->is_forcing_from_bmi);
-    if (cfe_ptr->is_forcing_from_bmi == TRUE){
-      printf("FORCING COMES FROM BMI\n");
-      if (t > (cfe_ptr->current_time_step + 1)){
-      printf("****************    RETURNING A FAILURE BECAUSE UPDATE_UNTIL DOESNT WORK WITH BMI FORCING MORE THAN ONE TIMESTEP\n");
-      return BMI_FAILURE;
-      }
-    }
-
-    // If it is an exact time, advance to that time step
-    if (is_exact_future_time == TRUE) {
-        while (current_time < t) {
-        
-            // Two modes to get forcing data... 1) read from file, 2) pass with bmi    
-            if (cfe_ptr->is_forcing_from_bmi == TRUE){
-              // BMI sets the precipitation to the aorc structure.
-              // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
-              cfe_ptr->timestep_rainfall_input_m = cfe_ptr->aorc.precip_kg_per_m2 /1000;
-            }
-            else
-              // Set the current rainfall input to the right place in the forcing array.
-              // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
-              cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step] /1000;
-            
-            cfe_ptr->vol_struct.volin += cfe_ptr->timestep_rainfall_input_m;
-            
-            run_cfe(cfe_ptr);
-
-            if (cfe_ptr->verbosity > 0)
-              print_cfe_flux_at_timestep(cfe_ptr);
-            
-            // Advance the model time 
-            cfe_ptr->current_time_step += 1;
-
-            self->get_current_time(self, &current_time);
-
-        }
-        return BMI_SUCCESS;
-    }
-
-    // If t is not an exact time, it could be a number of time step forward to proceed
-
-    // The model doesn't support partial time step value args (i.e., fractions)
+    
     int t_int = (int) t;
     if ((t - ((double)t_int)) != 0)
         return BMI_FAILURE;
 
-    // Keep in mind the current_time_step hasn't been processed yet (hence, using <= for this test)
-    // E.g., if (unprocessed) current_time_step = 0, t = 2, num_timesteps = 2, this is valid a valid t (run 0, run 1)
-    if ((cfe_ptr->current_time_step + t_int) <= cfe_ptr->num_timesteps) {
-        for (i = 0; i < t_int; i++){
-            
-            // Two modes to get forcing data... 0/FALSE) read from file, 1/TRUE) pass with bmi    
-            if (cfe_ptr->is_forcing_from_bmi == TRUE)
-              // BMI sets the precipitation to the aorc structure.
-              // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
-              cfe_ptr->timestep_rainfall_input_m = cfe_ptr->aorc.precip_kg_per_m2 /1000;
-            else
-              // Set the current rainfall input to the right place in the forcing array.
-              // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
-              cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step] /1000;
-            
-            cfe_ptr->vol_struct.volin += cfe_ptr->timestep_rainfall_input_m;
-            
-            run_cfe(cfe_ptr);
+    for (int j = 0; j < t_int; j++){
 
-            if (cfe_ptr->verbosity > 0)
-              print_cfe_flux_at_timestep(cfe_ptr);
+        self->update(self); 
+        if (cfe_ptr->verbosity > 1)
+            print_cfe_flux_at_timestep(cfe_ptr);
 
-            // Advance the model time 
-            cfe_ptr->current_time_step += 1;
-
-        }
-
-        return BMI_SUCCESS;
     }
-
-    // If we arrive here, t wasn't an exact time at end of a time step or a valid relative time step jump, so invalid.
-    return BMI_FAILURE;
+    return BMI_SUCCESS;
 }
 
 
@@ -2399,7 +2293,6 @@ extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr){
     cfe_ptr->vol_struct.vol_in_gw_start = cfe_ptr->gw_reservoir.storage_m;  
     cfe_ptr->vol_struct.volstart          += cfe_ptr->soil_reservoir.storage_m;    // initial mass balance checks in soil reservoir
     cfe_ptr->vol_struct.vol_soil_start     = cfe_ptr->soil_reservoir.storage_m;
-    printf("_____DELETEME_____ VOLSTART: %lf\n", cfe_ptr->vol_struct.volstart);
 }
 
 /**************************************************************************/

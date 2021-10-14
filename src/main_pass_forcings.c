@@ -110,6 +110,7 @@ int
     }
 
     cfe_bmi_model->update_until(cfe_bmi_model, 1);                           // Update model 2
+    //cfe_bmi_model->update(cfe_bmi_model);                           // Update model 2
   
     if (cfe_model_data->verbosity > 0)
       print_cfe_flux_at_timestep(cfe_model_data);
