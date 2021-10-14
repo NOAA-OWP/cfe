@@ -211,7 +211,8 @@ int
       printf("PET value from CFE is %8.9lf\n", cfe1->et_struct.potential_et_m_per_s);
   }
 
-    cfe_bmi_model->update(cfe_bmi_model);                           //Update model 2
+    //cfe_bmi_model->update(cfe_bmi_model);                           //Update model 2
+    cfe_bmi_model->update_until(cfe_bmi_model, 1);
 
     if (cfe1->verbosity > 0)
       print_cfe_flux_at_timestep(cfe1);
