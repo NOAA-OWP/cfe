@@ -71,7 +71,7 @@ extern int run_aorc(aorc_model* model)
   aorc_calculate_solar_radiation(model);
   
   if (model->bmi.verbose > 1)
-    printf("calculate the net radiation");
+    printf("calculate the net radiation\n");
     // NOTE don't call this function use_aerodynamic_method option is TRUE
   model->other_forcing.net_radiation_W_per_sq_m=aorc_calculate_net_radiation_W_per_sq_m(model);
 

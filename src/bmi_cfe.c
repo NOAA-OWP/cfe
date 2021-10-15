@@ -143,9 +143,9 @@ int j = 0;
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
 static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "RAIN_RATE",
-
         /* xinanjiang_dev
         "SCHAAKE_OUTPUT_RUNOFF",*/
+        "DIRECT_RUNOFF",
         "GIUH_RUNOFF",
         "NASH_LATERAL_RUNOFF",
         "DEEP_GW_TO_CHANNEL_FLUX",
@@ -976,7 +976,7 @@ static int Update_until (Bmi *self, double t)
 {
     // https://bmi.readthedocs.io/en/latest/#update-until
     // "the time argument can be a non-integral multiple of time steps"
-    
+
     cfe_state_struct* cfe_ptr = ((cfe_state_struct *) self->data);
     
     int t_int = (int) t;
@@ -1043,9 +1043,10 @@ static int Get_adjusted_index_for_variable(const char *name)
     // associated names array, plus either:
     //      0 if it is in the output variable array or
     //      OUTPUT_VAR_NAME_COUNT if it is in the input variable array
-    for (i = 0; i < OUTPUT_VAR_NAME_COUNT; i++)
+    for (i = 0; i < OUTPUT_VAR_NAME_COUNT; i++){
         if (strcmp(name, output_var_names[i]) == 0)
             return i;
+    }
 
     for (i = 0; i < INPUT_VAR_NAME_COUNT; i++)
         if (strcmp(name, input_var_names[i]) == 0)
