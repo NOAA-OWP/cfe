@@ -553,11 +553,14 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         }
         /* xinanjiang_dev: Need the option to run either runoff method in the config file, 
         *//////////////////////////////////////////////////////////////////////////////
-        if (strcmp(param_key, "direct_runoff_method") == 0) {
-            model->direct_runoff_params_struct.method = strtod(param_value, NULL);
+        if (strcmp(param_key, "surface_partitioning_scheme") == 0) {
+            if (strcmp(param_value, "Schaake")==0 || strcmp(param_value, "schaake")==0 || strcmp(param_value,"1")==0 )
+                model->direct_runoff_params_struct.surface_partitioning_scheme = Schaake;
+            if (strcmp(param_value, "Xinanjiang")==0 || strcmp(param_value, "xinanjiang")==0 || strcmp(param_value,"2")==0)
+                model->direct_runoff_params_struct.surface_partitioning_scheme = Xinanjiang;
             is_direct_runoff_method_set = TRUE;
         }
-        if (model->direct_runoff_params_struct.method == 2) {  //Check that logical statement is correct
+        if (model->direct_runoff_params_struct.surface_partitioning_scheme == Xinanjiang) {  //Check that logical statement is correct
             if (strcmp(param_key, "a_Xinanjiang_inflection_point_parameter") == 0){
                 model->direct_runoff_params_struct.a_Xinanjiang_inflection_point_parameter = strtod(param_value, NULL);
                 is_a_Xinanjiang_inflection_point_parameter_set = TRUE;
@@ -688,7 +691,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         return BMI_FAILURE;
     }
 /* xinanjiang_dev*/
-    if(model->direct_runoff_params_struct.method == 2) {  // Check that logical statement is correct
+    if(model->direct_runoff_params_struct.surface_partitioning_scheme == 2) {  // Check that logical statement is correct
         if (is_a_Xinanjiang_inflection_point_parameter_set == FALSE) {
 #if CFE_DEGUG >= 1
             printf("Config param 'a_Xinanjiang_inflection_point_parameter' not found in config file\n");

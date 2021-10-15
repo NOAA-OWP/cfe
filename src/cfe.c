@@ -75,39 +75,32 @@ extern void cfe(
 
   soil_reservoir_storage_deficit_m=(NWM_soil_params_struct.smcmax*NWM_soil_params_struct.D-soil_reservoir_struct->storage_m);
 
- /* xinanjiang_dev: Somewhere we need to add logic to the call the particular runoff method.
-                    Since the logic can get kind of long, lets make a subroutine to do it.
-    Schaake_partitioning_scheme(timestep_h,Schaake_adjusted_magic_constant_by_soil_type,soil_reservoir_storage_deficit_m,
-                              timestep_rainfall_input_m,&Schaake_output_runoff_m,&infiltration_depth_m);                      */
-  /*direct_runoff(timestep_h, direct_runoff_params_struct,
-                soil_reservoir_storage_deficit_m, timestep_rainfall_input_m,
-                *direct_output_runoff_m, *infiltration_depth_m);*/
-  if(timestep_rainfall_input_m >0.0) // Call a runoff function only if rainfall input this time step is nonzero.
+  // NEW FLO
+  if(0.0 < timestep_rainfall_input_m) 
     {
-
-      if(direct_runoff_params_struct.method == 1){
-          Schaake_partitioning_scheme(timestep_h, direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type,
-                                  soil_reservoir_storage_deficit_m, timestep_rainfall_input_m,
-                                  &direct_output_runoff_m, &infiltration_depth_m);
-    
-      } else if (direct_runoff_params_struct.method == 2) {
-            Xinanjiang_partitioning_scheme(timestep_rainfall_input_m, soil_reservoir_struct->storage_threshold_primary_m,
-                                       soil_reservoir_struct->storage_max_m, soil_reservoir_struct->storage_m,
-                                       &direct_runoff_params_struct, 
-                                       &direct_output_runoff_m, &infiltration_depth_m);
-    
-      } else {
-            printf("ERROR: Direct runoff method not specified in Config File\n");
+    if (direct_runoff_params_struct.surface_partitioning_scheme == Schaake)
+      {
+      Schaake_partitioning_scheme(timestep_h,direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type,soil_reservoir_storage_deficit_m,
+                                  timestep_rainfall_input_m,&direct_output_runoff_m,&infiltration_depth_m);
+      }
+    else if (direct_runoff_params_struct.surface_partitioning_scheme == Xinanjiang)
+      {
+      Xinanjiang_partitioning_scheme(timestep_rainfall_input_m, soil_reservoir_struct->storage_threshold_primary_m,
+                                     soil_reservoir_struct->storage_max_m, soil_reservoir_struct->storage_m,
+                                     &direct_runoff_params_struct, 
+                                     &direct_output_runoff_m, &infiltration_depth_m);
+      }
+    else
+      {
+      fprintf(stderr,"Problem, must specify one of Schaake of Xinanjiang partitioning scheme.\n");
+      fprintf(stderr,"Program terminating.\n");
+      exit(-1);   // note -1 is arbitrary   #############BOMB################ NEW FLO
       }
     }
-  else // No need to call the Schaake function.
+  else  // NEW FLO no need to call Schaake or Xinanjiang if it's not raining.
     {
-    
-    /* xinanjiang_dev
-    Schaake_output_runoff_m=0.0;    */
-    direct_output_runoff_m=0.0;
-    
-    infiltration_depth_m=0.0;
+    direct_output_runoff_m = 0.0;
+    infiltration_depth_m = 0.0;
     }
 
   // check to make sure that there is storage available in soil to hold the water that does not runoff
@@ -456,53 +449,112 @@ else
 return;
 }
 
- /* xinanjiang_dev: Since the logic can get kind of long, lets make a subroutine to do it.
- *//////////////////////////////////////////////////////////////////////////////
-//##############################################################
-//########   DIRECT RUNOFF LOGICAL FUNCTION   ###########
-//##############################################################
-//void direct_runoff(double timestep_h, struct direct_runoff_params_struct *parms,
-//                                    double soil_reservoir_storage_deficit_m, double timestep_rainfall_input_m,
-//                                    double *flux_output_direct_runoff_m, double *infiltration_depth_m){
-//  //------------------------------------------------------------------------
-//  //  This function runs through the logic of calling a direct runoff method
-//  // So it doesn't have to clutter up the CFE function
-//   
-//  if(timestep_rainfall_input_m >0.0) // Call a runoff function only if rainfall input this time step is nonzero.
-//    {
-//
-//      if(direct_runoff_params_struct.method == 1){
-//          Schaake_partitioning_scheme(timestep_h, direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type,
-//                                  soil_reservoir_storage_deficit_m, timestep_rainfall_input_m,
-//                                  &flux_output_direct_runoff_m, &infiltration_depth_m);
-//    
-//      } else if (direct_runoff_params_struct.method == 2) {
-//            Xinanjiang_partitioning_scheme(timestep_rainfall_input_m, soil_reservoir_struct.storage_threshold_primary_m,
-//                                       soil_reservoir_struct.storage_max_m, soil_reservoir_struct.storage_m,
-//                                       parms, 
-//                                       &flux_output_direct_runoff_m, &infiltration_depth_m);
-//    
-//      } else {
-//          Schaake_partitioning_scheme(timestep_h, direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type,
-//                                  soil_reservoir_storage_deficit_m, timestep_rainfall_input_m,
-//                                  &flux_output_direct_runoff_m, &infiltration_depth_m);
-//      }
-//    }
-//  else // No need to call the Schaake function.
-//    {
-//    
-//    /* xinanjiang_dev
-//    Schaake_output_runoff_m=0.0;    */
-//    flux_output_direct_runoff_m=0.0;
-//    
-//    infiltration_depth_m=0.0;
-//    }
-//
-//}
 
 //##############################################################
 //########   XINANJIANG RUNOFF PARTITIONING SCHEME   ###########
 //##############################################################
+
+void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_capacity_m,
+                                    double max_soil_moisture_storage_m, double column_total_soil_water_m,
+                                    struct direct_runoff_parameters_structure *parms, 
+                                    double *surface_runoff_depth_m, double *infiltration_depth_m)
+{
+  //------------------------------------------------------------------------
+  //  This module takes the water_input_depth_m and separates it into surface_runoff_depth_m
+  //  and infiltration_depth_m by calculating the saturated area and runoff based on a scheme developed
+  //  for the Xinanjiang model by Jaywardena and Zhou (2000). According to Knoben et al.
+  //  (2019) "the model uses a variable contributing area to simulate runoff.  [It] uses
+  //  a double parabolic curve to simulate tension water capacities within the catchment, 
+  //  instead of the original single parabolic curve" which is also used as the standard 
+  //  VIC fomulation.  This runoff scheme was selected for implementation into NWM v3.0.
+  //  REFERENCES:
+  //  1. Jaywardena, A.W. and M.C. Zhou, 2000. A modified spatial soil moisture storage 
+  //     capacity distribution curve for the Xinanjiang model. Journal of Hydrology 227: 93-113
+  //  2. Knoben, W.J.M. et al., 2019. Supplement of Modular Assessment of Rainfall-Runoff Models
+  //     Toolbox (MARRMoT) v1.2: an open-source, extendable framework providing implementations
+  //     of 46 conceptual hydrologic models as continuous state-space formulations. Supplement of 
+  //     Geosci. Model Dev. 12: 2463-2480.
+  //-------------------------------------------------------------------------
+  //  Written by RLM May 2021
+  //  Adapted by JMFrame September 2021 for new version of CFE
+  //-------------------------------------------------------------------------
+  // Inputs
+  //   double  water_input_depth_m           amount of water input to soil surface this time step [m]
+  //   double  field_capacity_m              amount of water stored in soil reservoir when at field capacity [m]
+  //   double  max_soil_moisture_storage_m   total storage of the soil moisture reservoir (porosity*soil thickness) [m]
+  //   double  column_total_soil_water_m     current storage of the soil moisture reservoir [m]
+  //   double  a_inflection_point_parameter  a parameter
+  //   double  b_shape_parameter             b parameter
+  //   double  x_shape_parameter             x parameter
+  //
+  // Outputs
+  //   double  surface_runoff_depth_m        amount of water partitioned to surface water this time step [m]
+  //   double  infiltration_depth_m          amount of water partitioned as infiltration (soil water input) this time step [m]
+  //------------------------------------------------------------------------- 
+
+  double tension_water_m, free_water_m, max_tension_water_m, max_free_water_m, pervious_runoff_m;
+
+  //could move this if statement outside of both the Schaake and Xinanjiang subroutines  edit FLO- moved to main().
+
+  // partition the total soil water in the column between free water and tension water
+  free_water_m = column_total_soil_water_m - field_capacity_m;
+
+  if(0.0 < free_water_m) {      //edit FLO
+    tension_water_m = field_capacity_m;
+  } else {
+    free_water_m = 0.0;
+    tension_water_m = column_total_soil_water_m;
+  }
+
+  // estimate the maximum free water and tension water available in the soil column
+  max_free_water_m = max_soil_moisture_storage_m - field_capacity_m;
+  max_tension_water_m = field_capacity_m;
+
+  // check that the free_water_m and tension_water_m do not exceed the maximum and if so, change to the max value
+  if(max_free_water_m < free_water_m) free_water_m = max_free_water_m;
+  if(max_tension_water_m < tension_water_m) tension_water_m = max_tension_water_m;
+
+  // NOTE: the impervious surface runoff assumptions due to frozen soil used in NWM 3.0 have not been included.
+  // We are assuming an impervious area due to frozen soils equal to 0 (see eq. 309 from Knoben et al).
+
+  // The total (pervious) runoff is first estimated before partitioning into surface and subsurface components.
+  // See Knoben et al eq 310 for total runoff and eqs 313-315 for partitioning between surface and subsurface
+  // components.
+
+  // Calculate total estimated pervious runoff. 
+  // NOTE: If the impervious surface runoff due to frozen soils is added,
+  // the pervious_runoff_m equation will need to be adjusted by the fraction of pervious area.
+  if ((tension_water_m/max_tension_water_m) <= (0.5 - parms->a_Xinanjiang_inflection_point_parameter)) {
+      pervious_runoff_m = water_input_depth_m * (pow((0.5 - parms->a_Xinanjiang_inflection_point_parameter), 
+                                                     (1.0 - parms->b_Xinanjiang_shape_parameter)) *
+                                                 pow((1.0 - (tension_water_m/max_tension_water_m)),
+                                                     parms->b_Xinanjiang_shape_parameter));
+
+  } else {
+      pervious_runoff_m = water_input_depth_m * (1.0 - pow((0.5 + parms->a_Xinanjiang_inflection_point_parameter), 
+                                                         (1.0 - parms->b_Xinanjiang_shape_parameter)) * 
+                                                     pow((1.0 - (tension_water_m/max_tension_water_m)),
+                                                         (parms->b_Xinanjiang_shape_parameter)));
+  }
+  // Separate the surface water from the pervious runoff 
+  // NOTE: If impervious runoff is added to this subroutine, impervious runoff should be added to
+  // the surface_runoff_depth_m.
+  *surface_runoff_depth_m = pervious_runoff_m * (1.0 - pow((1.0 - (free_water_m/max_free_water_m)),parms->x_Xinanjiang_shape_parameter));
+
+  // The surface runoff depth is bounded by a minimum of 0 and a maximum of the water input depth.
+  // Check that the estimated surface runoff is not less than 0.0 and if so, change the value to 0.0.
+  if(*surface_runoff_depth_m < 0.0) *surface_runoff_depth_m = 0.0;
+  // Check that the estimated surface runoff does not exceed the amount of water input to the soil surface.  If it does,
+  // change the surface water runoff value to the water input depth.
+  if(*surface_runoff_depth_m > water_input_depth_m) *surface_runoff_depth_m = water_input_depth_m;
+  // Separate the infiltration from the total water input depth to the soil surface.
+  *infiltration_depth_m = water_input_depth_m - *surface_runoff_depth_m;    
+
+return;
+}
+//##############################################################
+//########   XINANJIANG RUNOFF PARTITIONING SCHEME   ###########
+/*##############################################################
 
 void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_capacity_m,
                                     double max_soil_moisture_storage_m, double column_total_soil_water_m,
@@ -604,7 +656,7 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
     *infiltration_depth_m = 0.0;
   }
   return;
-}
+}*/
 
 //##############################################################
 //####################   ET FROM RAINFALL   ####################

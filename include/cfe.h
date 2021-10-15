@@ -106,16 +106,6 @@ struct evapotranspiration_structure {
 };
 typedef struct evapotranspiration_structure evapotranspiration_structure;
 
-/* xinanjiang_dev*/
-struct direct_runoff_parameters_structure{
-    int method;
-    double Schaake_adjusted_magic_constant_by_soil_type;
-    double a_Xinanjiang_inflection_point_parameter;
-    double b_Xinanjiang_shape_parameter;
-    double x_Xinanjiang_shape_parameter;
-};
-typedef struct direct_runoff_parameters_structure direct_runoff_parameters_structure;
-
 struct massbal
 {
     double volstart            ;
@@ -145,15 +135,30 @@ typedef struct massbal massbal;
 //--------------------------
 typedef enum {Schaake, Xinanjiang} surface_water_partition_type;
 
+/* xinanjiang_dev*/
+struct direct_runoff_parameters_structure{
+    surface_water_partition_type surface_partitioning_scheme;
+    double Schaake_adjusted_magic_constant_by_soil_type;
+    double a_Xinanjiang_inflection_point_parameter;
+    double b_Xinanjiang_shape_parameter;
+    double x_Xinanjiang_shape_parameter;
+};
+typedef struct direct_runoff_parameters_structure direct_runoff_parameters_structure;
+
+
 // function prototypes
 // --------------------------------
 extern void Schaake_partitioning_scheme(double dt, double magic_number, double deficit, double qinsur,
                                         double *runsrf, double *pddum);
 
-// xinanjiang_dev: XinJiang function written by Rachel adapted by Jmframe, 
-extern void Xinanjiang_partitioning_scheme(double qinsur, double smcref, double smcmax, double smc, 
-                                           struct direct_runoff_parameters_structure *parms,
-                                           double *runsrf, double *pddum);
+// xinanjiang_dev: XinJiang function written by Rachel adapted by Jmframe and FLO, 
+//DELETEME: extern void Xinanjiang_partitioning_scheme(double qinsur, double smcref, double smcmax, double smc, 
+//DELETEME:                                            struct direct_runoff_parameters_structure *parms,
+//DELETEME:                                            double *runsrf, double *pddum);
+extern void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_capacity_m,
+                                    double max_soil_moisture_storage_m, double column_total_soil_water_m,
+                                    struct direct_runoff_parameters_structure *parms, 
+                                    double *surface_runoff_depth_m, double *infiltration_depth_m);
 
 extern void conceptual_reservoir_flux_calc(struct conceptual_reservoir *da_reservoir,
                                            double *primary_flux_m, double *secondary_flux_m);
