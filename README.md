@@ -6,6 +6,15 @@ There are actually multiple ways to run the CFE.
 1. As written by the original  author. This includes a full program to read and process atmospheric forcing data, print the model output and check for mass balance closure. This code can be run from the `original_author_code` directory.
 2. Through the BMI commands. This method will be used by the Next Generation U.S. National Water Model (Nextgen NWM). The `make_and_run_bmi.sh` script in the main directory does that for you through a main run file in the `./src` directory.
 
+## Direct runoff 
+The user has the option to pick a particular direct runoff (aka surface partitioning) method:
+1. Schaake function (configuration: `surface_partitioning_scheme=Schaake`)
+2. XinanJiang function (configuration: `surface_partitioning_scheme=Xinanjiang`). When using this runoff method the user must also include three parameters.
+### If XinanJiang is choosen these parameters need to be included in the configuration file:
+1. a_Xinanjiang_inflection_point_parameter
+2. b_Xinanjiang_shape_parameter
+3. x_Xinanjiang_shape_parameter 
+
 # Compiling this code to run examples with a "pseudo" or "mini" framework.
 ## Read local forcing file
 The BMI functionality was developed as a standalone module in C. To compile this code the developer used these steps:
