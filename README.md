@@ -7,9 +7,9 @@ There are actually multiple ways to run the CFE.
 2. Through the BMI commands. This method will be used by the Next Generation U.S. National Water Model (Nextgen NWM). The `make_and_run_bmi.sh` script in the main directory does that for you through a main run file in the `./src` directory.
 
 ## Direct runoff 
-The user has the option to pick a particular direct runoff method:
-1. Schaake function (configuration: `direct_runoff_method=Schaake`)
-2. XinanJiang function (configuration: `direct_runoff_method=Schaake`). When using this runoff method the user must also include three parameters.
+The user has the option to pick a particular direct runoff (aka surface partitioning) method:
+1. Schaake function (configuration: `surface_partitioning_scheme=Schaake`)
+2. XinanJiang function (configuration: `surface_partitioning_scheme=Xinanjiang`). When using this runoff method the user must also include three parameters.
 ### If XinanJiang is choosen these parameters need to be included in the configuration file:
 1. a_Xinanjiang_inflection_point_parameter
 2. b_Xinanjiang_shape_parameter
