@@ -84,13 +84,20 @@ int
   aorc_model *aorc;
   aorc = (aorc_model *) aorc_bmi_model->data;
 
+  /*************************************************************************
+   This will be used to advance the model with update_until
+  **************************************************************************/
+  double model_time_step_size;
+  cfe_bmi_model->get_time_step(cfe_bmi_model, &model_time_step_size);
+  printf("The model time step size is: %lf\n", model_time_step_size);
+
   /************************************************************************
     This is the basic process for getting two things to talk through BMI
     1. Update the AORC forcing data
     2. Getting forcing from AORC and setting forcing for CFE
     3. Update the CFE model.
   ************************************************************************/
-
+  
   /************************************************************************
     Now loop through time and call the models with the intermediate get/set
   ************************************************************************/
@@ -109,8 +116,7 @@ int
       printf("precip value from CFE is %lf\n", cfe_model_data->aorc.precip_kg_per_m2);
     }
 
-    //cfe_bmi_model->update_until(cfe_bmi_model, 1);                           // Update model 2
-    cfe_bmi_model->update(cfe_bmi_model);                           // Update model 2
+    cfe_bmi_model->update_until(cfe_bmi_model, (i+1)*model_time_step_size);                           // Update model 2
   
     if (cfe_model_data->verbosity > 0)
       print_cfe_flux_at_timestep(cfe_model_data);
