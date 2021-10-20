@@ -90,12 +90,19 @@ int
   cfe_state_struct *cfe_main_data2;
   cfe_main_data2 = (cfe_state_struct *) cfe_bmi_model2->data;
 
+  /*************************************************************************
+   This will be used to advance the model with update_until
+  **************************************************************************/
+  double model_time_step_size;
+  cfe_bmi_model2->get_time_step(cfe_bmi_model2, &model_time_step_size);
+  printf("The model time step size is: %lf\n", model_time_step_size);
+
   printf("looping through and calling update\n");
   if (cfe_main_data2->verbosity > 0)
       print_cfe_flux_header();
 
   // Run the model with the update until function
-  cfe_bmi_model2->update_until(cfe_bmi_model2, 45);
+  cfe_bmi_model2->update_until(cfe_bmi_model2, 45 * model_time_step_size);
 
   printf("Finalizing CFE model\n");
   cfe_bmi_model2->finalize(cfe_bmi_model2);

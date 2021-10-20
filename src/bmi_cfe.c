@@ -980,21 +980,51 @@ static int Update_until (Bmi *self, double t)
     // https://bmi.readthedocs.io/en/latest/#update-until
     // "the time argument can be a non-integral multiple of time steps"
 
+  {
     cfe_state_struct* cfe_ptr = ((cfe_state_struct *) self->data);
     
-    int t_int = (int) t;
-    if ((t - ((double)t_int)) != 0)
-        return BMI_FAILURE;
+    double dt;
+    double now;
 
-    for (int j = 0; j < t_int; j++){
+    Get_time_step (self, &dt);
+    Get_current_time (self, &now);
 
-        self->update(self); 
+    {
+      int n;
+      double frac;
+      const double n_steps = (t - now) / dt;
+      for (n=0; n<(int)n_steps; n++) {
+        Update (self);
         if (cfe_ptr->verbosity > 1)
             print_cfe_flux_at_timestep(cfe_ptr);
 
+      }
+
+      frac = n_steps - (int)n_steps;
+      if (frac > 0)
+          printf("WARNING: CFE trying to update a fraction of a timestep\n Figure out what to do here!\n");
     }
-    return BMI_SUCCESS;
+  }
+
+  return BMI_SUCCESS;
 }
+
+
+//    cfe_state_struct* cfe_ptr = ((cfe_state_struct *) self->data);
+//    
+//    int t_int = (int) t;
+//    if ((t - ((double)t_int)) != 0)
+//        return BMI_FAILURE;
+//
+//    for (int j = 0; j < t_int; j++){
+//
+//        self->update(self); 
+//        if (cfe_ptr->verbosity > 1)
+//            print_cfe_flux_at_timestep(cfe_ptr);
+//
+//    }
+//    return BMI_SUCCESS;
+//}
 
 
 static int Finalize (Bmi *self)
