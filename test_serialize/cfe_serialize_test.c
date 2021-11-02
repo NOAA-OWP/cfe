@@ -4,6 +4,7 @@
 #include "../include/bmi.h"
 #include "../include/bmi_cfe.h"
 #include "../include/serialize_state.h"
+#include "../include/cfe_serialize_test.h"
 
 /*
 This main program creates two instances of a BMI-enabled version of
@@ -43,6 +44,8 @@ int print_some(void *ptr_list[]){
 
   printf("ptr_list[42] = volout = %f\n", *(double *)ptr_list[42]);
   printf("ptr_list[43] = volin  = %f\n", *(double *)ptr_list[43]);
+  printf("ptr_list[46] = vol_in_nash    = %f\n", *(double *)ptr_list[46]);
+  printf("ptr_list[47] = vol_out_nash   = %f\n", *(double *)ptr_list[47]);
   printf("ptr_list[51] = num_time_steps = %d\n", *(int *)ptr_list[51]);
   printf("ptr_list[52] = current_time_step = %d\n", *(int *)ptr_list[52]);
   printf("ptr_list[53] = time_step_size = %d\n", *(int *)ptr_list[53]);
@@ -61,7 +64,8 @@ int print_some(void *ptr_list[]){
 //     while (*p != '\0'){
 //         printf("%c", *p++); } 
   //---------------------------------------------------------------
-  printf("ptr_list[71] = aorc.time = %ld\n", *(long *)ptr_list[71]);
+  printf("ptr_list[71] = aorc.time    = %ld\n", *(long *)ptr_list[71]);
+  printf("ptr_list[75] = nash_storage = %f\n", *(double *)ptr_list[75]);
   //---------------------------------------------------------------    
   puts("");    // newline is added
 
@@ -74,10 +78,11 @@ int main(int argc, const char *argv[])
 {
   // Check for config file arg
   const char *cfg_file;
-  if(argc<=1){
-      printf("WARNING: Missing config file argument.\n");
-      printf("         Using default.\n\n");
+  if (argc<=1){
       cfg_file = "./configs/cat_89_bmi_config_cfe.txt";
+      printf("WARNING: Missing config file argument.\n");
+      printf("         Using default:\n");
+      printf("         %s\n", cfg_file);
   } else {
       cfg_file = argv[1];
   }
@@ -94,7 +99,14 @@ int main(int argc, const char *argv[])
   int verbose   = 1;
   int print_obj = 1;  // Set to 1 to print values after deserializing
   int n_state_vars;
-    
+  int result;
+  int test_getters = 1;
+
+  char **names = NULL;
+  names = (char**) malloc (sizeof(char *) * n_state_vars);
+  for (int i=0; i<n_state_vars; i++){
+      names[i] = (char*) malloc (sizeof(char) * BMI_MAX_VAR_NAME);
+  }  
   //--------------------------------------------------------------   
   if (verbose){
       puts(""); 
@@ -114,6 +126,96 @@ int main(int argc, const char *argv[])
 
   model1->initialize(model1, cfg_file);
   model2->initialize(model2, cfg_file);
+
+  //-------------------------------------------------------------- 
+  if (test_getters){
+
+      //#########################################
+      // See "num_nash_lf = 2" in bmi_cfe.c
+      // padded to 3 causes intermittent
+      // mismatch for the 3rd value.
+      // Also see: Get_var_length in bmi_cfe.c.
+      //#########################################
+      int length, itemsize, nbytes, index;
+      int count_all, count_input, count_output;
+      char *name = "infiltration_depth_m";  // index = 2
+      // char name[] = "infiltration_depth_m";  // Doesn't work.
+      char *role_all    = "all";
+      char *role_input  = "input_from_bmi";
+      char *role_output = "output_to_bmi";
+      //-------------------------------      
+      //char *type;
+      //char *role;
+      //char *location;
+      //------------------------------- 
+      char type[BMI_MAX_TYPE_NAME];
+      char role[BMI_MAX_ROLE_NAME];
+      char location[BMI_MAX_LOCATION_NAME];
+      //------------------------------- 
+      puts("###############################################");      
+      puts("Testing bmi.get_var_count()...");
+      model1->get_var_count(model1, role_all, &count_all);
+      printf("  role  = %s\n", role_all);
+      printf("  count = %d\n", count_all);
+      puts("Testing bmi.get_var_count()...");      
+      model1->get_var_count(model1, role_input, &count_input);
+      printf("  role  = %s\n", role_input);
+      printf("  count = %d\n", count_input);
+      puts("Testing bmi.get_var_count()...");      
+      model1->get_var_count(model1, role_output, &count_output);
+      printf("  role  = %s\n", role_output);
+      printf("  count = %d\n", count_output);
+      //--------------------------------------------
+      puts("Testing bmi.get_var_names()...");
+      printf("  role = %s\n", role_all);
+      model1->get_var_names(model1, role_all, names);
+      for (int j=0; j<count_all; j++){
+          printf("  names[%d] = %s\n", j, names[j]);
+      }
+      //--------------------------------------------
+      puts("Testing bmi.get_var_names()...");
+      printf("  role = %s\n", role_input);
+      model1->get_var_names(model1, role_input, names);
+      for (int j=0; j<count_input; j++){
+          printf("  names[%d] = %s\n", j, names[j]);
+      }
+      //--------------------------------------------
+      puts(""); 
+      printf("Let name = %s\n", name);
+      //-------------------------------------------- 
+      puts("Testing bmi.get_var_index()...");
+      model1->get_var_index(model1, name, &index);
+      printf("  index = %d\n", index);
+      //-------------------------------------------- 
+      puts("Testing bmi.get_var_type()...");
+      model1->get_var_type(model1, name, type);
+      printf("  type = %s\n", type);
+      //--------------------------------------------
+      puts("Testing bmi.get_var_length()...");
+      model1->get_var_length(model1, name, &length);
+      printf("  length = %d\n", length); 
+      //--------------------------------------------
+      puts("Testing bmi.get_var_role()...");
+      model1->get_var_role(model1, name, role);
+      printf("  role = %s\n", role);
+      //--------------------------------------------
+      // This one uses bmi.get_var_type().
+      puts("Testing bmi.get_var_itemsize()...");
+      model1->get_var_itemsize(model1, name, &itemsize);
+      printf("  itemsize = %d\n", itemsize);
+      //--------------------------------------------
+      // This one uses bmi.get_var_type().
+      puts("Testing bmi.get_var_nbytes()...");
+      model1->get_var_nbytes(model1, name, &nbytes);
+      printf("  nbytes = %d\n", nbytes);
+      //--------------------------------------------
+      puts("Testing bmi.get_var_location()...");
+      model1->get_var_location(model1, name, location);
+      printf("  location = %s\n", location);
+      //--------------------------------------------
+      puts("###############################################"); 
+      puts("");                     
+  }
   
   //--------------------------------------------------------------
   if (verbose){
@@ -128,11 +230,36 @@ int main(int argc, const char *argv[])
 
   //--------------------------------------------------------------  
   if (verbose){
-      puts("Calling BMI.get_state_var_ptrs() on CFE model 1 ...");
+      puts("Calling get_state_var_count() on CFE model 1 ...");
+      //puts("Calling BMI.get_state_var_count() on CFE model 1 ...");
   }
 
-  model1->get_state_var_count(model1, &n_state_vars);  
+  result = get_state_var_count(model1, &n_state_vars);
+  if (result == BMI_FAILURE){
+      puts("ERROR in get_state_var_count(); returning.");
+      return BMI_FAILURE;
+  }
+  //model1->get_state_var_count(model1, &n_state_vars);  
 
+  //--------------------------------------------------------------  
+  if (verbose){
+      puts("Calling get_state_var_names() on CFE model 1 ...");
+      //puts("Calling BMI.get_state_var_names() on CFE model 1 ...");
+  }
+
+  result = get_state_var_names(model1, names);
+  if (result == BMI_FAILURE){
+      puts("ERROR in get_state_var_names(); returning.");
+      return BMI_FAILURE;
+  }
+  //model1->get_state_var_names(model1, names); 
+  
+  //--------------------------------------------------------------  
+  if (verbose){
+      puts("Calling get_state_var_ptrs() on CFE model 1 ...");
+      //puts("Calling BMI.get_state_var_ptrs() on CFE model 1 ...");
+
+  }
   //---------------------------------------------
   // For testing:  All 3 print "8" on my MacPro
   //---------------------------------------------
@@ -146,7 +273,12 @@ int main(int argc, const char *argv[])
   //      array-of-pointers-to-multiple-types-c/7799543
   //--------------------------------------------------------------- 
   void *ptr_list[ n_state_vars ];
-  model1->get_state_var_ptrs(model1, ptr_list);
+  result = get_state_var_ptrs(model1, names, ptr_list);
+  if (result == BMI_FAILURE){
+      puts("ERROR in get_state_var_ptrs(); returning.");
+      return BMI_FAILURE;
+  }
+  //model1->get_state_var_ptrs(model1, ptr_list);
 
   if (verbose){ print_some( ptr_list ); }
 
@@ -193,21 +325,48 @@ int main(int argc, const char *argv[])
 
   //--------------------------------------------------------------  
   if (verbose){
-      puts("Calling BMI.get_state_var_ptrs() on CFE model 1 ...");
+      puts("Calling get_state_var_ptrs() on CFE model 1 ...");
+      //puts("Calling BMI.get_state_var_ptrs() on CFE model 1 ...");
   }
 
-  model1->get_state_var_ptrs(model1, ptr_list);
+  result = get_state_var_ptrs(model1, names, ptr_list);
+  if (result == BMI_FAILURE){
+      puts("ERROR in get_state_var_ptrs(); returning.");
+      return BMI_FAILURE;
+  }
+  // model1->get_state_var_ptrs(model1, ptr_list);
 
   if (verbose){ print_some( ptr_list ); }
   
   //--------------------------------------------------------------  
   if (verbose){
-      puts("Calling BMI.get_state_var_ptrs() on CFE model 2 ...");
+      puts("Calling get_state_var_ptrs() on CFE model 2 ...");
+      //puts("Calling BMI.get_state_var_ptrs() on CFE model 2 ...");
   }
 
-  model2->get_state_var_ptrs(model2, ptr_list);
+  result = get_state_var_ptrs(model2, names, ptr_list);
+  if (result == BMI_FAILURE){
+      puts("ERROR in get_state_var_ptrs(); returning.");
+      return BMI_FAILURE;
+  }
+  // model2->get_state_var_ptrs(model2, ptr_list);
 
   if (verbose){ print_some( ptr_list ); }
+
+  //--------------------------------------------------------------
+  if (verbose){
+      puts("Freeing memory...");
+  }
+    
+  //--------------------------------   
+  // Free memory for string arrays
+  //--------------------------------
+  for (int i=0; i<n_state_vars; i++){
+      free (names[i]);
+      //free (types[i]);
+  }
+  free (names);
+  //free (types);
 
   //--------------------------------------------------------------
   if (verbose){ puts("Comparing CFE model 1 & 2 state vars ..."); }

@@ -9,6 +9,7 @@
 #include <msgpack.h>
 #include "msgpack/fbuffer.h"        // See note above
 #include "../include/bmi.h"
+#include "../include/serialize_state.h"
 
 //------------------------------------------------
 // Now computing these from filesize of ser_file
@@ -26,7 +27,7 @@ of the state variables of a model written in C.
 The function "serialize()" uses new BMI functions to retrieve
 the model's state variables called:  get_state_var_ptrs(),
 get_state_var_names(), get_state_var_types(), and
-get_state_var_sizes().
+get_state_var_lengths().
 
 The function "deserialize_to_state()" deserializes the saved model
 (from a file) and then uses the new BMI function set_state_var()
@@ -46,13 +47,24 @@ https://github.com/msgpack/msgpack-c/wiki/v2_0_c_overview
 See this msgpack example:
 https://blog.gypsyengineer.com/en/security/msgpack-fuzzing.html
 */
-
+//-----------------------------------------------------------------------
+// Functions in this file:
+//     get_file_size()
+//     get_state_var_count()
+//     get_state_var_names()
+//     get_state_var_types()
+//     get_state_var_lengths()
+//     get_state_var_ptrs()
+//    
+//     serialize()
+//     deserialize_to_state()
+//     compare_states()
 //-----------------------------------------------------------------------
 int get_file_size(const char *ser_file, unsigned long int *file_size){
 
-    //-------------------------------------
-    // Get the file size, set BUFFER_SIZE
-    //-------------------------------------
+    //----------------------------------------
+    // Get the file size, to set BUFFER_SIZE
+    //----------------------------------------
     struct stat st;
     stat(ser_file, &st);
     *file_size = st.st_size;
@@ -60,20 +72,174 @@ int get_file_size(const char *ser_file, unsigned long int *file_size){
 }
 
 //-----------------------------------------------------------------------
+int get_state_var_count(Bmi *model1, int *count){
+
+    if (!model1){
+        return BMI_FAILURE;   
+    }
+    
+    char role[] = "all";
+    model1->get_var_count( model1, role, count);
+    
+    //puts("In get_state_var_count()...");    
+    //printf("   count = %d\n", *count);
+    //puts("");
+    return BMI_SUCCESS;    
+}
+//-----------------------------------------------------------------------
+int get_state_var_names(Bmi *model1, char **names){
+
+    // Should we add "struct' before "Bmi" above?
+    if (!model1){
+        return BMI_FAILURE;   
+    }
+
+    //------------------------
+    // Do this in the caller
+    //------------------------
+    //char **names = NULL;
+    //names = (char**) malloc (sizeof(char *) * n_state_vars);
+    //for (int i=0; i<n_state_vars; i++){
+    //    names[i] = (char*) malloc (sizeof(char) * BMI_MAX_VAR_NAME);
+
+    
+    char role[] = "all";
+    model1->get_var_names( model1, role, names);
+
+    //--------------
+    // For testing
+    //--------------
+    //size_t n_state_vars = sizeof(names) / sizeof(names[0]); 
+    ////int n_state_vars = sizeof(names) / sizeof(names[0]);
+           
+    //puts("In get_state_var_names()...");
+    //printf("   role     = %s\n", role);
+    //printf("   names[0] = %s\n", names[0]);
+    //printf("   names[1] = %s\n", names[1]);
+    //printf("   names[2] = %s\n", names[2]);
+    
+    //printf("   sizeof(names)    = %zud\n", sizeof(*names) );
+    //printf("   sizeof(names[0]) = %zud\n", sizeof(*names[0]) );
+    //printf("   n_state_vars = %zud\n", n_state_vars);
+    // printf("   n_state_vars = %d\n", n_state_vars);
+    //puts("");
+    
+    return BMI_SUCCESS;    
+}
+
+//-----------------------------------------------------------------------
+int get_state_var_types(Bmi *model1, char **names, char **types){
+
+    if (!model1){
+        return BMI_FAILURE;
+    }
+
+    // char *type;  //#### Doesn't work now.
+    char type[BMI_MAX_TYPE_NAME];   // This works.
+    int n_state_vars;
+    get_state_var_count(model1, &n_state_vars);
+    
+    //puts("In get_state_var_types()...");
+    //printf("n_state_vars = %d\n", n_state_vars);
+    
+    //int n_state_vars = sizeof(names) / sizeof(names[0]);
+        
+    // Added "names" as argument.  #################
+    //char role[] = "all";
+    //model1->get_var_names( model1, role, names, &n_state_vars);
+    
+    for (int i = 0; i < n_state_vars; i++) {
+        model1->get_var_type( model1, names[i], type );
+        strncpy( types[i], type, BMI_MAX_TYPE_NAME);
+        // types[i] = type;  //#### Doesn't work now.
+        //printf("types[i] = %s\n", types[i]);
+    }
+  
+    return BMI_SUCCESS;
+}
+
+//-----------------------------------------------------------------------
+int get_state_var_lengths(Bmi *model1, char **names, unsigned int lengths[]){
+
+    if (!model1){
+        return BMI_FAILURE;   
+    }
+
+    int length, n_state_vars, itemsize, nbytes;
+    get_state_var_count(model1, &n_state_vars);
+    
+    for (int i = 0; i < n_state_vars; i++) {
+        //----------------------------------------    
+        // Method that uses new get_var_length()
+        //----------------------------------------
+        model1->get_var_length( model1, names[i], &length );
+        lengths[i] = length;
+        
+        //----------------------------------
+        // Method without get_var_length()
+        //----------------------------------
+        //model1->get_var_itemsize( model1, names[i], &itemsize);
+        //model1->get_var_nbytes(   model1, names[i], &nbytes);
+        //lengths[i] = (nbytes / itemsize);
+
+        //printf("itemsize = %d\n", itemsize);
+        //printf("nbytes   = %d\n", nbytes);
+        //printf("length   = %d\n", lengths[i]);
+        //printf("\n");
+    }
+
+    //puts("In get_state_var_lengths()...");
+    //printf("   names[0]   = %s\n", names[0]);
+    //printf("   lengths[0] = %d\n", lengths[0]);
+    //puts("");   
+    return BMI_SUCCESS;
+}
+
+//-----------------------------------------------------------------------
+int get_state_var_ptrs(Bmi *model1, char **names, void *ptrs[]){
+
+    if (!model1){
+        return BMI_FAILURE;   
+    }
+
+    void *ptr;
+    int n_state_vars;
+    get_state_var_count(model1, &n_state_vars);
+    
+    // int n_state_vars = sizeof(names) / sizeof(names[0]);
+
+    // Added "names" as argument. #################
+    //char role[] = "all";
+    //model1->get_var_names( model1, role, names, &n_state_vars);
+ 
+    //puts("In get_state_var_ptrs()...");   
+    //printf("   n_state_vars = %d\n", n_state_vars);
+    //printf("   names[0] = %s\n", names[0]);
+    
+    for (int i = 0; i < n_state_vars; i++) {
+        //printf("   name = %s\n", names[i]);
+        model1->get_value_ptr( model1, names[i], &ptr );
+        ptrs[i] = ptr;
+    }
+  
+    return BMI_SUCCESS;
+}
+
+//---------------------------------------------------------
+// We don't need this now.  Can just use get_file_size().
+//---------------------------------------------------------
 // int get_buffer_size(Bmi* model1, unsigned int buffer_size){
 //
-//     //---------------------------------------------------------
-//     // We don't need this now.  Can just use get_file_size().
-//     //---------------------------------------------------------
+
 //     int n_state_vars;
 //     model1->get_state_var_count(model1, &n_state_vars);
 // 
-//     unsigned int size, sizes[ n_state_vars ], type_size;
+//     unsigned int length, lengths[ n_state_vars ], type_size;
 //     unsigned int unpacked_buffer_size = 0;
 //     int verbose = 1;
 //     int i;
-// 
-//     char *type;
+//
+//     char type[BMI_MAX_TYPE_NAME];
 //     char **types = NULL;
 //     types = (char**) malloc (sizeof(char *) * n_state_vars);  
 //     for (i=0; i<n_state_vars; i++){
@@ -83,12 +249,12 @@ int get_file_size(const char *ser_file, unsigned long int *file_size){
 //     if (verbose){ puts("Calling BMI.get_state_var_types()..."); }
 //     model1->get_state_var_types(model1, types);
 // 
-//     if (verbose){ puts("Calling BMI.get_state_var_sizes()..."); }
-//     model1->get_state_var_sizes(model1, sizes); 
+//     if (verbose){ puts("Calling BMI.get_state_var_lengths()..."); }
+//     model1->get_state_var_lengths(model1, lengths); 
 // 
 //     for (i=0; i<n_state_vars; i++){
-//         type = types[i];
-//         size = sizes[i];
+//         type   = types[i];
+//         length = lengths[i];
 //  
 // 		if (strcmp(type, "int") == 0){
 // 			type_size = sizeof( int );
@@ -101,7 +267,7 @@ int get_file_size(const char *ser_file, unsigned long int *file_size){
 // 		} else if (strcmp(type, "FILE") == 0){
 // 			type_size = sizeof( FILE );
 // 		} else{
-// 			printf("  WARNING: Unknown type = %s", types[i] );
+// 			printf("  WARNING: Unknown type = %s\n", types[i] );
 // 			type_size = 4;
 // 		}
 //                    
@@ -127,13 +293,21 @@ int get_file_size(const char *ser_file, unsigned long int *file_size){
 //-----------------------------------------------------------------------
 int serialize(Bmi* model1, const char *ser_file) {
 
-    int n_state_vars;
-    model1->get_state_var_count(model1, &n_state_vars);
+    int n_state_vars, result;
+    result = get_state_var_count( model1, &n_state_vars);
+    printf("In serialize()...\n");
+    printf("   n_state_vars = %d.\n", n_state_vars);
+    
+    if (result == BMI_FAILURE){
+        puts("ERROR in get_state_var_count(); returning.");
+        return BMI_FAILURE;
+    }
+    // model1->get_state_var_count(model1, &n_state_vars);  //##############
     
     FILE *fp = fopen(ser_file, "w+");
     int i, j, n_bytes;
     void *ptr_list[ n_state_vars ];
-    unsigned int size, sizes[ n_state_vars ];
+    unsigned int length, lengths[ n_state_vars ];
     int verbose = 1;
     int    i_val;
     long   li_val;
@@ -145,28 +319,53 @@ int serialize(Bmi* model1, const char *ser_file) {
     for (i=0; i<n_state_vars; i++){
         names[i] = (char*) malloc (sizeof(char) * BMI_MAX_VAR_NAME);
     }
-
-    char *type;
+    
+    // char *type;  // Doesn't work now.  #######
+    char type[BMI_MAX_TYPE_NAME];   // This works.
     char **types = NULL;
     types = (char**) malloc (sizeof(char *) * n_state_vars);  
     for (i=0; i<n_state_vars; i++){
         types[i] = (char*) malloc (sizeof(char) * BMI_MAX_VAR_NAME);
     }
 
-    //--------------------------------------------------------------
-    // Get required information on the model's state variables
-    //--------------------------------------------------------------  
-    if (verbose){ puts("Calling BMI.get_state_var_names()..."); }
-    model1->get_state_var_names(model1, names);
+    //------------------------------------------------------
+    // Get required info about the model's state variables
+    //------------------------------------------------------ 
+    if (verbose){ puts("Calling get_state_var_names() in serialize()..."); }
+    result = get_state_var_names(model1, names);
+    if (result == BMI_FAILURE){
+        puts("ERROR in get_state_var_names(); returning.");
+        return BMI_FAILURE;
+    }
+    //if (verbose){ puts("Calling BMI.get_state_var_names()..."); }
+    //model1->get_state_var_names(model1, names);
+    
+    if (verbose){ puts("Calling get_state_var_types() in serialize()..."); }
+    result = get_state_var_types(model1, names, types);
+    if (result == BMI_FAILURE){
+        puts("ERROR in get_state_var_types(); returning.");
+        return BMI_FAILURE;
+    }
+    //if (verbose){ puts("Calling BMI.get_state_var_types()..."); }
+    //model1->get_state_var_types(model1, types);
 
-    if (verbose){ puts("Calling BMI.get_state_var_types()..."); }
-    model1->get_state_var_types(model1, types);
+    if (verbose){ puts("Calling get_state_var_lengths() in serialize()..."); }
+    result = get_state_var_lengths(model1, names, lengths);
+    if (result == BMI_FAILURE){
+        puts("ERROR in get_state_var_lengths(); returning.");
+        return BMI_FAILURE;
+    }
+    //if (verbose){ puts("Calling BMI.get_state_var_lengths()..."); }
+    //model1->get_state_var_lengths(model1, lengths);       
 
-    if (verbose){ puts("Calling BMI.get_state_var_sizes()..."); }
-    model1->get_state_var_sizes(model1, sizes);      
-
-    if (verbose){ puts("Calling BMI.get_state_var_ptrs()..."); }
-    model1->get_state_var_ptrs(model1, ptr_list);
+    if (verbose){ puts("Calling get_state_var_ptrs() in serialize()..."); }
+    result = get_state_var_ptrs(model1, names, ptr_list);
+    if (result == BMI_FAILURE){
+        puts("ERROR in get_state_var_ptrs(); returning.");
+        return BMI_FAILURE;
+    }
+    //if (verbose){ puts("Calling BMI.get_state_var_ptrs()..."); }
+    //model1->get_state_var_ptrs(model1, ptr_list);
 
     //--------------------------------------------
     // Prepare to write serialized state to file
@@ -202,9 +401,11 @@ int serialize(Bmi* model1, const char *ser_file) {
         printf("  Number of state vars = %d\n", n_state_vars);
     } 
     for (i=0; i<n_state_vars; i++){
-        size = sizes[i];
-        type = types[i];
-        printf("  i = %d, type = %s, size = %u\n", i, type, size );
+        length = lengths[i];
+        strncpy( type, types[i], BMI_MAX_TYPE_NAME);
+        // type = types[i];  //#### Doesn't work now.
+        // printf("  types[i] = %s\n", types[i]);
+        printf("  i = %d, type = %s, length = %u\n", i, type, length );
 
         if (ptr_list[i] == NULL){
             if (verbose){
@@ -223,23 +424,25 @@ int serialize(Bmi* model1, const char *ser_file) {
         //---------------------------------------------
         // Is this state var a single value or array?
         //---------------------------------------------
-        if (size == 1){
+        if (length == 1){
             if (strcmp(type, "int") == 0){
                 msgpack_pack_int(&pk, *(int *)ptr_list[i]);
             } else if (strcmp(type, "long") == 0){
-                msgpack_pack_long(&pk, *(long *)ptr_list[i]);    //#############
+                msgpack_pack_long(&pk, *(long *)ptr_list[i]);
             } else if (strcmp(type, "float") == 0){
                 msgpack_pack_float(&pk, *(float *)ptr_list[i]);  
             } else if (strcmp(type, "double") == 0){
                 msgpack_pack_double(&pk, *(double *)ptr_list[i]);
             } else if (strcmp(type, "string") == 0){
                 // Note:  Need ptr_list[i] without * here.
-                msgpack_pack_str_body(&pk, ptr_list[i], size);   
+                msgpack_pack_str_body(&pk, ptr_list[i], length);
+            } else if (strcmp(type, "char") == 0){
+                msgpack_pack_str_body(&pk, ptr_list[i], length);      
             } else if (strcmp(type, "FILE") == 0){
                 // nil is an object pointer to nothing
                 msgpack_pack_nil(&pk);  // Need something; will this work?
             } else{
-                printf("  WARNING: Unknown type = %s", types[i] );
+                printf("  WARNING: Unknown type = %s\n", types[i] );
                 msgpack_pack_nil(&pk);  // Need something; will this work?
             }
         } else{
@@ -247,11 +450,13 @@ int serialize(Bmi* model1, const char *ser_file) {
             // This state var is an array or string
             //---------------------------------------
             if (strcmp(type, "string") == 0){
-                msgpack_pack_str(&pk, size);
+                msgpack_pack_str(&pk, length);
+            } else if (strcmp(type, "char") == 0){
+                msgpack_pack_str(&pk, length);
             } else if (strcmp(type, "FILE") != 0){
-                msgpack_pack_array(&pk, size);
-                // n_bytes = size * sizeof( double );
-                // msgpack_pack_bin(&pk, n_bytes); 
+                msgpack_pack_array(&pk, length);
+                // n_bytes = length * sizeof( double );
+                // msgpack_pack_bin(&pk, n_bytes);
             }
 
             //-----------------------------------------------------
@@ -263,30 +468,33 @@ int serialize(Bmi* model1, const char *ser_file) {
             //       INCORRECT:  *(double *)ptr + j 
             //---------------------------------------------
             if (strcmp(type, "int") == 0){
-                for (j=0; j<size; j++){
+                for (j=0; j<length; j++){
                     i_val = *( ((int *)ptr_list[i]) + j);
                         msgpack_pack_int(&pk, i_val); }
             } else if (strcmp(type, "long") == 0){
-                for (j=0; j<size; j++){
+                for (j=0; j<length; j++){
                     li_val = *( ((long *)ptr_list[i]) + j);
                     msgpack_pack_long(&pk, li_val); }    //#####################
             } else if (strcmp(type, "float") == 0){
-                for (j=0; j<size; j++){
+                for (j=0; j<length; j++){
                     f_val = *( ((float *)ptr_list[i]) + j);
                     msgpack_pack_float(&pk, f_val); }
             } else if (strcmp(type, "double") == 0){
-                for (j=0; j<size; j++){
+                for (j=0; j<length; j++){
                     d_val = *( ((double *)ptr_list[i]) + j);
                     msgpack_pack_double(&pk, d_val); }
             } else if (strcmp(type, "string") == 0){
                 // Note:  Need ptr_list[i] without * here.
-                msgpack_pack_str_body(&pk, ptr_list[i], size);   
+                msgpack_pack_str_body(&pk, ptr_list[i], length);
+            } else if (strcmp(type, "char") == 0){
+                // Note:  Need ptr_list[i] without * here.
+                msgpack_pack_str_body(&pk, ptr_list[i], length);     
             } else if (strcmp(type, "FILE") == 0){
-                for (j=0; j<size; j++){
+                for (j=0; j<length; j++){
                     // nil is an object pointer to nothing
                      msgpack_pack_nil(&pk); } // Need something; will this work?
             } else{
-                printf("  WARNING: Unknown type = %s", types[i] );
+                printf("  WARNING: Unknown type = %s\n", types[i] );
                 msgpack_pack_nil(&pk);  // Need something; will this work?
             }
         }
@@ -344,27 +552,69 @@ int deserialize_to_state(const char *ser_file, Bmi* model2, int print_obj) {
     //--------------------------------------------------------------------
     int verbose   = 1;
     // int print_obj = 1;
-    int n_state_vars;
-    model2->get_state_var_count(model2, &n_state_vars);
- 
-    unsigned int sizes[ n_state_vars ], size;
-    model2->get_state_var_sizes(model2, sizes);
-    int     i_val, *i_arr, j;
+    int     i_val,  *i_arr, j, result;
+    short   si_val, *si_arr;
     long    li_val, *li_arr;
-    float   f_val, *f_arr;
-    double  d_val, *d_arr;
+    float   f_val,  *f_arr;
+    double  d_val,  *d_arr;
     void    *ptr;
-        
-    char *type, *sval;
+
+    //------------------------------------     
+    // Get all the total state var count
+    //------------------------------------
+    int n_state_vars;
+    result = get_state_var_count(model2, &n_state_vars);
+    if (result == BMI_FAILURE){
+        puts("ERROR in get_state_var_count(); returning.");
+        return BMI_FAILURE;
+    }
+      
+    //------------------------------   
+    // Get all the state var names
+    //------------------------------
+    // char *name;
+    char name[BMI_MAX_VAR_NAME];
+    char **names = NULL;
+    names = (char**) malloc (sizeof(char *) * n_state_vars);
+    for (int j=0; j<n_state_vars; j++){
+        names[j] = (char*) malloc (sizeof(char) * BMI_MAX_VAR_NAME);
+    }
+    result = get_state_var_names(model2, names);
+    if (result == BMI_FAILURE){
+        puts("ERROR in get_state_var_names(); returning.");
+        return BMI_FAILURE;
+    }
+    
+    //------------------------------     
+    // Get all the state var types
+    //------------------------------
+    // char *type;
+    char type[BMI_MAX_TYPE_NAME];
+          
+    char *sval;
     char **types = NULL;
     types = (char**) malloc (sizeof(char *) * n_state_vars);  
     for (int j=0; j<n_state_vars; j++){
         types[j] = (char*) malloc (sizeof(char) * BMI_MAX_VAR_NAME);
     }
-    model2->get_state_var_types(model2, types);
+    result = get_state_var_types(model2, names, types);
+    if (result == BMI_FAILURE){
+        puts("ERROR in get_state_var_types(); returning.");
+        return BMI_FAILURE;
+    }
 
+    //--------------------------------     
+    // Get all the state var lengths
+    //--------------------------------
+    unsigned int length, lengths[ n_state_vars ];
+    result = get_state_var_lengths(model2, names, lengths);
+    if (result == BMI_FAILURE){
+        puts("ERROR in get_state_var_lengths(); returning.");
+        return BMI_FAILURE;
+    }
+    
     //-------------------------------------
-    // Get the file size, set buffer_size
+    // Get the file size; set buffer_size
     //-------------------------------------
     unsigned long int file_size, buffer_size, unpacked_buffer_size;
     get_file_size( ser_file, &file_size );
@@ -404,48 +654,52 @@ int deserialize_to_state(const char *ser_file, Bmi* model2, int print_obj) {
     len = fread(inbuffer, sizeof(char), buffer_size, fp); 
     ret = msgpack_unpack_next(&unpacked, inbuffer, len, &off);
 
+    //-------------------------------------------
+    // Deserialize and set state vars in model2
+    //-------------------------------------------
     while (ret == MSGPACK_UNPACK_SUCCESS) {
         msgpack_object obj = unpacked.data;
 
-        size = sizes[i];
-        type = types[i];
+        //#### type = types[i];
+        //#### name = names[i];
+        strncpy( type, types[i], BMI_MAX_TYPE_NAME);
+        strncpy( name, names[i], BMI_MAX_VAR_NAME);
+        length = lengths[i];
+
         // printf("type = %s\n", type);
         if (strchr(type, '*') != NULL){
             type[strlen(type)-1] = '\0';  // remove last char
         }
 
-        if (size == 1){
-            //--------------------------------------------
-            // Note:  This does not work, even though we
-            //        typecast in set_state_var().
-            //--------------------------------------------
+        if (length == 1){
+            //------------------------------------------------
+            // Note:  These commented lines don't work, even
+            //        though we typecast in set_state_var().
+            //------------------------------------------------
             // ptr = &obj;
             // model2->set_state_var(model2, ptr, i );
             //--------------------------------------------                  
             if (strcmp(type, "int") == 0){
                 i_val = (int)obj.via.i64;
-                model2->set_state_var(model2, &i_val, i );
+                model2->set_value(model2, name, &i_val );
+            } else if (strcmp(type, "short") == 0){        
+                si_val = (short)obj.via.i64;
+                model2->set_value(model2, name, &si_val );
             } else if (strcmp(type, "long") == 0){        
                 li_val = (long)obj.via.i64;
-                model2->set_state_var(model2, &li_val, i );
+                model2->set_value(model2, name, &li_val );
             } else if (strcmp(type, "float") == 0){        
                 f_val = (float)obj.via.f64;
-                model2->set_state_var(model2, &f_val, i );
+                model2->set_value(model2, name, &f_val );
             } else if (strcmp(type, "double") == 0){   
                 d_val = (double)obj.via.f64;
-                model2->set_state_var(model2, &d_val, i );
+                model2->set_value(model2, name, &d_val );
+            } else if (strcmp(type, "char") == 0){
+                model2->set_value(model2, name, &obj );
             } else if (strcmp(type, "string") == 0){
-                model2->set_state_var(model2, &obj, i );
-                //-------------------------------------------
-                // Next 2 lines don't work
-                // sval = (char*)(obj.via.str);
-                // model2->set_state_var(model2, sval, i );
-                //-------------------------------------------
-                // Next 2 lines don't work either
-                //sval = obj.via.str;
-                //model2->set_state_var(model2, sval, i );
+                model2->set_value(model2, name, &obj );
             } else{
-                 model2->set_state_var(model2, &obj, i );
+                 model2->set_value(model2, name, &obj );
             }
         } else{
             //--------------------------------------------------
@@ -461,30 +715,45 @@ int deserialize_to_state(const char *ser_file, Bmi* model2, int print_obj) {
             if (strcmp(type, "string") == 0){
                 // Works for title & subcat strings in TOPMODEL.
                 ptr = obj.via.array.ptr;
-                model2->set_state_var(model2, ptr, i );
+                model2->set_value(model2, name, ptr );
+            //--------------------------------------------------
+            } else if (strcmp(type, "char") == 0){
+                ptr = obj.via.array.ptr;
+                model2->set_value(model2, name, ptr );
+            //--------------------------------------------------            
             } else if (strcmp(type, "int") == 0){
-                i_arr = (int*) malloc(size * sizeof( int ));
-                for (int j=0; j<size; j++){
+                i_arr = (int*) malloc(length * sizeof( int ));
+                for (int j=0; j<length; j++){
                     i_arr[j] = obj.via.array.ptr[j].via.i64; }
-                model2->set_state_var(model2, i_arr, i );
+                model2->set_value(model2, name, i_arr );
                 free(i_arr);
+            //--------------------------------------------------
             } else if (strcmp(type, "long") == 0){
-                li_arr = (long*) malloc(size * sizeof( long ));   //##########
-                for (int j=0; j<size; j++){
+                li_arr = (long*) malloc(length * sizeof( long ));   //##########
+                for (int j=0; j<length; j++){
                     li_arr[j] = obj.via.array.ptr[j].via.i64; }
-                model2->set_state_var(model2, li_arr, i );
+                model2->set_value(model2, name, li_arr );
                 free(li_arr);
+            //--------------------------------------------------
+            } else if (strcmp(type, "short") == 0){
+                si_arr = (short*) malloc(length * sizeof( short ));
+                for (int j=0; j<length; j++){
+                    si_arr[j] = obj.via.array.ptr[j].via.i64; }
+                model2->set_value(model2, name, si_arr );
+                free(si_arr);
+            //--------------------------------------------------
             } else if (strcmp(type, "float") == 0){
-                f_arr = (float*) malloc(size * sizeof( float ));
-                for (int j=0; j<size; j++){
+                f_arr = (float*) malloc(length * sizeof( float ));
+                for (int j=0; j<length; j++){
                     f_arr[j] = obj.via.array.ptr[j].via.f64; }
-                model2->set_state_var(model2, f_arr, i );
+                model2->set_value(model2, name, f_arr );
                 free(f_arr);
+            //--------------------------------------------------
             } else if (strcmp(type, "double") == 0){
-                d_arr = (double*) malloc(size * sizeof( double ));
-                for (int j=0; j<size; j++){
+                d_arr = (double*) malloc(length * sizeof( double ));
+                for (int j=0; j<length; j++){
                     d_arr[j] = obj.via.array.ptr[j].via.f64; }
-                model2->set_state_var(model2, d_arr, i );
+                model2->set_value(model2, name, d_arr );
                 free(d_arr);
             }
             
@@ -494,30 +763,7 @@ int deserialize_to_state(const char *ser_file, Bmi* model2, int print_obj) {
             //printf("### obj.via.array.ptr[2].via.f64 = %f\n", obj.via.array.ptr[2].via.f64);
             //printf("\n");
         }
-        
-            //------------------------------------------------------------
-            // Failed attempts to access a single pointer to an array in
-            // the msgpack_array structure, to pass to set_state_var().
-            // Note that typecasting occurs in set_state_var().
-            //------------------------------------------------------------
-//          if (strcmp(type, "double") == 0){
-//              ptr = obj.via.array.ptr;
-//              model2->set_state_var(model2, ptr, i ); }
-//          //-----------------------------------------------
-//          if (strcmp(type, "double") == 0){
-//              ptr = &obj;
-//              model2->set_state_var(model2, ptr, i ); }
-//          //-----------------------------------------------
-//          if (strcmp(type, "double") == 0){
-//              ptr = obj.via.array.ptr[0];
-//              model2->set_state_var(model2, ptr, i ); }
-//          //-----------------------------------------------
-//          if (strcmp(type, "double") == 0){
-//              d_val = obj.via.array.ptr[0].via.f64;
-//              ptr   = &d_val;
-//              model2->set_state_var(model2, ptr, i ); }
-//          //-----------------------------------------------  
-        
+              
         if (print_obj){
             printf("Object no %d:\n", i);
             msgpack_object_print(stdout, obj);
@@ -540,7 +786,7 @@ int deserialize_to_state(const char *ser_file, Bmi* model2, int print_obj) {
     if (i < n_state_vars){
         printf("WARNING: Expected %d state variables \n", n_state_vars);
         printf("         But unpacked only %d vars. \n", i);
-        printf("         BUFFER_SIZE may be too small.");
+        printf("         BUFFER_SIZE may be too small.\n");
         printf("");
     } else{
         printf("Unpacked %d state variables.\n", i);
@@ -562,10 +808,10 @@ int deserialize_to_state(const char *ser_file, Bmi* model2, int print_obj) {
     //--------------------------------
     if (verbose){ puts("Freeing memory...");}
     for (i=0; i<n_state_vars; i++){
-        // free (names[i]);
+        free (names[i]);
         free (types[i]);
     }
-    // free (names);
+    free (names);
     free (types);
     
     if (verbose){ puts("Finished deserializing."); puts("");}
@@ -575,10 +821,11 @@ int deserialize_to_state(const char *ser_file, Bmi* model2, int print_obj) {
 //------------------------------------------------------------------------
 int compare_states(Bmi* model1, Bmi* model2){
 
-    int verbose = 1;
-    int    i, j, match, n_state_vars;
+    int    verbose = 1;
+    int    i, j, match, n_state_vars, result;
     int    err_count = 0;
     int    i_val1, i_val2;
+    short  si_val1, si_val2;
     long   li_val1, li_val2;
     float  f_val1, f_val2;
     double d_val1, d_val2;
@@ -587,54 +834,84 @@ int compare_states(Bmi* model1, Bmi* model2){
     //--------------------------------------
     // Get total number of state variables
     //--------------------------------------
-   model1->get_state_var_count(model1, &n_state_vars); 
+    result = get_state_var_count(model1, &n_state_vars);
+    if (result == BMI_FAILURE){
+        puts("ERROR in get_state_var_count(); returning.");
+        return BMI_FAILURE;
+    }
 
     //----------------------------------------
     // Get the state variable internal names
     //----------------------------------------
+    // char *name;
+    char name[BMI_MAX_VAR_NAME];
     char **names = NULL;
     names = (char**) malloc (sizeof(char *) * n_state_vars);
     for (i=0; i<n_state_vars; i++){
         names[i] = (char*) malloc (sizeof(char) * BMI_MAX_VAR_NAME);
     }
-    model1->get_state_var_names(model1, names);
-  
+    result = get_state_var_names(model1, names);
+    if (result == BMI_FAILURE){
+        puts("ERROR in get_state_var_names(); returning.");
+        return BMI_FAILURE;
+    }
+      
     //------------------------------------  
     // Get the state variable data types
     //------------------------------------
-    char *type;
+    // char *type;
+    char type[BMI_MAX_TYPE_NAME];
     char **types = NULL;
     types = (char**) malloc (sizeof(char *) * n_state_vars);  
     for (i=0; i<n_state_vars; i++){
         types[i] = (char*) malloc (sizeof(char) * BMI_MAX_VAR_NAME);
     }
-    model1->get_state_var_types(model1, types);
+    result = get_state_var_types(model1, names, types);
+    if (result == BMI_FAILURE){
+        puts("ERROR in get_state_var_types(); returning.");
+        return BMI_FAILURE;
+    }
+    
+    //---------------------------------  
+    // Get the state variable lengths
+    //---------------------------------
+    unsigned int length, lengths[ n_state_vars ];
+    result = get_state_var_lengths(model1, names, lengths);
+    if (result == BMI_FAILURE){
+        puts("ERROR in get_state_var_lengths(); returning.");
+        return BMI_FAILURE;
+    }
 
-    //-------------------------------  
-    // Get the state variable sizes
-    //-------------------------------
-    unsigned int size, sizes[ n_state_vars ];  
-    model1->get_state_var_sizes(model1, sizes);
-
-   //-------------------------------------        
+    //-------------------------------------        
     // Get pointers to Model 1 state vars
     //-------------------------------------
     void *ptr_list1[ n_state_vars ];
-    model1->get_state_var_ptrs(model1, ptr_list1);
+    result = get_state_var_ptrs(model1, names, ptr_list1);
+    if (result == BMI_FAILURE){
+        puts("ERROR in get_state_var_ptrs(); returning.");
+        return BMI_FAILURE;
+    }
 
     //-------------------------------------
     // Get pointers to Model 2 state vars
     //-------------------------------------  
     void *ptr_list2[ n_state_vars ];
-    model2->get_state_var_ptrs(model2, ptr_list2);
+    result = get_state_var_ptrs(model2, names, ptr_list2);
+    if (result == BMI_FAILURE){
+        puts("ERROR in get_state_var_ptrs(); returning.");
+        return BMI_FAILURE;
+    }
 
     //--------------------------------
     // Loop over all state variables
     //--------------------------------
     for (int i=0; i<n_state_vars; i++){
         match = 1;
-        type  = types[i];
-        size  = sizes[i];
+        // type = types[i];
+        // name  = names[i];  //########## This works, but "type" doesn't?
+        strncpy( type, types[i], BMI_MAX_TYPE_NAME);
+        strncpy( name, names[i], BMI_MAX_VAR_NAME);
+        length = lengths[i];
         // printf("i = %d\n", i);  //##############
       
         //-------------------------------
@@ -652,43 +929,53 @@ int compare_states(Bmi* model1, Bmi* model2){
         //       INCORRECT:  *(double *)ptr + j 
         //---------------------------------------------
         if (strcmp(type, "int") == 0){
-            for (j=0; j<size; j++){
+            for (j=0; j<length; j++){
                 i_val1 = *( ((int *)ptr_list1[i]) + j);
                 i_val2 = *( ((int *)ptr_list2[i]) + j);
                 if (i_val1 != i_val2){
                     printf("Mismatch: i = %d, j = %d\n", i, j);
                     printf("i_val1 = %d, i_val2 = %d\n", i_val1, i_val2);
-                    printf("var_name = %s\n\n", names[i]);
+                    printf("var_name = %s\n\n", name);
                     match = 0;}
             }
+        } else if (strcmp(type, "short") == 0){      //################
+            for (j=0; j<length; j++){
+                si_val1 = *( ((short *)ptr_list1[i]) + j);
+                si_val2 = *( ((short *)ptr_list2[i]) + j);
+                if (si_val1 != si_val2){
+                    printf("Mismatch: i = %d, j = %d\n", i, j);
+                    printf("si_val1 = %hd, si_val2 = %hd\n", si_val1, si_val2);
+                    printf("var_name = %s\n\n", name);
+                    match = 0; }
+            }
         } else if (strcmp(type, "long") == 0){      //################
-            for (j=0; j<size; j++){
+            for (j=0; j<length; j++){
                 li_val1 = *( ((long *)ptr_list1[i]) + j);
                 li_val2 = *( ((long *)ptr_list2[i]) + j);
                 if (li_val1 != li_val2){
                     printf("Mismatch: i = %d, j = %d\n", i, j);
                     printf("li_val1 = %ld, li_val2 = %ld\n", li_val1, li_val2);
-                    printf("var_name = %s\n\n", names[i]);
+                    printf("var_name = %s\n\n", name);
                     match = 0; }
             }
         } else if (strcmp(type, "float") == 0){
-            for (j=0; j<size; j++){
+            for (j=0; j<length; j++){
                 f_val1 = *( ((float *)ptr_list1[i]) + j);
                 f_val2 = *( ((float *)ptr_list2[i]) + j);
                 if (f_val1 != f_val2){
                     printf("Mismatch: i = %d, j = %d\n", i, j);
                     printf("f_val1 = %f, f_val2 = %f\n", f_val1, f_val2);
-                    printf("var_name = %s\n\n", names[i]);
+                    printf("var_name = %s\n\n", name);
                     match = 0; }
             }
         } else if (strcmp(type, "double") == 0){
-            for (j=0; j<size; j++){
+            for (j=0; j<length; j++){
                 d_val1 = *( ((double *)ptr_list1[i]) + j);
                 d_val2 = *( ((double *)ptr_list2[i]) + j);
                 if (d_val1 != d_val2){
                     printf("Mismatch: i = %d, j = %d\n", i, j);
                     printf("d_val1 = %f, d_val2 = %f\n", d_val1, d_val2);
-                    printf("var_name = %s\n\n", names[i]);
+                    printf("var_name = %s\n\n", name);
                     match = 0; }
             }
         } else if (strcmp(type, "string") == 0){
@@ -696,13 +983,21 @@ int compare_states(Bmi* model1, Bmi* model2){
                     printf("Mismatch: i = %d\n", i);
                     printf("str1 = %s\n", ptr_list1[i]);
                     printf("str2 = %s\n", ptr_list2[i]);                          
-                    printf("var_name = %s\n\n", names[i]);
+                    printf("var_name = %s\n\n", name);
+                    match = 0;
+              }
+        } else if (strcmp(type, "char") == 0){
+              if (strcmp(ptr_list1[i], ptr_list2[i]) != 0){
+                    printf("Mismatch: i = %d\n", i);
+                    printf("str1 = %s\n", ptr_list1[i]);
+                    printf("str2 = %s\n", ptr_list2[i]);                          
+                    printf("var_name = %s\n\n", name);
                     match = 0;
               }
         } else if (strcmp(type, "FILE") == 0){
               j = 0;  // do nothing 
         } else{
-              printf("  Unknown type = %s", types[i] );
+              printf("  Unknown type = %s\n", type );
         }
 
         //---------------------------------      
@@ -711,7 +1006,7 @@ int compare_states(Bmi* model1, Bmi* model2){
         if (match == 0){
             err_count++;
         } else{
-            printf("Match: i = %d, name = %s\n", i, names[i]) ;        
+            printf("Match: i = %d, name = %s\n", i, name) ;        
         }
     }
 
