@@ -152,9 +152,6 @@ extern void Schaake_partitioning_scheme(double dt, double magic_number, double d
                                         double *runsrf, double *pddum);
 
 // xinanjiang_dev: XinJiang function written by Rachel adapted by Jmframe and FLO, 
-//DELETEME: extern void Xinanjiang_partitioning_scheme(double qinsur, double smcref, double smcmax, double smc, 
-//DELETEME:                                            struct direct_runoff_parameters_structure *parms,
-//DELETEME:                                            double *runsrf, double *pddum);
 extern void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_capacity_m,
                                     double max_soil_moisture_storage_m, double column_total_soil_water_m,
                                     struct direct_runoff_parameters_structure *parms, 

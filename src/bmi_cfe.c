@@ -691,7 +691,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         return BMI_FAILURE;
     }
 /* xinanjiang_dev*/
-    if(model->direct_runoff_params_struct.surface_partitioning_scheme == 2) {  // Check that logical statement is correct
+    if(model->direct_runoff_params_struct.surface_partitioning_scheme == Xinanjiang){
         if (is_a_Xinanjiang_inflection_point_parameter_set == FALSE) {
 #if CFE_DEGUG >= 1
             printf("Config param 'a_Xinanjiang_inflection_point_parameter' not found in config file\n");
@@ -980,31 +980,37 @@ static int Update_until (Bmi *self, double t)
     // https://bmi.readthedocs.io/en/latest/#update-until
     // "the time argument can be a non-integral multiple of time steps"
 
-  {
     cfe_state_struct* cfe_ptr = ((cfe_state_struct *) self->data);
     
     double dt;
     double now;
 
-    Get_time_step (self, &dt);
-    Get_current_time (self, &now);
+    if(self->get_time_step (self, &dt) == BMI_FAILURE)
+        return BMI_FAILURE;
+
+    if(self->get_current_time(self, &now) == BMI_FAILURE)
+        return BMI_FAILURE;    
 
     {
-      int n;
-      double frac;
-      const double n_steps = (t - now) / dt;
-      for (n=0; n<(int)n_steps; n++) {
+    
+    int n;
+    double frac;
+    const double n_steps = (t - now) / dt;
+    for (n=0; n<(int)n_steps; n++) {
         Update (self);
-        if (cfe_ptr->verbosity > 1)
-            print_cfe_flux_at_timestep(cfe_ptr);
-
-      }
-
-      frac = n_steps - (int)n_steps;
-      if (frac > 0)
-          printf("WARNING: CFE trying to update a fraction of a timestep\n Figure out what to do here!\n");
     }
-  }
+    frac = n_steps - (int)n_steps;
+    if (frac > 0){
+        printf("WARNING: CFE trying to update a fraction of a timestep\n");
+        
+        // change timestep to remaining fraction & call update()
+        cfe_ptr->time_step_size = frac * dt;
+        Update (self);
+        // set back to original
+        cfe_ptr->time_step_size = dt;
+    }
+    
+    }
 
   return BMI_SUCCESS;
 }
@@ -1081,9 +1087,10 @@ static int Get_adjusted_index_for_variable(const char *name)
             return i;
     }
 
-    for (i = 0; i < INPUT_VAR_NAME_COUNT; i++)
+    for (i = 0; i < INPUT_VAR_NAME_COUNT; i++){
         if (strcmp(name, input_var_names[i]) == 0)
             return i + OUTPUT_VAR_NAME_COUNT;
+    }
 
     return -1;
 }

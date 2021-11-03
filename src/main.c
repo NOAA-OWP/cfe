@@ -71,7 +71,7 @@ int
   ////////////////////////////////////////////////////////////////
   //////////////    USING UPDATE UNTIL    ////////////////////////
   ////////////////////////////////////////////////////////////////
-  printf("Running CFE using UPDAT UNTIL\n");
+  printf("Running CFE using UPDATE UNTIL\n");
   printf("_____________________________\n");
   
   printf("allocating memory to store entire BMI structure for CFE\n");
@@ -97,12 +97,18 @@ int
   cfe_bmi_model2->get_time_step(cfe_bmi_model2, &model_time_step_size);
   printf("The model time step size is: %lf\n", model_time_step_size);
 
-  printf("looping through and calling update\n");
+  printf("Calling update_until()\n");
   if (cfe_main_data2->verbosity > 0)
       print_cfe_flux_header();
 
   // Run the model with the update until function
   cfe_bmi_model2->update_until(cfe_bmi_model2, 45 * model_time_step_size);
+
+  if (cfe_main_data->verbosity > 0)
+      print_cfe_flux_at_timestep(cfe_main_data);
+
+  // Run the Mass Balance check
+  //mass_balance_check(cfe_main_data);
 
   printf("Finalizing CFE model\n");
   cfe_bmi_model2->finalize(cfe_bmi_model2);
