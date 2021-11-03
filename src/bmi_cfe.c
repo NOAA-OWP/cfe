@@ -99,7 +99,9 @@ Variable var_info[] = {
 	{ 53, "time_step_size",        "int",  1 },
 	{ 54, "is_forcing_from_bmi",   "int",  1 },
 	{ 55, "forcing_file",                                 "string", 1 },  // strlen
-	{ 56, "Schaake_adjusted_magic_constant_by_soil_type", "double", 1 },
+	//{ 56, "Schaake_adjusted_magic_constant_by_soil_type", "double", 1 }, 
+    // TODO: add all members of surface_partitioning_scheme?
+    { 56, "surface_partitioning_scheme", "int", 1 }, 
 	{ 57, "num_lateral_flow_nash_reservoirs",             "int",    1 },
 	{ 58, "K_lf",                                         "double", 1 },
 	{ 59, "K_nash",                                       "double", 1 },
@@ -712,16 +714,16 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         }   
     }
 
-#if CFE_DEGUG >= 1
-    printf("All CFE config params present\n");
-#endif
-
-    model->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = refkdt * model->NWM_soil_params.satdk / 0.000002;
-
+    if(model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake){
+        model->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = refkdt * model->NWM_soil_params.satdk / 0.000002;   
 #if CFE_DEGUG >= 1
     printf("Schaake Magic Constant calculated\n");
 #endif
+    }
 
+#if CFE_DEGUG >= 1
+    printf("All CFE config params present\n");
+#endif    
     // Used for parsing strings representing arrays of values below
     char *copy, *value;
 
@@ -1683,8 +1685,8 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[53] = &(state->time_step_size );
     ptr_list[54] = &(state->is_forcing_from_bmi );
     ptr_list[55] = state->forcing_file;
-    // ####### ptr_list[55] = &(state->forcing_file );
-    ptr_list[56] = &(state->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type );
+    // ####### ptr_list[55] = &(state->forcing_file ); 
+    ptr_list[56] = &(state->direct_runoff_params_struct.surface_partitioning_scheme );
     ptr_list[57] = &(state->num_lateral_flow_nash_reservoirs);
     ptr_list[58] = &(state->K_lf);
     ptr_list[59] = &(state->K_nash);
@@ -1919,8 +1921,8 @@ static int Set_state_var (Bmi *self, void *src, int index)
         // forcing_file is a string
         memcpy(state->forcing_file, src, size); }
         // state->forcing_file = (char *)src; }    // Doesn't work
-    else if (index == 56){
-        state->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = *(double *)src; }  
+    else if (index == 56){ 
+        state->direct_runoff_params_struct.surface_partitioning_scheme = *(int *)src; }  
     else if (index == 57){
         state->num_lateral_flow_nash_reservoirs = *(int *)src; }          
     else if (index == 58){

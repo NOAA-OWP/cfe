@@ -61,6 +61,7 @@ int print_some(void *ptr_list[]){
 //     while (*p != '\0'){
 //         printf("%c", *p++); } 
   //---------------------------------------------------------------
+  printf("ptr_list[56] = surface_partitioning_scheme = %d\n", *(int *)ptr_list[56]);
   printf("ptr_list[71] = aorc.time = %ld\n", *(long *)ptr_list[71]);
   //---------------------------------------------------------------    
   puts("");    // newline is added
@@ -77,7 +78,7 @@ int main(int argc, const char *argv[])
   if(argc<=1){
       printf("WARNING: Missing config file argument.\n");
       printf("         Using default.\n\n");
-      cfg_file = "./configs/cat_89_bmi_config_cfe.txt";
+      cfg_file = "./configs/cat_87_bmi_config_cfe.txt";
   } else {
       cfg_file = argv[1];
   }
