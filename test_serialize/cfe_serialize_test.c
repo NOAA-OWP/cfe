@@ -102,11 +102,6 @@ int main(int argc, const char *argv[])
   int result;
   int test_getters = 1;
 
-  char **names = NULL;
-  names = (char**) malloc (sizeof(char *) * n_state_vars);
-  for (int i=0; i<n_state_vars; i++){
-      names[i] = (char*) malloc (sizeof(char) * BMI_MAX_VAR_NAME);
-  }  
   //--------------------------------------------------------------   
   if (verbose){
       puts(""); 
@@ -136,7 +131,7 @@ int main(int argc, const char *argv[])
       // mismatch for the 3rd value.
       // Also see: Get_var_length in bmi_cfe.c.
       //#########################################
-      int length, itemsize, nbytes, index;
+      int length, itemsize, nbytes, index, grid;
       int count_all, count_input, count_output;
       char *name = "infiltration_depth_m";  // index = 2
       // char name[] = "infiltration_depth_m";  // Doesn't work.
@@ -151,6 +146,7 @@ int main(int argc, const char *argv[])
       char type[BMI_MAX_TYPE_NAME];
       char role[BMI_MAX_ROLE_NAME];
       char location[BMI_MAX_LOCATION_NAME];
+      char units[BMI_MAX_UNITS_NAME];
       //------------------------------- 
       puts("###############################################");      
       puts("Testing bmi.get_var_count()...");
@@ -166,19 +162,62 @@ int main(int argc, const char *argv[])
       printf("  role  = %s\n", role_output);
       printf("  count = %d\n", count_output);
       //--------------------------------------------
+      // Alloc mem for names array role_all
+      char **names_test_all = NULL;
+      names_test_all = (char**) malloc (sizeof(char *) * count_all);
+        for (int i=0; i<count_all; i++){
+      names_test_all[i] = (char*) malloc (sizeof(char) * BMI_MAX_VAR_NAME);
+      }
+      // Populate array via get_var_names(role_all)
       puts("Testing bmi.get_var_names()...");
       printf("  role = %s\n", role_all);
-      model1->get_var_names(model1, role_all, names);
+      model1->get_var_names(model1, role_all, names_test_all);
       for (int j=0; j<count_all; j++){
-          printf("  names[%d] = %s\n", j, names[j]);
+          printf("  names_test_all[%d] = %s\n", j, names_test_all[j]);
       }
+      // Free mem
+      for (int n=0; n<count_all; n++){
+          free (names_test_all[n]);
+      }
+      free (names_test_all);
       //--------------------------------------------
+      // Alloc mem for names array role_input
+      char **names_test_input = NULL;
+      names_test_input = (char**) malloc (sizeof(char *) * count_input);
+        for (int i=0; i<count_input; i++){
+      names_test_input[i] = (char*) malloc (sizeof(char) * BMI_MAX_VAR_NAME);
+      }
+      // Populate array via get_var_names(role_input)
       puts("Testing bmi.get_var_names()...");
       printf("  role = %s\n", role_input);
-      model1->get_var_names(model1, role_input, names);
+      model1->get_var_names(model1, role_input, names_test_input);
       for (int j=0; j<count_input; j++){
-          printf("  names[%d] = %s\n", j, names[j]);
+          printf("  names_test_input[%d] = %s\n", j, names_test_input[j]);
       }
+      // Free mem
+      for (int n=0; n<count_input; n++){
+          free (names_test_input[n]);
+      }
+      free (names_test_input);
+      //--------------------------------------------
+      // Alloc mem for names array role_output
+      char **names_test_output = NULL;
+      names_test_output = (char**) malloc (sizeof(char *) * count_output);
+        for (int i=0; i<count_output; i++){
+      names_test_output[i] = (char*) malloc (sizeof(char) * BMI_MAX_VAR_NAME);
+      }
+      // Populate array via get_var_names(role_output)
+      puts("Testing bmi.get_var_names()...");
+      printf("  role = %s\n", role_output);
+      model1->get_var_names(model1, role_output, names_test_output);
+      for (int j=0; j<count_output; j++){
+          printf("  names_test_output[%d] = %s\n", j, names_test_output[j]);
+      }
+      // Free mem
+      for (int n=0; n<count_output; n++){
+          free (names_test_output[n]);
+      }
+      free (names_test_output);
       //--------------------------------------------
       puts(""); 
       printf("Let name = %s\n", name);
@@ -187,17 +226,26 @@ int main(int argc, const char *argv[])
       model1->get_var_index(model1, name, &index);
       printf("  index = %d\n", index);
       //-------------------------------------------- 
+      puts("Testing bmi.get_var_grid()...");
+      model1->get_var_grid(model1, name, &grid);
+      printf("  grid = %d\n", grid);      
+      //--------------------------------------------      
+      //-------------------------------------------- 
       puts("Testing bmi.get_var_type()...");
       model1->get_var_type(model1, name, type);
       printf("  type = %s\n", type);
-      //--------------------------------------------
-      puts("Testing bmi.get_var_length()...");
-      model1->get_var_length(model1, name, &length);
-      printf("  length = %d\n", length); 
+      //-------------------------------------------- 
+      puts("Testing bmi.get_var_units()...");
+      model1->get_var_units(model1, name, units);
+      printf("  units = %s\n", units); 
       //--------------------------------------------
       puts("Testing bmi.get_var_role()...");
       model1->get_var_role(model1, name, role);
       printf("  role = %s\n", role);
+      //--------------------------------------------
+      puts("Testing bmi.get_var_length()...");
+      model1->get_var_length(model1, name, &length);
+      printf("  length = %d\n", length); 
       //--------------------------------------------
       // This one uses bmi.get_var_type().
       puts("Testing bmi.get_var_itemsize()...");
@@ -246,6 +294,12 @@ int main(int argc, const char *argv[])
       puts("Calling get_state_var_names() on CFE model 1 ...");
       //puts("Calling BMI.get_state_var_names() on CFE model 1 ...");
   }
+
+  char **names = NULL;
+  names = (char**) malloc (sizeof(char *) * n_state_vars);
+  for (int i=0; i<n_state_vars; i++){
+    names[i] = (char*) malloc (sizeof(char) * BMI_MAX_VAR_NAME);
+  }  
 
   result = get_state_var_names(model1, names);
   if (result == BMI_FAILURE){
