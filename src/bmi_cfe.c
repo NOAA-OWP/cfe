@@ -2272,14 +2272,6 @@ Bmi* register_bmi_cfe(Bmi *model) {
         model->set_value = Set_value;
         model->set_value_at_indices = Set_value_at_indices;
 
-        // New BMI extensions to support serialization
-        model->get_state_var_count = Get_state_var_count;
-        model->get_state_var_names = Get_state_var_names;
-        model->get_state_var_types = Get_state_var_types;
-        model->get_state_var_ptrs  = Get_state_var_ptrs;
-        model->get_state_var_sizes = Get_state_var_sizes;
-        model->set_state_var       = Set_state_var;
-
         model->get_grid_size = Get_grid_size;    
         model->get_grid_rank = Get_grid_rank;    
         model->get_grid_type = Get_grid_type;    
