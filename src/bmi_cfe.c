@@ -1768,8 +1768,11 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
 //        }
 //
 //-----------------------------------------------------------------------
-static int Set_state_var (Bmi *self, void *src, int index)
+/*static int Set_state_var (Bmi *self, void *src, int index)
 {
+    // NOTE: 11.05.2021: this and other serialization functions (*_state_var_*)
+    // are in current working development outside of master branch
+
     //----------------------------------------------------
     // Set the value (or values) for a state variable
     // using its position index within the state struct.
@@ -2040,7 +2043,7 @@ static int Set_state_var (Bmi *self, void *src, int index)
         state->direct_runoff_params_struct.x_Xinanjiang_shape_parameter = *(double *)src; }       
     
     return BMI_SUCCESS;
-}
+}*/
 
 /* Grid information */
 static int Get_grid_rank (Bmi *self, int grid, int * rank)
