@@ -67,9 +67,7 @@ typedef struct Bmi {
 
     int (*get_output_var_names)(struct Bmi *self, char **names);
 
-    /* Variable information */
-    // int (*get_var_role)(struct Bmi *self, const char *name, char* role);
-    
+    /* Variable information */  
     int (*get_var_grid)(struct Bmi *self, const char *name, int *grid);
 
     int (*get_var_type)(struct Bmi *self, const char *name, char *type);
@@ -99,15 +97,7 @@ typedef struct Bmi {
     int (*get_value_ptr)(struct Bmi *self, const char *name, void **dest_ptr);
 
     int (*get_value_at_indices)(struct Bmi *self, const char *name, void *dest, int *inds, int count);
-
-    // New BMI functions to support serialization
-    int (*get_state_var_count)(struct Bmi *self, int *count);
-    int (*get_state_var_names)(struct Bmi *self, char ** names);
-    int (*get_state_var_types)(struct Bmi *self, char ** types);
-    int (*get_state_var_ptrs)(struct Bmi *self, void *ptr_list[]);
-    int (*get_state_var_sizes)(struct Bmi *self, unsigned int sizes[]);
-    int (*set_state_var)(struct Bmi *self, void *src, int index);
-    
+   
     /* Setters */
     int (*set_value)(struct Bmi *self, const char *name, void *src);
 

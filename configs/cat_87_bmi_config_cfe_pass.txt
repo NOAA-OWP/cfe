@@ -1,4 +1,4 @@
-forcing_file=./forcings/cat87_01Dec2015.csv
+forcing_file=BMI
 soil_params.depth=2.0
 soil_params.b=4.05
 soil_params.mult=1000.0
@@ -19,3 +19,7 @@ nash_storage=0.0,0.0
 giuh_ordinates=0.06,0.51,0.28,0.12,0.03
 num_timesteps=1
 verbosity=1
+surface_partitioning_scheme=Xinanjiang
+a_Xinanjiang_inflection_point_parameter=1
+b_Xinanjiang_shape_parameter=1
+x_Xinanjiang_shape_parameter=1

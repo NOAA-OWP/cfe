@@ -159,6 +159,13 @@ int
   aorc1 = (aorc_model *) aorc_bmi_model->data;
   printf("forcing file for the AORC module %s\n", aorc1->forcing_file);
 
+  /*************************************************************************
+   This will be used to advance the model with update_until
+  **************************************************************************/
+  double model_time_step_size;
+  cfe_bmi_model->get_time_step(cfe_bmi_model, &model_time_step_size);
+  printf("The model time step size is: %lf\n", model_time_step_size);
+  
   /************************************************************************
     This is the basic process for getting the three things to talk through BMI
     1. Update the AORC forcing data
@@ -211,7 +218,7 @@ int
       printf("PET value from CFE is %8.9lf\n", cfe1->et_struct.potential_et_m_per_s);
   }
 
-    cfe_bmi_model->update(cfe_bmi_model);                           //Update model 2
+    cfe_bmi_model->update_until(cfe_bmi_model, (i+1)*model_time_step_size);      // Update model 2
 
     if (cfe1->verbosity > 0)
       print_cfe_flux_at_timestep(cfe1);

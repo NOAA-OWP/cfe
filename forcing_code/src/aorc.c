@@ -71,7 +71,7 @@ extern int run_aorc(aorc_model* model)
   aorc_calculate_solar_radiation(model);
   
   if (model->bmi.verbose > 1)
-    printf("calculate the net radiation");
+    printf("calculate the net radiation\n");
     // NOTE don't call this function use_aerodynamic_method option is TRUE
   model->other_forcing.net_radiation_W_per_sq_m=aorc_calculate_net_radiation_W_per_sq_m(model);
 
@@ -148,79 +148,67 @@ void aorc_unit_tests(aorc_model* model)
 /*####################################################################*/
 /*########################### PARSE LINE #############################*/
 /*####################################################################*/
-void parse_aorc_line_aorc(char *theString, long *year, long *month, long *day, long *hour, long *minute, double *second,
-                     struct aorc_forcing_data *aorc) {
-    char str[20];
-    long yr, mo, da, hr, mi;
-    double mm, julian, se;
-    double val;
-    int i, start, end, len;
-    int yes_pm, wordlen;
+void parse_aorc_line_aorc(char *theString,long *year,long *month, long *day,long *hour,long *minute, double *second,
+                struct aorc_forcing_data *aorc)
+{
+    int start,end;
+    int wordlen;
     char theWord[150];
+    
+    //len=strlen(theString);
+    
+    start=0; /* begin at the beginning of theString */
+    get_word_aorc(theString,&start,&end,theWord,&wordlen);
+    *year=atol(theWord);
+    
+    get_word_aorc(theString,&start,&end,theWord,&wordlen);
+    *month=atol(theWord);
+    
+    get_word_aorc(theString,&start,&end,theWord,&wordlen);
+    *day=atol(theWord);
+    
+    get_word_aorc(theString,&start,&end,theWord,&wordlen);
+    *hour=atol(theWord);
+    
+    get_word_aorc(theString,&start,&end,theWord,&wordlen);
+    *minute=atol(theWord);
+    
+    get_word_aorc(theString,&start,&end,theWord,&wordlen);
+    *second=(double)atof(theWord);
+    
+    get_word_aorc(theString,&start,&end,theWord,&wordlen);
+    aorc->precip_kg_per_m2=atof(theWord);
+    //printf("%s, %s, %lf, %lf\n", theString, theWord, (double)atof(theWord), aorc->precip_kg_per_m2);
+                  
+    get_word_aorc(theString,&start,&end,theWord,&wordlen);
+    aorc->incoming_longwave_W_per_m2=(double)atof(theWord);   
+    
+    get_word_aorc(theString,&start,&end,theWord,&wordlen);
+    aorc->incoming_shortwave_W_per_m2=(double)atof(theWord);   
+    
+    get_word_aorc(theString,&start,&end,theWord,&wordlen);
+    aorc->surface_pressure_Pa=(double)atof(theWord);           
+    
+    get_word_aorc(theString,&start,&end,theWord,&wordlen);
+    aorc->specific_humidity_2m_kg_per_kg=(double)atof(theWord);
+    
+    get_word_aorc(theString,&start,&end,theWord,&wordlen);
+    aorc->air_temperature_2m_K=(double)atof(theWord);          
+    
+    get_word_aorc(theString,&start,&end,theWord,&wordlen);
+    aorc->u_wind_speed_10m_m_per_s=(double)atof(theWord);      
+    
+    get_word_aorc(theString,&start,&end,theWord,&wordlen);
+    aorc->v_wind_speed_10m_m_per_s=(double)atof(theWord);      
 
-    len = strlen(theString);
-
-    char *copy, *copy_to_free, *value;
-    copy_to_free = copy = strdup(theString);
-
-    // time
-    value = strsep(&copy, ",");
-    // TODO: handle this
-    // struct tm{
-    //   int tm_year;
-    //   int tm_mon; 
-    //   int tm_mday; 
-    //   int tm_hour; 
-    //   int tm_min; 
-    //   int tm_sec; 
-    //   int tm_isdst;
-    // } t;
-    struct tm t;
-    time_t t_of_day;
-
-    t.tm_year = (int)strtol(strsep(&value, "-"), NULL, 10) - 1900;
-    t.tm_mon = (int)strtol(strsep(&value, "-"), NULL, 10);
-    t.tm_mday = (int)strtol(strsep(&value, " "), NULL, 10);
-    t.tm_hour = (int)strtol(strsep(&value, ":"), NULL, 10);
-    t.tm_min = (int)strtol(strsep(&value, ":"), NULL, 10);
-    t.tm_sec = (int)strtol(value, NULL, 10);
-    t.tm_isdst = -1;        // Is DST on? 1 = yes, 0 = no, -1 = unknown
-    aorc->time = mktime(&t);
-
-    // APCP_surface
-    value = strsep(&copy, ",");
-    // Not sure what this is
-
-    // DLWRF_surface
-    value = strsep(&copy, ",");
-    aorc->incoming_longwave_W_per_m2 = strtof(value, NULL);
-    // DSWRF_surface
-    value = strsep(&copy, ",");
-    aorc->incoming_shortwave_W_per_m2 = strtof(value, NULL);
-    // PRES_surface
-    value = strsep(&copy, ",");
-    aorc->surface_pressure_Pa = strtof(value, NULL);
-    // SPFH_2maboveground
-    value = strsep(&copy, ",");
-    aorc->specific_humidity_2m_kg_per_kg = strtof(value, NULL);;
-    // TMP_2maboveground
-    value = strsep(&copy, ",");
-    aorc->air_temperature_2m_K = strtof(value, NULL);
-    // UGRD_10maboveground
-    value = strsep(&copy, ",");
-    aorc->u_wind_speed_10m_m_per_s = strtof(value, NULL);
-    // VGRD_10maboveground
-    value = strsep(&copy, ",");
-    aorc->v_wind_speed_10m_m_per_s = strtof(value, NULL);
-    // precip_rate
-    value = strsep(&copy, ",");
-    aorc->precip_kg_per_m2 = strtof(value, NULL);
-
-    // Go ahead and free the duplicate copy now
-    free(copy_to_free);
-
+    //----------------------------------------------    
+    // Is this needed?  It has not been set. (SDP)
+    //----------------------------------------------
+    aorc->time = -9999.0;
+    //######################################################
+     
     return;
-}
+    }
 
 /*####################################################################*/
 /*############################## GET WORD ############################*/

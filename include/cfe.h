@@ -106,10 +106,56 @@ struct evapotranspiration_structure {
 };
 typedef struct evapotranspiration_structure evapotranspiration_structure;
 
+struct massbal
+{
+    double volstart            ;
+    double vol_runoff          ;   
+    double vol_infilt          ;   
+    double vol_out_giuh        ;
+    double vol_end_giuh        ;
+    double vol_to_gw           ;
+    double vol_in_gw_start     ;
+    double vol_in_gw_end       ;
+    double vol_from_gw         ;
+    double vol_in_nash         ;
+    double vol_in_nash_end     ;  // note the nash cascade is empty at start of simulation.
+    double vol_out_nash        ;
+    double vol_soil_start      ;
+    double vol_to_soil         ;
+    double vol_soil_to_lat_flow;
+    double vol_soil_to_gw      ;  // this should equal vol_to_gw
+    double vol_soil_end        ;
+    double volin               ;
+    double volout              ;
+    double volend              ;
+};
+typedef struct massbal massbal;
+
+// define data types
+//--------------------------
+typedef enum {Schaake, Xinanjiang} surface_water_partition_type;
+
+/* xinanjiang_dev*/
+struct direct_runoff_parameters_structure{
+    surface_water_partition_type surface_partitioning_scheme;
+    double Schaake_adjusted_magic_constant_by_soil_type;
+    double a_Xinanjiang_inflection_point_parameter;
+    double b_Xinanjiang_shape_parameter;
+    double x_Xinanjiang_shape_parameter;
+};
+typedef struct direct_runoff_parameters_structure direct_runoff_parameters_structure;
+
+
 // function prototypes
 // --------------------------------
 extern void Schaake_partitioning_scheme(double dt, double magic_number, double deficit, double qinsur,
                                         double *runsrf, double *pddum);
+
+// xinanjiang_dev: XinJiang function written by Rachel adapted by Jmframe and FLO, 
+extern void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_capacity_m,
+                                    double max_soil_moisture_storage_m, double column_total_soil_water_m,
+                                    struct direct_runoff_parameters_structure *parms, 
+                                    double *surface_runoff_depth_m, double *infiltration_depth_m);
 
 extern void conceptual_reservoir_flux_calc(struct conceptual_reservoir *da_reservoir,
                                            double *primary_flux_m, double *secondary_flux_m);
@@ -131,37 +177,36 @@ extern void cfe(
         struct NWM_soil_parameters NWM_soil_params_struct,
         struct conceptual_reservoir *soil_reservoir_struct,
         double timestep_h,
-        double Schaake_adjusted_magic_constant_by_soil_type,
+
+        /* xinanjiang_dev: since we are doing the option for Schaake and XinJiang, 
+                           instead of passing in the constants
+                           pass in a structure with the constants for both subroutines.
+        //double Schaake_adjusted_magic_constant_by_soil_type,*/
+        struct direct_runoff_parameters_structure direct_runoff_param_struct,
+
         double timestep_rainfall_input_m,
-        double *Schaake_output_runoff_m_ptr,
+
+        /* xinanjiang_dev:
+        double *Schaake_output_runoff_m_ptr,*/
+        double *flux_output_direct_runoff_m,
+
         double *infiltration_depth_m_ptr,
-//        double *flux_overland_m_ptr,  // NOT NEEDED redundant with Schaake_output_runoff_m_fptr
-        double *vol_sch_runoff_ptr,
-        double *vol_sch_infilt_ptr,
         double *flux_perc_m_ptr,
-        double *vol_to_soil_ptr,
         double *flux_lat_m_ptr,
         double *gw_reservoir_storage_deficit_m_ptr,
         struct conceptual_reservoir *gw_reservoir_struct,
-        double *vol_to_gw_ptr,
-        double *vol_soil_to_gw_ptr,
-        double *vol_soil_to_lat_flow_ptr,
-        double *volout_ptr,
         double *flux_from_deep_gw_to_chan_m_ptr,
-        double *vol_from_gw_ptr,
         double *giuh_runoff_m_ptr,
         int num_giuh_ordinates,
         double *giuh_ordinates_arr,
         double *runoff_queue_m_per_timestep_arr,
-        double *vol_out_giuh_ptr,
         double *nash_lateral_runoff_m_ptr,
         int num_lateral_flow_nash_reservoirs,
         double K_nash,
         double *nash_storage_arr,
-        double *vol_in_nash_ptr,
-        double *vol_out_nash_ptr,
         struct evapotranspiration_structure *evap_struct,
-        double *Qout_m_ptr
+        double *Qout_m_ptr,
+        struct massbal *massbal_struct
     );
 
 #endif //CFE_CFE_H
