@@ -100,7 +100,7 @@ Variable var_info[] = {
 	{ 54, "is_forcing_from_bmi",   "int",  1 },
 	{ 55, "forcing_file",                                 "string", 1 },  // strlen
 	//{ 56, "Schaake_adjusted_magic_constant_by_soil_type", "double", 1 }, 
-    { 56, "surface_partitioning_scheme", "int", 1 }, // from direct_runoff_parameters_structure
+    { 56, "surface_partitioning_scheme", "int", 1 }, // from direct_runoff_params_struct
 	{ 57, "num_lateral_flow_nash_reservoirs",             "int",    1 },
 	{ 58, "K_lf",                                         "double", 1 },
 	{ 59, "K_nash",                                       "double", 1 },
@@ -137,13 +137,13 @@ Variable var_info[] = {
 	{ 83, "flux_Qout_m",                    "double*", 1 },
 	{ 84, "verbosity",                      "int",     1 },
     //---------------------------------------
-    // direct_runoff_parameters_structure vars
+    // direct_runoff_params_struct vars
     // xinanjiang or schaake flag [56]
     //---------------------------------------
     { 85, "Schaake_adjusted_magic_constant_by_soil_type",   "double", 1},
     { 86, "a_Xinanjiang_inflection_point_parameter",        "double", 1},
     { 87, "b_Xinanjiang_shape_parameter",                   "double", 1},
-    { 88, "x_Xinanjiang_shape_parameter",                   "double", 1},
+    { 88, "x_Xinanjiang_shape_parameter",                   "double", 1}
     //---------------------------------------
 };
 
@@ -1735,7 +1735,7 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[83] = state->flux_Qout_m;
     ptr_list[84] = &(state->verbosity); 
     //---------------------------------------
-    // direct_runoff_parameters_structure vars
+    // direct_runoff_params_struct vars
     // xinanjiang or schaake flag [56]
     //---------------------------------------
     ptr_list[85] = &(state->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type );
@@ -2028,7 +2028,7 @@ static int Set_state_var (Bmi *self, void *src, int index)
         // verbosity is not a pointer
         state->verbosity = *(int *)src; }
     //--------------------------------------------------------------------------
-    // direct_runoff_parameters_structure vars (includes xinanjiang AND schaake)
+    // direct_runoff_params_struc vars (includes xinanjiang AND schaake)
     //--------------------------------------------------------------------------
     else if (index == 85){ 
         state->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = *(double *)src; }
