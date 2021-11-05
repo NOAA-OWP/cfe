@@ -13,7 +13,7 @@
 
 #define INPUT_VAR_NAME_COUNT 2
 #define OUTPUT_VAR_NAME_COUNT 6
-#define STATE_VAR_NAME_COUNT 85   // must match var_info array size
+#define STATE_VAR_NAME_COUNT 89   // must match var_info array size
 
 //----------------------------------------------
 // Put variable info into a struct to simplify
@@ -100,8 +100,7 @@ Variable var_info[] = {
 	{ 54, "is_forcing_from_bmi",   "int",  1 },
 	{ 55, "forcing_file",                                 "string", 1 },  // strlen
 	//{ 56, "Schaake_adjusted_magic_constant_by_soil_type", "double", 1 }, 
-    // TODO: add all members of surface_partitioning_scheme?
-    { 56, "surface_partitioning_scheme", "int", 1 }, 
+    { 56, "surface_partitioning_scheme", "int", 1 }, // from direct_runoff_parameters_structure
 	{ 57, "num_lateral_flow_nash_reservoirs",             "int",    1 },
 	{ 58, "K_lf",                                         "double", 1 },
 	{ 59, "K_nash",                                       "double", 1 },
@@ -136,7 +135,16 @@ Variable var_info[] = {
 	{ 81, "flux_perc_m",                    "double*", 1 },
 	{ 82, "flux_lat_m",                     "double*", 1 },
 	{ 83, "flux_Qout_m",                    "double*", 1 },
-	{ 84, "verbosity",                      "int",     1 }
+	{ 84, "verbosity",                      "int",     1 },
+    //---------------------------------------
+    // direct_runoff_parameters_structure vars
+    // xinanjiang or schaake flag [56]
+    //---------------------------------------
+    { 85, "Schaake_adjusted_magic_constant_by_soil_type",   "double", 1},
+    { 86, "a_Xinanjiang_inflection_point_parameter",        "double", 1},
+    { 87, "b_Xinanjiang_shape_parameter",                   "double", 1},
+    { 88, "x_Xinanjiang_shape_parameter",                   "double", 1},
+    //---------------------------------------
 };
 
 int i = 0;
@@ -1687,6 +1695,7 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[55] = state->forcing_file;
     // ####### ptr_list[55] = &(state->forcing_file ); 
     ptr_list[56] = &(state->direct_runoff_params_struct.surface_partitioning_scheme );
+    // ptr_list[56] = &(state->Schaake_adjusted_magic_constant_by_soil_type );
     ptr_list[57] = &(state->num_lateral_flow_nash_reservoirs);
     ptr_list[58] = &(state->K_lf);
     ptr_list[59] = &(state->K_nash);
@@ -1725,6 +1734,14 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[82] = state->flux_lat_m;
     ptr_list[83] = state->flux_Qout_m;
     ptr_list[84] = &(state->verbosity); 
+    //---------------------------------------
+    // direct_runoff_parameters_structure vars
+    // xinanjiang or schaake flag [56]
+    //---------------------------------------
+    ptr_list[85] = &(state->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type );
+    ptr_list[86] = &(state->direct_runoff_params_struct.a_Xinanjiang_inflection_point_parameter );
+    ptr_list[87] = &(state->direct_runoff_params_struct.b_Xinanjiang_shape_parameter );
+    ptr_list[88] = &(state->direct_runoff_params_struct.x_Xinanjiang_shape_parameter );
     //-------------------------------------------------------------                
     return BMI_SUCCESS;
 }
@@ -2010,7 +2027,18 @@ static int Set_state_var (Bmi *self, void *src, int index)
     else if (index == 84){
         // verbosity is not a pointer
         state->verbosity = *(int *)src; }
-
+    //--------------------------------------------------------------------------
+    // direct_runoff_parameters_structure vars (includes xinanjiang AND schaake)
+    //--------------------------------------------------------------------------
+    else if (index == 85){ 
+        state->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = *(double *)src; }
+    else if (index == 86){ 
+        state->direct_runoff_params_struct.a_Xinanjiang_inflection_point_parameter = *(double *)src; }
+    else if (index == 87){ 
+        state->direct_runoff_params_struct.b_Xinanjiang_shape_parameter = *(double *)src; }
+    else if (index == 88){ 
+        state->direct_runoff_params_struct.x_Xinanjiang_shape_parameter = *(double *)src; }       
+    
     return BMI_SUCCESS;
 }
 

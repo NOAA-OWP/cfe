@@ -62,7 +62,11 @@ int print_some(void *ptr_list[]){
 //         printf("%c", *p++); } 
   //---------------------------------------------------------------
   printf("ptr_list[56] = surface_partitioning_scheme = %d\n", *(int *)ptr_list[56]);
-  printf("ptr_list[71] = aorc.time = %ld\n", *(long *)ptr_list[71]);
+  printf("ptr_list[85] = Schaake_adjusted_magic_constant_by_soil_type = %f\n", *(double *)ptr_list[85]);
+  printf("ptr_list[86] = a_Xinanjiang_inflection_point_parameter = %f\n", *(double *)ptr_list[86]);
+  printf("ptr_list[87] = b_Xinanjiang_shape_parameter = %f\n", *(double *)ptr_list[87]);
+  printf("ptr_list[88] = x_Xinanjiang_shape_parameter = %f\n", *(double *)ptr_list[88]);
+  //printf("ptr_list[71] = aorc.time = %ld\n", *(long *)ptr_list[71]);
   //---------------------------------------------------------------    
   puts("");    // newline is added
 
@@ -78,7 +82,8 @@ int main(int argc, const char *argv[])
   if(argc<=1){
       printf("WARNING: Missing config file argument.\n");
       printf("         Using default.\n\n");
-      cfg_file = "./configs/cat_87_bmi_config_cfe.txt";
+      //cfg_file = "./configs/cat_87_bmi_config_cfe.txt"; //Xinanjiang
+      cfg_file = "./configs/cat_89_bmi_config_cfe.txt"; //Schaake
   } else {
       cfg_file = argv[1];
   }
