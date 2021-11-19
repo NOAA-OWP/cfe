@@ -102,10 +102,10 @@ int
       print_cfe_flux_header();
 
   // Run the model with the update until function
-  cfe_bmi_model2->update_until(cfe_bmi_model2, 45 * model_time_step_size);
+  cfe_bmi_model2->update_until(cfe_bmi_model2, 45*model_time_step_size);
 
-  if (cfe_main_data->verbosity > 0)
-      print_cfe_flux_at_timestep(cfe_main_data);
+  if (cfe_main_data2->verbosity > 0)
+      print_cfe_flux_at_timestep(cfe_main_data2);
 
   // Run the Mass Balance check
   //mass_balance_check(cfe_main_data);
