@@ -71,7 +71,7 @@ struct cfe_state_struct {
     int num_timesteps;
     int current_time_step;
     int time_step_size;
-  
+    double time_step_fraction;
     // an integer to flag the forcings coming as "set_value" from BMI
     int is_forcing_from_bmi;
 
