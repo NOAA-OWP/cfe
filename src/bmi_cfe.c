@@ -984,6 +984,9 @@ static int Update (Bmi *self)
       // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
       cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step] /1000;
     
+    //Adjust the rainfall input by a potential fraction of the time step
+    cfe_ptr->timestep_rainfall_input_m *= cfe_ptr->time_step_fraction;
+    //Accumulate volume for mass balance
     cfe_ptr->vol_struct.volin += cfe_ptr->timestep_rainfall_input_m;
     
     run_cfe(cfe_ptr);
@@ -1025,8 +1028,11 @@ static int Update_until (Bmi *self, double t)
         
         // change timestep to remaining fraction & call update()
         cfe_ptr->time_step_size = frac * dt;
+        //Record the time step fraction so `Update` can adjust input if needed
+        cfe_ptr->time_step_fraction = frac;
         Update (self);
         // set back to original
+        cfe_ptr->time_step_fraction = 1.0;
         cfe_ptr->time_step_size = dt;
     }
     
@@ -2228,7 +2234,7 @@ cfe_state_struct *new_bmi_cfe(void)
     cfe_state_struct *data;
     data = (cfe_state_struct *) malloc(sizeof(cfe_state_struct));
     data->time_step_size = 3600;
-    
+    data->time_step_fraction = 1.0;
     data->forcing_data_precip_kg_per_m2 = NULL;
     data->forcing_data_time = NULL;
     data->giuh_ordinates = NULL;
