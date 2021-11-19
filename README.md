@@ -17,11 +17,16 @@ The user has the option to pick a particular direct runoff (aka surface partitio
 
 # Compiling this code to run examples with a "pseudo" or "mini" framework.
 ## Read local forcing file
-The BMI functionality was developed as a standalone module in C. To compile this code the developer used these steps:
+The BMI functionality was developed as a standalone module in C. 
+To compile this code the developer used these steps:
 1. `module load gnu/10.1.0`
 2. `gcc -lm ./src/main.c ./src/cfe.c ./src/bmi_cfe.c -o run_bmi_cfe`
-This should generate an executable called **run_cfe_bmi**. To run this executable you must pass the path to the corresponding configuration file: `./run_bmi_cfe ./configs/cat_58_bmi_config_cfe.txt`  
-Included in this repository is an environment file (env_cheyenne.sh), and a "make and run" file (make_and_run_bmi.sh), which will compile the code and run an example. If you are on the Cheyenne computer, or if you can modify these files to your machine, you can simply follow these two steps to run this code:
+This should generate an executable called **run_cfe_bmi**. 
+To run this executable you must pass the path to the corresponding configuration file: 
+3.  `./run_bmi_cfe ./configs/cat_58_bmi_config_cfe.txt`  
+
+Alternatively, Included in this repository is an environment file (env_cheyenne.sh), and a "make and run" file (make_and_run_bmi.sh), which will compile the code and run an example.
+If you are on the Cheyenne computer, or if you can modify these files to your machine, you can simply follow these two steps to run this code:
 1. `source env_cheyenne.sh`
 2. `./make_and_run_bmi.sh`
 
