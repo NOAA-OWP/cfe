@@ -844,6 +844,9 @@ static int Initialize (Bmi *self, const char *file)
     cfe_bmi_data_ptr->flux_lat_m = malloc(sizeof(double));
     cfe_bmi_data_ptr->flux_nash_lateral_runoff_m = malloc(sizeof(double));
     cfe_bmi_data_ptr->flux_perc_m = malloc(sizeof(double));
+    //This needs an initial value, it is used in computations in CFE and only set towards the end of the model
+    //See issue #31
+    *cfe_bmi_data_ptr->flux_perc_m = 0.0;
 
     /*******************************************************
        JMFRAME: Check to see where forcings come from
