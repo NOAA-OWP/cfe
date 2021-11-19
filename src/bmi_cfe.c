@@ -2418,6 +2418,7 @@ extern double init_reservoir_storage(int is_ratio, double amount, double max_amo
 }
 
 extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr){
+    cfe_ptr->vol_struct.volin = 0;
     cfe_ptr->vol_struct.vol_runoff = 0;
     cfe_ptr->vol_struct.vol_infilt = 0;
     cfe_ptr->vol_struct.vol_to_soil = 0;
