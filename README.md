@@ -1,8 +1,8 @@
 # Conceptual Functional Equivalent Model
 This model is designed to be a simplified (conceptual) model of the National Water Model, which is functionally equivalent.
 
-CFE was written by Fred Ogden, and this repository includes a Basic Model Interface (BMI) to run the CFE.
-There are actually multiple ways to run the CFE.
+CFE was written by Fred Ogden, and this repository includes a [Basic Model Interface (BMI)](https://bmi.readthedocs.io/en/latest/) to run the CFE.
+There are multiple ways to run the CFE.
 1. As written by the original author.
 This includes a full program to read and process atmospheric forcing data, print the model output and check for mass balance closure. This code can be run from the [original_author_code](./original_author_code) directory.
 2. Through the BMI commands. This method will be used by the Next Generation U.S. National Water Model (Nextgen NWM). See [Compiling BMI Code](#compiling-bmi-code)
