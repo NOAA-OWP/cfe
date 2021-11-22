@@ -75,6 +75,8 @@ extern void cfe(
 
   soil_reservoir_storage_deficit_m=(NWM_soil_params_struct.smcmax*NWM_soil_params_struct.D-soil_reservoir_struct->storage_m);
 
+  et_from_rainfall(&timestep_rainfall_input_m,evap_struct);
+ 
   // NEW FLO
   if(0.0 < timestep_rainfall_input_m) 
     {
@@ -102,7 +104,7 @@ extern void cfe(
     direct_output_runoff_m = 0.0;
     infiltration_depth_m = 0.0;
     }
-
+  et_from_soil(soil_reservoir_struct, evap_struct, &NWM_soil_params_struct);
   // check to make sure that there is storage available in soil to hold the water that does not runoff
   //--------------------------------------------------------------------------------------------------
   if(soil_reservoir_storage_deficit_m<infiltration_depth_m)
