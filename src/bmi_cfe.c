@@ -950,6 +950,7 @@ static int Initialize (Bmi *self, const char *file)
     //          Will subtract this from the soil moisture and infiltration mass.
     cfe_bmi_data_ptr->et_struct.potential_et_m_per_s = 0;
     cfe_bmi_data_ptr->et_struct.actual_et_m_per_timestep = 0;
+    cfe_bmi_data_ptr->et_struct.potential_et_m_per_timestep = 0;
 
     // Set all the mass balance trackers to zero.
     initialize_volume_trackers(cfe_bmi_data_ptr);
@@ -2350,7 +2351,8 @@ extern void run_cfe(cfe_state_struct* cfe_ptr){
         cfe_ptr->nash_storage,                              // Set from config file
         &cfe_ptr->et_struct,                                    // Set to zero with initalize. Set by BMI (set_value) during run
         cfe_ptr->flux_Qout_m,                                    // Set by CFE function
-        &cfe_ptr->vol_struct
+        &cfe_ptr->vol_struct,
+        cfe_ptr->time_step_size
     );
 }
 

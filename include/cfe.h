@@ -206,7 +206,8 @@ extern void cfe(
         double *nash_storage_arr,
         struct evapotranspiration_structure *evap_struct,
         double *Qout_m_ptr,
-        struct massbal *massbal_struct
+        struct massbal *massbal_struct,
+        double time_step_size
     );
 
 #endif //CFE_CFE_H
