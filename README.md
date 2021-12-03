@@ -1,11 +1,11 @@
-# Conceptual Functional Equivalent Model
-This model is designed to be a simplified (conceptual) model of the National Water Model, which is functionally equivalent.
+# Conceptual Functional Equivalent (CFE) Model
+This model is designed to be a simplified (conceptual) model of the runoff scheme in the National Water Model.
 
-CFE was written by Fred Ogden, and this repository includes a [Basic Model Interface (BMI)](https://bmi.readthedocs.io/en/latest/) to run the CFE.
-There are multiple ways to run the CFE.
+CFE was written by Fred Ogden, and this repository includes an implementation of the [Basic Model Interface (BMI)](https://bmi.readthedocs.io/en/latest/).
+There are multiple ways to run CFE.
 1. As written by the original author.
-This includes a full program to read and process atmospheric forcing data, print the model output and check for mass balance closure. This code can be run from the [original_author_code](./original_author_code) directory.
-2. Through the BMI commands. This method will be used by the Next Generation U.S. National Water Model (Nextgen NWM). See [Compiling BMI Code](#compiling-bmi-code)
+This includes a full program to read and process atmospheric forcing data, print the model output and check for mass balance closure. This code can be run from the [original_author_code](./original_author_code) directory. This code does not have a BMI implementation.
+2. Through the BMI commands. This method will be used by the Next Generation National Water Model (Nextgen NWM). See [Compiling BMI Code](#compiling-bmi-code)
 
 ## Direct Runoff 
 The user has the option to pick a particular direct runoff (aka surface partitioning) method:
