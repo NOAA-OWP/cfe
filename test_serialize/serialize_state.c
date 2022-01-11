@@ -79,7 +79,7 @@ int get_state_var_count(Bmi *model1, int *count){
     }
     
     char role[] = "all";
-    model1->get_var_count( model1, role, count);
+    model1->get_model_var_count( model1, role, count);
     
     //puts("In get_state_var_count()...");    
     //printf("   count = %d\n", *count);
@@ -104,7 +104,7 @@ int get_state_var_names(Bmi *model1, char **names){
 
     
     char role[] = "all";
-    model1->get_var_names( model1, role, names);
+    model1->get_model_var_names( model1, role, names);
 
     //--------------
     // For testing
@@ -146,7 +146,7 @@ int get_state_var_types(Bmi *model1, char **names, char **types){
         
     // Added "names" as argument.  #################
     //char role[] = "all";
-    //model1->get_var_names( model1, role, names, &n_state_vars);
+    //model1->get_model_var_names( model1, role, names, &n_state_vars);
     
     for (int i = 0; i < n_state_vars; i++) {
         model1->get_var_type( model1, names[i], type );
@@ -210,7 +210,7 @@ int get_state_var_ptrs(Bmi *model1, char **names, void *ptrs[]){
 
     // Added "names" as argument. #################
     //char role[] = "all";
-    //model1->get_var_names( model1, role, names, &n_state_vars);
+    //model1->get_model_var_names( model1, role, names, &n_state_vars);
  
     //puts("In get_state_var_ptrs()...");   
     //printf("   n_state_vars = %d\n", n_state_vars);

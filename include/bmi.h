@@ -107,12 +107,13 @@ typedef struct Bmi {
     // for serialization, calibration, etc.
     //----------------------------------------------
     int (*get_bmi_version)(struct Bmi *self, char *version);
-    int (*get_var_count)(struct Bmi *self, const char *role, int *count);
-    int (*get_var_names)(struct Bmi *self, const char *role, char **names);
+    int (*get_model_var_roles)(struct Bmi *self, char **roles);
+    int (*get_model_var_count)(struct Bmi *self, const char *role, int *count);
+    int (*get_model_var_names)(struct Bmi *self, const char *role, char **names);
     //------------------------------------------------------------------------
     int (*get_var_index)(struct Bmi *self, const char *name, int *index);
     int (*get_var_role)(struct Bmi *self, const char *name, char *role);
-    int (*get_var_length)(struct Bmi *self, const char *name, int *length);
+    int (*get_var_length)(struct Bmi *self, const char *name, int *elements);
     
     //--------------------------------------------------------------
     // Maximum and minimum possible values for the given variable.
