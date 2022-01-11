@@ -10,9 +10,9 @@
 
 #define CFE_DEGUG 0
 
-#define INPUT_VAR_NAME_COUNT 2
-#define OUTPUT_VAR_NAME_COUNT 6
-#define STATE_VAR_NAME_COUNT 85   // must match var_info array size
+//#define INPUT_VAR_NAME_COUNT 2
+//#define OUTPUT_VAR_NAME_COUNT 6
+//#define STATE_VAR_NAME_COUNT 85   // must match var_info array size
 
 //----------------------------------------------
 // Put variable info into a struct to simplify
@@ -34,15 +34,15 @@ Variable var_info[] = {
 	// Vars in soil reservoir struct
 	// type: conceptual_reservoir
 	//--------------------------------
-	{ 5,  "soil.is_exponential",                 "int",    1, "option", "?", "node", 0 },
+	{ 5,  "soil.is_exponential",                 "int",    1, "option", "none", "node", 0 },
 	{ 6,  "soil.storage_max_m",                  "double", 1, "parameter_adjustable",  "m", "node", 0 },
 	{ 7,  "soil.storage_m",                      "double", 1, "parameter_adjustable",  "m", "node", 0 },
-	{ 8,  "soil.coeff_primary",                  "double", 1, "parameter_adjustable",  "?", "node", 0 },
-	{ 9,  "soil.exponent_primary",               "double", 1, "parameter_adjustable",  "?", "node", 0 },
+	{ 8,  "soil.coeff_primary",                  "double", 1, "parameter_adjustable",  "none", "node", 0 },
+	{ 9,  "soil.exponent_primary",               "double", 1, "parameter_adjustable",  "none", "node", 0 },
 	{ 10, "soil.storage_threshold_primary_m",    "double", 1, "parameter_adjustable",  "m", "node", 0 },
 	{ 11, "soil.storage_threshold_secondary_m",  "double", 1, "parameter_adjustable",  "m", "node", 0 },
-	{ 12, "soil.coeff_secondary",                "double", 1, "parameter_adjustable",  "?", "node", 0 },
-	{ 13, "soil.exponent_secondary",             "double", 1, "parameter_adjustable",  "?", "node", 0 },
+	{ 12, "soil.coeff_secondary",                "double", 1, "parameter_adjustable",  "none", "node", 0 },
+	{ 13, "soil.exponent_secondary",             "double", 1, "parameter_adjustable",  "none", "node", 0 },
 	//------------------------------
 	// Vars in gw reservoir struct
 	// type: conceptual_reservoir
@@ -50,12 +50,12 @@ Variable var_info[] = {
 	{ 14, "gw.is_exponential",                 "int",    1, "option", "?", "node", 0 },
 	{ 15, "gw.storage_max_m",                  "double", 1, "parameter_adjustable",  "m", "node", 0 },
 	{ 16, "gw.storage_m",                      "double", 1, "parameter_adjustable",  "m", "node", 0 },
-	{ 17, "gw.coeff_primary",                  "double", 1, "parameter_adjustable",  "?", "node", 0 },
-	{ 18, "gw.exponent_primary",               "double", 1, "parameter_adjustable",  "?", "node", 0 },
+	{ 17, "gw.coeff_primary",                  "double", 1, "parameter_adjustable",  "none", "node", 0 },
+	{ 18, "gw.exponent_primary",               "double", 1, "parameter_adjustable",  "none", "node", 0 },
 	{ 19, "gw.storage_threshold_primary_m",    "double", 1, "parameter_adjustable",  "m", "node", 0 },
 	{ 20, "gw.storage_threshold_secondary_m",  "double", 1, "parameter_adjustable",  "m", "node", 0 },
-	{ 21, "gw.coeff_secondary",                "double", 1, "parameter_adjustable",  "?", "node", 0 },
-	{ 22, "gw.exponent_secondary",             "double", 1, "parameter_adjustable",  "?", "node", 0 },
+	{ 21, "gw.coeff_secondary",                "double", 1, "parameter_adjustable",  "none", "node", 0 },
+	{ 22, "gw.exponent_secondary",             "double", 1, "parameter_adjustable",  "none", "node", 0 },
 	//---------------------------------
 	// Vars in NWM_soil_params struct
 	// See cfe.h for more info.
@@ -64,9 +64,9 @@ Variable var_info[] = {
 	{ 24, "wltsmc",          "double", 1, "state", "m3/m3", "node", 0 },
 	{ 25, "satdk",           "double", 1, "state", "m s-1", "node", 0 },
 	{ 26, "satpsi",          "double", 1, "state", "m",     "node", 0 },
-	{ 27, "bb",              "double", 1, "state", "?",     "node", 0 },
-	{ 28, "mult",            "double", 1, "state", "?",     "node", 0 },
-	{ 29, "slop",            "double", 1, "state", "?",     "node", 0 },
+	{ 27, "bb",              "double", 1, "state", "none",     "node", 0 },
+	{ 28, "mult",            "double", 1, "state", "none",     "node", 0 },
+	{ 29, "slop",            "double", 1, "state", "none",     "node", 0 },
 	{ 30, "D",               "double", 1, "state", "m",     "node", 0 }, // soil depth
 	{ 31, "wilting_point_m", "double", 1, "state", "m",     "node", 0 },
 	//--------------------
@@ -97,16 +97,16 @@ Variable var_info[] = {
 	//-----------------------------------------         
 	// More top-level, static allocation vars
 	//-----------------------------------------
-	{ 50, "epoch_start_time",      "long", 1, "time_info", "?",    "node", -1 },
+	{ 50, "epoch_start_time",      "long", 1, "time_info", "none",    "node", -1 },
 	{ 51, "num_timesteps",         "int",  1, "time_info", "none", "none", -1 },
 	{ 52, "current_time_step",     "int",  1, "time_info", "none", "none", -1 },
-	{ 53, "time_step_size",        "int",  1, "time_info", "?",    "none", -1 },
+	{ 53, "time_step_size",        "int",  1, "time_info", "none",    "none", -1 },
 	{ 54, "is_forcing_from_bmi",   "int",  1, "option", "none", "none", -1},
 	{ 55, "forcing_file",                                 "char",   1, "filename",    "none", "node", 0 },  // strlen
-	{ 56, "Schaake_adjusted_magic_constant_by_soil_type", "double", 1, "not_set",        "?", "node", 0 },
+	{ 56, "Schaake_adjusted_magic_constant_by_soil_type", "double", 1, "not_set",        "none", "node", 0 },
 	{ 57, "num_lateral_flow_nash_reservoirs",             "int",    1, "array_size", "none",  "node", 0 },
-	{ 58, "K_lf",                                         "double", 1, "not_set",   "m s-1?", "node", 0 },
-	{ 59, "K_nash",                                       "double", 1, "not_set",   "m s-1?", "node", 0 },
+	{ 58, "K_lf",                                         "double", 1, "not_set",   "m s-1", "node", 0 },
+	{ 59, "K_nash",                                       "double", 1, "not_set",   "m s-1", "node", 0 },
 	{ 60, "num_giuh_ordinates",                           "int",    1, "array_size", "none",  "node", 0 },
 	//---------------------------------------
 	// Vars in aorc_forcing_data_cfe struct
@@ -129,11 +129,11 @@ Variable var_info[] = {
 	// Don't use "*" at end of typename anymore.
 	//--------------------------------------------
 	{ 72, "forcing_data_precip_kg_per_m2",  "double", 1, "not_set", "kg m-2", "node", 0 },
-	{ 73, "forcing_data_time",              "long",   1, "not_set", "?",      "node", 0 },
+	{ 73, "forcing_data_time",              "long",   1, "not_set", "none",      "node", 0 },
 	// size will be num_giuh
-	{ 74, "giuh_ordinates",                 "double", 1, "input_from_file", "none?", "node", 0 },
+	{ 74, "giuh_ordinates",                 "double", 1, "input_from_file", "none", "node", 0 },
 	// size will be num_lat_flow
-	{ 75, "nash_storage",                   "double", 1, "not_set", "?", "node", 0 },
+	{ 75, "nash_storage",                   "double", 1, "not_set", "none", "node", 0 },
 	// size will be num_giuh
 	{ 76, "runoff_queue_m_per_timestep",    "double", 1, "not_set",       "m", "node", 0 },
 	{ 77, "flux_Schaake_output_runoff_m",   "double", 1, "output_to_bmi", "m", "node", 0 },
@@ -146,6 +146,30 @@ Variable var_info[] = {
 	{ 84, "verbosity",                      "int",    1, "option",     "none", "node", 0 }
 };
 
+static const char *model_var_roles[] = {
+    "array_length",
+    "constant",
+    "diagnostic",
+    "directory",
+    "filename",
+    "file_offset",
+    "info_string",
+    "input_from_bmi",
+    "input_from_file",
+    "not_set",
+    "option",
+    "output_to_bmi",
+    "output_to_file",
+    "parameter_fixed",
+    "parameter_adjustable",
+    "state",
+    "time_info"
+};
+
+// These replace hard-coded #DEFINE so you don't have to keep updating, yey
+int STATE_VAR_NAME_COUNT = sizeof(var_info)/sizeof(var_info[0]);
+int VAR_ROLE_COUNT = sizeof(model_var_roles)/sizeof(model_var_roles[0]);
+
 int i = 0;
 int j = 0;
 
@@ -153,14 +177,14 @@ int j = 0;
 // These have been superseded by new "var_info" array of struct, above.
 //-----------------------------------------------------------------------
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
-static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
+/*static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "RAIN_RATE",
         "SCHAAKE_OUTPUT_RUNOFF",
         "GIUH_RUNOFF",
         "NASH_LATERAL_RUNOFF",
         "DEEP_GW_TO_CHANNEL_FLUX",
         "Q_OUT"
-};
+};*/
 
 /*
 static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
@@ -172,14 +196,14 @@ static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
         "double"
 };
 */
-static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
+/*static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
         1,
         1,
         1,
         1,
         1,
         1
-};
+};*/
 /*
 static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
         "m",
@@ -190,14 +214,14 @@ static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
         "m"
 };
 */
-static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
+/*static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
         0,
         0,
         0,
         0,
         0,
         0
-};
+};*/
 
 /*
 static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
@@ -214,7 +238,7 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
 // These may be obsolete soon, due to "var_info" array of struct, above.
 //------------------------------------------------------------------------
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
-static const char *input_var_names[INPUT_VAR_NAME_COUNT] = {
+/*static const char *input_var_names[INPUT_VAR_NAME_COUNT] = {
         "atmosphere_water__liquid_equivalent_precipitation_rate",
         "water_potential_evaporation_flux"
 };
@@ -242,7 +266,7 @@ static const char input_var_grids[INPUT_VAR_NAME_COUNT] = {
 static const char *input_var_locations[INPUT_VAR_NAME_COUNT] = {
         "node",
         "node"
-};
+};*/
 
 //-----------------------------------------------------------------------
 static int Get_start_time (Bmi *self, double * time)
@@ -1109,7 +1133,7 @@ static int Finalize (Bmi *self)
 }
 
 //--------------------------------------------------------------------------
-static int Get_adjusted_index_for_variable(const char *name)
+/*static int Get_adjusted_index_for_variable(const char *name)
 {
     // Get an "adjusted index" value for the associated variable, where this is its index within the
     // associated names array, plus either:
@@ -1124,7 +1148,7 @@ static int Get_adjusted_index_for_variable(const char *name)
             return i + OUTPUT_VAR_NAME_COUNT;
 
     return -1;
-}
+}*/
 
 //#################################################
 //  New BMI functions to support variable roles
@@ -1136,8 +1160,16 @@ static int Get_bmi_version (Bmi *self, char *version)
     return BMI_SUCCESS;
 }
 
+static int Get_model_var_roles (Bmi *self, char ** roles)
+{
+    for (int i = 0; i < VAR_ROLE_COUNT; i++) {
+        strncpy (roles[i], model_var_roles[i], BMI_MAX_ROLE_NAME);
+    }
+    return BMI_SUCCESS;
+}
+
 //--------------------------------------------------------------------------
-static int Get_var_count (Bmi *self, const char *role, int *count)
+static int Get_model_var_count (Bmi *self, const char *role, int *count)
 {
     //----------------------------------------
     // Note: Returns the number of variables
@@ -1165,7 +1197,7 @@ static int Get_var_count (Bmi *self, const char *role, int *count)
 }
 
 //--------------------------------------------------------------------------
-static int Get_var_names (Bmi *self, const char *role, char **names)
+static int Get_model_var_names (Bmi *self, const char *role, char **names)
 {
     //----------------------------------------------------
     // Note: This pulls information from the var_info
@@ -1214,7 +1246,7 @@ static int Get_var_names (Bmi *self, const char *role, char **names)
     // Option to print all the names for testing
     //--------------------------------------------
     if (print_names == 1){
-		printf("\nIn Get_var_names()...\n");
+		printf("\nIn Get_model_var_names()...\n");
 		printf("  role = %s\n", role);
 		printf("  role_count = %d\n", role_count);\
 		printf("  Variable names with this role:\n");
@@ -1300,7 +1332,7 @@ static int Get_var_type (Bmi *self, const char *name, char *type)
 }
 
 //--------------------------------------------------------------------------
-static int Get_var_length (Bmi *self, const char *name, int *size)
+static int Get_var_length (Bmi *self, const char *name, int *elements)
 {
     //---------------------------------------------------
     // Note: This pulls information from the var_info
@@ -1353,7 +1385,7 @@ static int Get_var_length (Bmi *self, const char *name, int *size)
 			} else if (strcmp(name, "runoff_queue_m_per_timestep") == 0){        
 				var_info[i].size = num_giuh;
 			}
-            *size = var_info[i].size;
+            *elements = var_info[i].size;
             return BMI_SUCCESS;
         }
     }
@@ -1363,7 +1395,7 @@ static int Get_var_length (Bmi *self, const char *name, int *size)
     //--------------------------
     printf("ERROR in get_var_length():\n");
     printf("  No match for: %s\n\n", name);
-    *size = -1;
+    *elements = -1;
     return BMI_FAILURE;
 }
 
@@ -1388,18 +1420,29 @@ static int Get_var_role (Bmi *self, const char *name, char *role)
     stand_alone = !(state->is_forcing_from_bmi);
 
     for (int i = 0; i < n_state_vars; i++) {
-        if (strcmp( var_info[i].name, name ) == 0){
-            strncpy(role, var_info[i].role, MAX_ROLE_LEN);
- 
+        if (strcmp(name, var_info[i].name) == 0) {
             //----------------------------------------------------
             // Override some roles based on config file settings
-            //----------------------------------------------------               
-            if (stand_alone && (strcmp(role, "input_from_bmi") == 0)){
-                role = "input_from_file";
-                // var_info[i].role = role; // doesn't work
-            }
-            return BMI_SUCCESS;
-        }
+            //----------------------------------------------------
+            if (stand_alone == TRUE) {              
+                // input_from_bmi --> input_from_file 
+                if (strcmp(var_info[i].role, "input_from_bmi") == 0){
+                    //role = "input_from_file";  //this doesn't work
+                    strncpy(role, "input_from_file", BMI_MAX_ROLE_NAME);
+                    return BMI_SUCCESS; 
+                }
+                // output_to_bmi --> output_to_file 
+                if (strcmp(var_info[i].role, "output_to_bmi") == 0){
+                    //role = "output_to_file";
+                    strncpy(role, "output_to_file", BMI_MAX_ROLE_NAME);
+                    return BMI_SUCCESS; 
+                }
+            }               
+
+            strncpy(role, var_info[i].role, BMI_MAX_ROLE_NAME);
+            return BMI_SUCCESS;  
+        }  
+
     }
 
     //--------------------------
@@ -1407,7 +1450,8 @@ static int Get_var_role (Bmi *self, const char *name, char *role)
     //--------------------------
     printf("ERROR in get_var_role():\n");
     printf("  No match for: %s\n\n", name); 
-    role = "not_set";
+    //role = "not_set";
+    strncpy(role, "not_set", BMI_MAX_ROLE_NAME);
     return BMI_FAILURE;
 }
 
@@ -1941,7 +1985,7 @@ static int Set_value (Bmi *self, const char *name, void *src )
     int i, length;
     // int n_state_vars;
     // char role[] = "all";
-    // self->get_var_count( self, role, &n_state_vars);
+    // self->get_model_var_count( self, role, &n_state_vars);
     self->get_var_length( self, name, &length);
 
     cfe_state_struct *state;
@@ -2263,9 +2307,9 @@ static int Get_value_at_indices (Bmi *self, const char *name, void *dest, int *i
     // associated names array, plus either:
     //      0 if it is in the output variable array or
     //      OUTPUT_VAR_NAME_COUNT if it is in the input variable array
-    int adjusted_index = Get_adjusted_index_for_variable(name);
+/*    int adjusted_index = Get_adjusted_index_for_variable(name);
     if (adjusted_index < 0)
-        return BMI_FAILURE;
+        return BMI_FAILURE;*/
 
     int var_item_size;
     int status = Get_var_itemsize(self, name, &var_item_size);
@@ -2305,9 +2349,9 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
         return BMI_FAILURE;
 
     // Get "adjusted_index" for variable
-    int adjusted_index = Get_adjusted_index_for_variable(name);
+/*    int adjusted_index = Get_adjusted_index_for_variable(name);
     if (adjusted_index < 0)
-        return BMI_FAILURE;
+        return BMI_FAILURE;*/
 
     int var_item_size;
     int status = Get_var_itemsize(self, name, &var_item_size);
@@ -2373,7 +2417,7 @@ static int Get_input_item_count (Bmi *self, int *count)
     char *role = "input_from_bmi";
     //char role[BMI_MAX_ROLE_NAME] = "input_from_bmi";
     
-    result = Get_var_count( self, role, count );
+    result = Get_model_var_count( self, role, count );
 
     if (result == 0){
         return BMI_SUCCESS;
@@ -2392,7 +2436,7 @@ static int Get_input_var_names (Bmi *self, char **names)
     char *role = "input_from_bmi";
     //char role[BMI_MAX_ROLE_NAME] = "input_from_bmi";
     
-    result = Get_var_names( self, role, names );
+    result = Get_model_var_names( self, role, names );
 
     if (result == 0){
         return BMI_SUCCESS;
@@ -2407,7 +2451,7 @@ static int Get_output_item_count (Bmi *self, int *count)
     char *role = "output_to_bmi";
     //char role[BMI_MAX_ROLE_NAME] = "output_to_bmi";
     
-    result = Get_var_count( self, role, count );
+    result = Get_model_var_count( self, role, count );
 
     if (result == 0){
         return BMI_SUCCESS;
@@ -2426,7 +2470,7 @@ static int Get_output_var_names (Bmi *self, char **names)
     char *role = "output_to_bmi";
     //char role[BMI_MAX_ROLE_NAME] = "output_to_bmi";
     
-    result = Get_var_names( self, role, names );
+    result = Get_model_var_names( self, role, names );
 
     if (result == 0){
         return BMI_SUCCESS;
@@ -2700,8 +2744,9 @@ Bmi* register_bmi_cfe(Bmi *model) {
         // New BMI functions for variable roles
         //---------------------------------------
         model->get_bmi_version = Get_bmi_version;
-        model->get_var_count   = Get_var_count;
-        model->get_var_names   = Get_var_names;
+        model->get_model_var_roles = Get_model_var_roles;
+        model->get_model_var_count   = Get_model_var_count;
+        model->get_model_var_names   = Get_model_var_names;
         model->get_var_index   = Get_var_index;     
         model->get_var_role    = Get_var_role;
         model->get_var_length  = Get_var_length;

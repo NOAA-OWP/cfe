@@ -386,7 +386,7 @@ main(int argc, const char *argv[]){
     free(names_out);
     free(names_in);
     // Test BMI: CONTROL FUNCTION update_until()
-    {
+/*    {
         int added_nstep=5;
         int total_nstep= added_nstep + test_nstep;
         printf("\n updating until... new total timesteps in test loop: %i\n", total_nstep);
@@ -395,7 +395,7 @@ main(int argc, const char *argv[]){
         // confirm updated current time
         model->get_current_time(model, &now);
         printf(" current time: %f\n", now);
-    }
+    }*/
     // Test BMI: CONTROL FUNCTION finalize()
     {
         printf("\n finalizing...\n");

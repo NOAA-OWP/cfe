@@ -149,16 +149,16 @@ int main(int argc, const char *argv[])
       char units[BMI_MAX_UNITS_NAME];
       //------------------------------- 
       puts("###############################################");      
-      puts("Testing bmi.get_var_count()...");
-      model1->get_var_count(model1, role_all, &count_all);
+      puts("Testing bmi.get_model_var_count()...");
+      model1->get_model_var_count(model1, role_all, &count_all);
       printf("  role  = %s\n", role_all);
       printf("  count = %d\n", count_all);
-      puts("Testing bmi.get_var_count()...");      
-      model1->get_var_count(model1, role_input, &count_input);
+      puts("Testing bmi.get_model_var_count()...");      
+      model1->get_model_var_count(model1, role_input, &count_input);
       printf("  role  = %s\n", role_input);
       printf("  count = %d\n", count_input);
-      puts("Testing bmi.get_var_count()...");      
-      model1->get_var_count(model1, role_output, &count_output);
+      puts("Testing bmi.get_model_var_count()...");      
+      model1->get_model_var_count(model1, role_output, &count_output);
       printf("  role  = %s\n", role_output);
       printf("  count = %d\n", count_output);
       //--------------------------------------------
@@ -168,10 +168,10 @@ int main(int argc, const char *argv[])
         for (int i=0; i<count_all; i++){
       names_test_all[i] = (char*) malloc (sizeof(char) * BMI_MAX_VAR_NAME);
       }
-      // Populate array via get_var_names(role_all)
-      puts("Testing bmi.get_var_names()...");
+      // Populate array via get_model_var_names(role_all)
+      puts("Testing bmi.get_model_var_names()...");
       printf("  role = %s\n", role_all);
-      model1->get_var_names(model1, role_all, names_test_all);
+      model1->get_model_var_names(model1, role_all, names_test_all);
       for (int j=0; j<count_all; j++){
           printf("  names_test_all[%d] = %s\n", j, names_test_all[j]);
       }
@@ -187,10 +187,10 @@ int main(int argc, const char *argv[])
         for (int i=0; i<count_input; i++){
       names_test_input[i] = (char*) malloc (sizeof(char) * BMI_MAX_VAR_NAME);
       }
-      // Populate array via get_var_names(role_input)
-      puts("Testing bmi.get_var_names()...");
+      // Populate array via get_model_var_names(role_input)
+      puts("Testing bmi.get_model_var_names()...");
       printf("  role = %s\n", role_input);
-      model1->get_var_names(model1, role_input, names_test_input);
+      model1->get_model_var_names(model1, role_input, names_test_input);
       for (int j=0; j<count_input; j++){
           printf("  names_test_input[%d] = %s\n", j, names_test_input[j]);
       }
@@ -206,10 +206,10 @@ int main(int argc, const char *argv[])
         for (int i=0; i<count_output; i++){
       names_test_output[i] = (char*) malloc (sizeof(char) * BMI_MAX_VAR_NAME);
       }
-      // Populate array via get_var_names(role_output)
-      puts("Testing bmi.get_var_names()...");
+      // Populate array via get_model_var_names(role_output)
+      puts("Testing bmi.get_model_var_names()...");
       printf("  role = %s\n", role_output);
-      model1->get_var_names(model1, role_output, names_test_output);
+      model1->get_model_var_names(model1, role_output, names_test_output);
       for (int j=0; j<count_output; j++){
           printf("  names_test_output[%d] = %s\n", j, names_test_output[j]);
       }
