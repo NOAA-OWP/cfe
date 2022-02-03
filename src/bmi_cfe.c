@@ -384,8 +384,12 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     int is_soil_params__slop_set = FALSE;
     int is_soil_params__smcmax_set = FALSE;
     int is_soil_params__wltsmc_set = FALSE;
+    int is_soil_params__expon_set = FALSE;
+    int is_soil_params__expon2_set = FALSE;
     int is_Cgw_set = FALSE;
+    int is_Cgw2_set = FALSE;
     int is_expon_set = FALSE;
+    int is_expon2_set = FALSE;
     int is_alpha_fc_set = FALSE;
     int is_soil_storage_set = FALSE;
     int is_K_nash_set = FALSE;
@@ -479,6 +483,16 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             is_soil_params__wltsmc_set = TRUE;
             continue;
         }
+        if (strcmp(param_key, "soil_params.expon") == 0) {
+            model->soil_reservoir.exponent_primary = strtod(param_value, NULL);
+            is_soil_params__expon_set = TRUE;
+            continue;
+        }
+        if (strcmp(param_key, "soil_params.expon_secondary") == 0) {
+            model->soil_reservoir.exponent_secondary = strtod(param_value, NULL);
+            is_soil_params__expon2_set = TRUE;
+            continue;
+        }
         if (strcmp(param_key, "max_gw_storage") == 0) {
             model->gw_reservoir.storage_max_m = strtod(param_value, NULL);
             is_gw_max_set = TRUE;
@@ -493,9 +507,19 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             is_Cgw_set = TRUE;
             continue;
         }
+        if (strcmp(param_key, "Cgw_secondary") == 0) {
+            model->gw_reservoir.coeff_secondary = strtod(param_value, NULL);
+            is_Cgw2_set = TRUE;
+            continue;
+        }
         if (strcmp(param_key, "expon") == 0) {
             model->gw_reservoir.exponent_primary = strtod(param_value, NULL);
             is_expon_set = TRUE;
+            continue;
+        }
+        if (strcmp(param_key, "expon_secondary") == 0) {
+            model->gw_reservoir.exponent_secondary = strtod(param_value, NULL);
+            is_expon2_set = TRUE;
             continue;
         }
         if (strcmp(param_key, "gw_storage") == 0) {
@@ -638,6 +662,18 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
 #endif
         return BMI_FAILURE;
     }
+    if (is_soil_params__expon_set == FALSE) {
+#if CFE_DEGUG >= 1
+        printf("Config param 'soil_params.expon' not found in config file\n");
+#endif
+        return BMI_FAILURE;
+    }
+    if (is_soil_params__expon2_set == FALSE) {
+#if CFE_DEGUG >= 1
+        printf("Config param 'soil_params.expon_secondary' not found in config file\n");
+#endif
+        return BMI_FAILURE;
+    }
     if (is_Cgw_set == FALSE) {
 #if CFE_DEGUG >= 1
         printf("Config param 'Cgw' not found in config file\n");
@@ -647,6 +683,18 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     if (is_expon_set == FALSE) {
 #if CFE_DEGUG >= 1
         printf("Config param 'expon' not found in config file\n");
+#endif
+        return BMI_FAILURE;
+    }
+    if (is_Cgw2_set == FALSE) {
+#if CFE_DEGUG >= 1
+        printf("Config param 'Cgw_secondary' not found in config file\n");
+#endif
+        return BMI_FAILURE;
+    }
+    if (is_expon2_set == FALSE) {
+#if CFE_DEGUG >= 1
+        printf("Config param 'expon_secondary' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
@@ -696,6 +744,12 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         printf("Config param 'verbosity' not found in config file\n");
         printf("setting verbosity to a high value\n");
         model->verbosity = 10;
+        return BMI_FAILURE;
+    }
+    if (is_direct_runoff_method_set == FALSE) {
+#if CFE_DEGUG >= 1
+        printf("Config param 'direct_runoff_method' not found in config file\n");
+#endif
         return BMI_FAILURE;
     }
 /* xinanjiang_dev*/
@@ -939,8 +993,8 @@ static int Initialize (Bmi *self, const char *file)
     cfe_bmi_data_ptr->gw_reservoir.is_exponential = TRUE;
     cfe_bmi_data_ptr->gw_reservoir.storage_threshold_primary_m = 0.0;    // 0.0 means no threshold applied
     cfe_bmi_data_ptr->gw_reservoir.storage_threshold_secondary_m = 0.0;  // 0.0 means no threshold applied
-    cfe_bmi_data_ptr->gw_reservoir.coeff_secondary = 0.0;                // 0.0 means that secondary outlet is not applied
-    cfe_bmi_data_ptr->gw_reservoir.exponent_secondary = 1.0;             // linear
+    //cfe_bmi_data_ptr->gw_reservoir.coeff_secondary = 0.0;                // 0.0 means that secondary outlet is not applied
+    //cfe_bmi_data_ptr->gw_reservoir.exponent_secondary = 1.0;             // linear
 
     // Initialize soil conceptual reservoirs
     init_soil_reservoir(cfe_bmi_data_ptr, alpha_fc, max_soil_storage, S_soil, is_S_soil_ratio);
@@ -2495,7 +2549,7 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, doub
     // Units of primary coefficient are m per time step
     cfe_ptr->soil_reservoir.coeff_primary = cfe_ptr->NWM_soil_params.satdk * cfe_ptr->NWM_soil_params.slop * cfe_ptr->time_step_size;
     // 1.0=linear
-    cfe_ptr->soil_reservoir.exponent_primary = 1.0;
+    //cfe_ptr->soil_reservoir.exponent_primary = 1.0;
     // i.e., field_capacity_storage_threshold_m
     cfe_ptr->soil_reservoir.storage_threshold_primary_m =
             cfe_ptr->NWM_soil_params.smcmax * pow(1.0 / cfe_ptr->NWM_soil_params.satpsi, (-1.0 / cfe_ptr->NWM_soil_params.bb)) *
@@ -2505,7 +2559,7 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, doub
     // TODO: look at whether K_lf needs to be a derived (i.e., via get_K_lf_for_time_step()) or explicit parameter
     cfe_ptr->soil_reservoir.coeff_secondary = cfe_ptr->K_lf;
     // 1.0=linear
-    cfe_ptr->soil_reservoir.exponent_secondary = 1.0;
+    //cfe_ptr->soil_reservoir.exponent_secondary = 1.0;
     // making them the same, but they don't have 2B
     cfe_ptr->soil_reservoir.storage_threshold_secondary_m = cfe_ptr->soil_reservoir.storage_threshold_primary_m;
     cfe_ptr->soil_reservoir.storage_m = init_reservoir_storage(is_storage_ratios, storage, max_storage);
