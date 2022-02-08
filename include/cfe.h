@@ -125,6 +125,9 @@ struct massbal
     double vol_soil_to_lat_flow;
     double vol_soil_to_gw      ;  // this should equal vol_to_gw
     double vol_soil_end        ;
+    double vol_et_from_soil    ;
+    double vol_et_from_rain    ; 
+    double vol_et_to_atm       ;   
     double volin               ;
     double volout              ;
     double volend              ;
@@ -206,7 +209,8 @@ extern void cfe(
         double *nash_storage_arr,
         struct evapotranspiration_structure *evap_struct,
         double *Qout_m_ptr,
-        struct massbal *massbal_struct
+        struct massbal *massbal_struct,
+        double time_step_size
     );
 
 #endif //CFE_CFE_H
