@@ -15,6 +15,16 @@
 #define OUTPUT_VAR_NAME_COUNT 6
 #define STATE_VAR_NAME_COUNT 89   // must match var_info array size
 
+#define PARAM_VAR_NAME_COUNT 10
+static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
+    "maxsmc", "satdk", "slope", "b", "multiplier", "Klf", 
+    "Kn", "Cgw", "expon", "max_gw_storage"
+};
+
+static const char *param_var_types[PARAM_VAR_NAME_COUNT] = {
+    "double", "double", "double", "double", "double", "double",
+    "double", "double", "double", "double"
+};
 //----------------------------------------------
 // Put variable info into a struct to simplify
 // BMI implementation and avoid errors.
