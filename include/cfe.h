@@ -125,6 +125,9 @@ struct massbal
     double vol_soil_to_lat_flow;
     double vol_soil_to_gw      ;  // this should equal vol_to_gw
     double vol_soil_end        ;
+    double vol_et_from_soil    ;
+    double vol_et_from_rain    ; 
+    double vol_et_to_atm       ;   
     double volin               ;
     double volout              ;
     double volend              ;
