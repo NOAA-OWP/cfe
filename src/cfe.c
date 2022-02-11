@@ -110,9 +110,7 @@ extern void cfe(
     infiltration_depth_m = 0.0;
     }
   et_from_soil(soil_reservoir_struct, evap_struct, &NWM_soil_params_struct);
-  massbal_struct->vol_et_from_soil = massbal_struct->vol_et_from_soil + evap_struct->actual_et_m_per_timestep;
-  massbal_struct->vol_et_to_atm = massbal_struct->vol_et_to_atm + evap_struct->actual_et_m_per_timestep;
-  massbal_struct->volout=massbal_struct->volout+evap_struct->actual_et_m_per_timestep;
+
   // check to make sure that there is storage available in soil to hold the water that does not runoff
   //--------------------------------------------------------------------------------------------------
   if(soil_reservoir_storage_deficit_m<infiltration_depth_m)
