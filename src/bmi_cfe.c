@@ -1294,6 +1294,72 @@ static int Get_var_nbytes (Bmi *self, const char *name, int * nbytes)
 
 static int Get_value_ptr (Bmi *self, const char *name, void **dest)
 {
+    /*********** Calibration Params Hacked ************/
+    if (strcmp (name, "maxsmc") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->NWM_soil_params.smcmax;
+        return BMI_SUCCESS;
+    }
+    if (strcmp (name, "satdk") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->NWM_soil_params.satdk;
+        return BMI_SUCCESS;
+    }
+    if (strcmp (name, "slope") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->NWM_soil_params.slop;
+        return BMI_SUCCESS;
+    }
+    if (strcmp (name, "b") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->NWM_soil_params.bb;
+        return BMI_SUCCESS;
+    }
+    if (strcmp (name, "multiplier") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->NWM_soil_params.mult;
+        return BMI_SUCCESS;
+    }
+    if (strcmp (name, "Klf") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->soil_reservoir.coeff_secondary;
+        return BMI_SUCCESS;
+    }
+    if (strcmp (name, "Kn") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->K_nash;
+        return BMI_SUCCESS;
+    }
+    if (strcmp (name, "Cgw") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->gw_reservoir.coeff_primary;
+        return BMI_SUCCESS;
+    }
+    if (strcmp (name, "expon") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->gw_reservoir.exponent_primary;
+        return BMI_SUCCESS;
+    }
+    if (strcmp (name, "max_gw_storage") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->gw_reservoir.storage_max_m;
+        return BMI_SUCCESS;
+    }
+    
+    
+    //NOT MESSING WITH nash_n (number of nash cascades) cause it is a bit of a side
+    //effecting value when it changes
+
     /***********************************************************/
     /***********    OUTPUT   ***********************************/
     /***********************************************************/
