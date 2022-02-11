@@ -803,6 +803,13 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
 
 static int Initialize (Bmi *self, const char *file)
 {
+    //FIXME, we can use the input file to help imply "framework" support or "standalone"
+    //an empty init file string indicates things will come from set_value???
+    //what happens when both occur, that is we have a config file and framewrok
+    //using set_value after init???
+
+    //Consider enumeration of failure states and how that might look across multiple languages
+    //integrating into a framework
 
     cfe_state_struct* cfe_bmi_data_ptr;
 
@@ -1154,6 +1161,8 @@ static int Get_var_grid(Bmi *self, const char *name, int *grid)
 
 static int Get_var_type (Bmi *self, const char *name, char * type)
 {
+    //TODO may need to expose type info for "hidden" parameter values
+    //or impose BMI side casting of double to whatever type
     // Check to see if in output array first
     for (i = 0; i < OUTPUT_VAR_NAME_COUNT; i++) {
         if (strcmp(name, output_var_names[i]) == 0) {
@@ -1184,6 +1193,8 @@ static int Get_var_type (Bmi *self, const char *name, char * type)
 
 static int Get_var_itemsize (Bmi *self, const char *name, int * size)
 {
+    //TODO may need to implement for "hidden" parameter variables
+    //or impose BMI side casting from double to desired type
     char type[BMI_MAX_TYPE_NAME];
     int type_result = Get_var_type(self, name, type);
     if (type_result != BMI_SUCCESS) {
@@ -1492,6 +1503,24 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
     if (status == BMI_FAILURE)
         return BMI_FAILURE;
     memcpy(ptr, src, var_item_size * len);
+    /*
+    * If we want to modify the number of nash cascades, we must also side effect other
+    * variables.  This "should" work, based on current program structure
+    */
+    /*
+    if (strcmp (name, "number_nash_reservoirs") ) {
+    
+            //Note that this only allows adjustment to the number of cascades,
+            //and each one will have initial storage value of 0.0
+            //Reallocate nash_storage
+            if( model->nash_storage != NULL ) free(model->nash_storage);
+            model->nash_storage = malloc(sizeof(double) * model->num_lateral_flow_nash_reservoirs);
+            if( model->nash_storage == NULL ) return BMI_FAILURE;
+            for (j = 0; j < model->num_lateral_flow_nash_reservoirs; j++)
+                model->nash_storage[j] = 0.0;
+        
+    }
+    */
     return BMI_SUCCESS;
 }
 
