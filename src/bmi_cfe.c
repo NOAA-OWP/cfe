@@ -369,7 +369,6 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     int is_forcing_file_set = FALSE;
     int is_soil_params__depth_set = FALSE;
     int is_soil_params__bb_set = FALSE;
-    int is_soil_params__mult_set = FALSE;
     int is_soil_params__satdk_set = FALSE;
     int is_soil_params__satpsi_set = FALSE;
     int is_soil_params__slop_set = FALSE;
