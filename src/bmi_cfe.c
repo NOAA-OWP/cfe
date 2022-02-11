@@ -1120,6 +1120,11 @@ static int Get_adjusted_index_for_variable(const char *name)
             return i + OUTPUT_VAR_NAME_COUNT;
     }
 
+    for (i = 0; i < PARAM_VAR_NAME_COUNT; i++){
+    if (strcmp(name, param_var_names[i]) == 0)
+        return i + INPUT_VAR_NAME_COUNT + OUTPUT_VAR_NAME_COUNT;
+    }
+
     return -1;
 }
 
