@@ -1177,6 +1177,14 @@ static int Get_var_type (Bmi *self, const char *name, char * type)
             return BMI_SUCCESS;
         }
     }
+
+    for (i = 0; i < PARAM_VAR_NAME_COUNT; i++) {
+        if (strcmp(name, param_var_names[i]) == 0) {
+            strncpy(type, param_var_types[i], BMI_MAX_TYPE_NAME);
+            return BMI_SUCCESS;
+        }
+    }
+
     // If we get here, it means the variable name wasn't recognized
     type[0] = '\0';
     return BMI_FAILURE;
