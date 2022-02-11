@@ -102,6 +102,9 @@ double wilting_point_m;
 struct evapotranspiration_structure {
     double potential_et_m_per_s;
     double potential_et_m_per_timestep;
+    double reduced_potential_et_m_per_timestep;
+    double actual_et_from_rain_m_per_timestep;
+    double actual_et_from_soil_m_per_timestep;
     double actual_et_m_per_timestep;
 };
 typedef struct evapotranspiration_structure evapotranspiration_structure;
