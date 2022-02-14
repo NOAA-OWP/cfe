@@ -79,7 +79,9 @@ extern void cfe(
   evap_struct->potential_et_m_per_timestep = evap_struct->potential_et_m_per_s * time_step_size;
 
   et_from_rainfall(&timestep_rainfall_input_m,evap_struct);
- 
+  massbal_struct->vol_et_from_rain = massbal_struct->vol_et_from_rain + evap_struct->actual_et_m_per_timestep;
+  massbal_struct->vol_et_to_atm = massbal_struct->vol_et_to_atm + evap_struct->actual_et_m_per_timestep;
+  massbal_struct->volout=massbal_struct->volout+evap_struct->actual_et_m_per_timestep;
   // NEW FLO
   if(0.0 < timestep_rainfall_input_m) 
     {
@@ -149,6 +151,7 @@ extern void cfe(
   
   // calculate fluxes from the soil storage into the deep groundwater (percolation) and to lateral subsurface flow
   //--------------------------------------------------------------------------------------------------------------
+  
   conceptual_reservoir_flux_calc(soil_reservoir_struct,&percolation_flux,&lateral_flux);
   flux_perc_m=percolation_flux;  // m/h   <<<<<<<<<<<  flux of percolation from soil to g.w. reservoir >>>>>>>>>
   
@@ -159,7 +162,6 @@ extern void cfe(
   //--------------------------------------------------------------------------
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   gw_reservoir_storage_deficit_m= gw_reservoir_struct->storage_max_m-gw_reservoir_struct->storage_m;
-  
   // limit amount transferred to deficit iff there is insuffienct avail. storage
   if(flux_perc_m>gw_reservoir_storage_deficit_m)
     {
@@ -168,6 +170,7 @@ extern void cfe(
     massbal_struct->vol_runoff+=diff;  // send excess water back to GIUH runoff
     massbal_struct->vol_infilt-=diff;  // correct overprediction of infilt.
     }
+  
     
   massbal_struct->vol_to_gw                +=flux_perc_m;
   massbal_struct->vol_soil_to_gw           +=flux_perc_m;
@@ -180,7 +183,15 @@ extern void cfe(
   
   conceptual_reservoir_flux_calc(gw_reservoir_struct,&primary_flux,&secondary_flux);
   
+  
   flux_from_deep_gw_to_chan_m=primary_flux;  // m/h   <<<<<<<<<< BASE FLOW FLUX >>>>>>>>>
+  if(flux_from_deep_gw_to_chan_m >  gw_reservoir_struct->storage_m)  {
+  flux_from_deep_gw_to_chan_m=gw_reservoir_struct->storage_m;
+  // TODO: set a flag when flux larger than storage
+  printf("WARNING: Groundwater flux larger than storage \n");
+  }
+  	
+ 
   massbal_struct->vol_from_gw+=flux_from_deep_gw_to_chan_m;
   
   // in the instance of calling the gw reservoir the secondary flux should be zero- verify
@@ -189,7 +200,7 @@ extern void cfe(
   
   // adjust state of deep groundwater conceptual nonlinear reservoir
   //-----------------------------------------------------------------
-  
+ 
   gw_reservoir_struct->storage_m -= flux_from_deep_gw_to_chan_m;
 
   
@@ -211,7 +222,7 @@ extern void cfe(
   massbal_struct->vol_out_nash  += nash_lateral_runoff_m;
 
 #ifdef DEBUG
-        fprintf(out_debug_fptr,"%d %lf %lf\n",tstep,flux_lat_m,nash_lateral_runoff_m);
+        fprintf(out_debug_fptr,"%d %lf %lf  %lf\n",tstep,flux_lat_m,nash_lateral_runoff_m,flux_from_deep_gw_to_chan_m);
 #endif
 
   Qout_m = giuh_runoff_m + nash_lateral_runoff_m + flux_from_deep_gw_to_chan_m;
@@ -342,7 +353,13 @@ if(da_reservoir->is_exponential==TRUE)  // single outlet reservoir like the NWM 
   // calculate the one flux and return.
   *primary_flux_m=da_reservoir->coeff_primary*
                     (exp(da_reservoir->exponent_primary*da_reservoir->storage_m/da_reservoir->storage_max_m)-1.0);
+  
   *secondary_flux_m=0.0;
+  /*printf("primary_flux_m %lf  \n",*primary_flux_m);
+  printf("da_reservoir->coeff_primary %lf \n",da_reservoir->coeff_primary);
+  printf("da_reservoir->exponent_primary %lf \n",da_reservoir->exponent_primary);
+  printf("da_reservoir->storage_m %lf \n",da_reservoir->storage_m);
+  printf("da_reservoir->storage_max_m %lf \n",da_reservoir->storage_max_m);*/
   return;
   }
 // code goes past here iff it is not a single outlet exponential deep groundwater reservoir of the NWM variety
@@ -558,111 +575,7 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
 
 return;
 }
-//##############################################################
-//########   XINANJIANG RUNOFF PARTITIONING SCHEME   ###########
-/*##############################################################
 
-void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_capacity_m,
-                                    double max_soil_moisture_storage_m, double column_total_soil_water_m,
-                                    struct direct_runoff_parameters_structure *parms, 
-                                    double *surface_runoff_depth_m, double *infiltration_depth_m)
-{
-  //------------------------------------------------------------------------
-  //  This module takes the water_input_depth_m and separates it into surface_runoff_depth_m
-  //  and infiltration_depth_m by calculating the saturated area and runoff based on a scheme developed
-  //  for the Xinanjiang model by Jaywardena and Zhou (2000). According to Knoben et al.
-  //  (2019) "the model uses a variable contributing area to simulate runoff.  [It] uses
-  //  a double parabolic curve to simulate tension water capacities within the catchment, 
-  //  instead of the original single parabolic curve" which is also used as the standard 
-  //  VIC fomulation.  This runoff scheme was selected for implementation into NWM v3.0.
-  //  REFERENCES:
-  //  1. Jaywardena, A.W. and M.C. Zhou, 2000. A modified spatial soil moisture storage 
-  //     capacity distribution curve for the Xinanjiang model. Journal of Hydrology 227: 93-113
-  //  2. Knoben, W.J.M. et al., 2019. Supplement of Modular Assessment of Rainfall-Runoff Models
-  //     Toolbox (MARRMoT) v1.2: an open-source, extendable framework providing implementations
-  //     of 46 conceptual hydrologic models as continuous state-space formulations. Supplement of 
-  //     Geosci. Model Dev. 12: 2463-2480.
-  //-------------------------------------------------------------------------
-  //  Written by RLM May 2021
-  //  Adapted by JMFrame September 2021 for new version of CFE
-  //-------------------------------------------------------------------------
-  // Inputs
-  //   double  water_input_depth_m           amount of water input to soil surface this time step [m]
-  //   double  field_capacity_m              <DEFINE>
-  //   double  max_soil_moisture_storage_m   <DEFINE>
-  //   double  column_total_soil_water_m     <DEFINE>
-  //   double  a_inflection_point_parameter  <DEFINE>
-  //   double  b_shape_parameter             <DEFINE>
-  //   double  x_shape_parameter             <DEFINE>
-  //
-  // Outputs
-  //   double  surface_runoff_depth_m        amount of water partitioned to surface water this time step [m]
-  //   double  infiltration_depth_m          amount of water partitioned as infiltration (soil water input) this time step [m]
-  //------------------------------------------------------------------------- 
-
-  double tension_water_m, free_water_m, max_tension_water_m, max_free_water_m, pervious_runoff_m;
-
-  if(0.0 < water_input_depth_m) {  //could move this if statement outside of both the schaake and xinanjiang subroutines
-
-    // partition the total soil water in the column between free water and tension water
-    free_water_m = column_total_soil_water_m - field_capacity_m;
-
-    if(free_water_m > 0) {
-      tension_water_m = field_capacity_m;
-    } else {
-      free_water_m = 0.0;
-      tension_water_m = column_total_soil_water_m;
-    }
-
-    // estimate the maximum free water and tension water available in the soil column
-    max_free_water_m = max_soil_moisture_storage_m - field_capacity_m;
-    max_tension_water_m = field_capacity_m;
-
-    // check that the free_water_m and tension_water_m do not exceed the maximum and if so, change to the max value
-    if(max_free_water_m < free_water_m) free_water_m = max_free_water_m;
-    if(max_tension_water_m < tension_water_m) tension_water_m = max_tension_water_m;
-
-    // NOTE: the impervious surface runoff assumptions due to frozen soil used in NWM 3.0 have not been included.
-    // We are assuming an impervious area due to frozen soils equal to 0 (see eq. 309 from Knoben et al).
-
-    // The total (pervious) runoff is first estimated before partitioning into surface and subsurface components.
-    // See Knoben et al eq 310 for total runoff and eqs 313-315 for partitioning between surface and subsurface
-    // components.
-
-    // Calculate total estimated pervious runoff. 
-    // NOTE: If the impervious surface runoff due to frozen soils is added,
-    // the pervious_runoff_m equation will need to be adjusted by the fraction of pervious area.
-    if ((tension_water_m/max_tension_water_m) <= (0.5 - parms->a_Xinanjiang_inflection_point_parameter)) {
-      pervious_runoff_m = water_input_depth_m * (pow((0.5 - parms->a_Xinanjiang_inflection_point_parameter), 
-                                                     (1.0 - parms->b_Xinanjiang_shape_parameter)) *
-                                                 pow((1.0 - (tension_water_m/max_tension_water_m)),
-                                                     parms->b_Xinanjiang_shape_parameter));
-
-    } else {
-      pervious_runoff_m = water_input_depth_m * (1.0 - pow((0.5 + parms->a_Xinanjiang_inflection_point_parameter), 
-                                                         (1.0 - parms->b_Xinanjiang_shape_parameter)) * 
-                                                     pow((1.0 - (tension_water_m/max_tension_water_m)),
-                                                         (parms->b_Xinanjiang_shape_parameter)));
-    }
-    // Separate the surface water from the pervious runoff 
-    // NOTE: If impervious runoff is added to this subroutine, impervious runoff should be added to
-    // the surface_runoff_depth_m.
-    *surface_runoff_depth_m = pervious_runoff_m * (1.0 - pow((1.0 - (free_water_m/max_free_water_m)),parms->x_Xinanjiang_shape_parameter));
-    // The surface runoff depth is bounded by a minimum of 0 and a maximum of the water input depth.
-    // Check that the estimated surface runoff is not less than 0.0 and if so, change the value to 0.0.
-    if(*surface_runoff_depth_m < 0.0) *surface_runoff_depth_m = 0.0;
-    // Check that the estimated surface runoff does not exceed the amount of water input to the soil surface.  If it does,
-    // change the surface water runoff value to the water input depth.
-    if(*surface_runoff_depth_m > water_input_depth_m) *surface_runoff_depth_m = water_input_depth_m;
-    // Separate the infiltration from the total water input depth to the soil surface.
-    *infiltration_depth_m = water_input_depth_m - *surface_runoff_depth_m;    
-
-  } else {
-    *surface_runoff_depth_m = 0.0;
-    *infiltration_depth_m = 0.0;
-  }
-  return;
-}*/
 
 //##############################################################
 //####################   ET FROM RAINFALL   ####################
@@ -682,12 +595,13 @@ void et_from_rainfall(double *timestep_rainfall_input_m, struct evapotranspirati
         }
 
         else{
-
-            et_struct->potential_et_m_per_timestep -= *timestep_rainfall_input_m;
+            // LKC: This was incorrectly set to potential instead of actual
+	    et_struct->actual_et_m_per_timestep = *timestep_rainfall_input_m;          
             *timestep_rainfall_input_m = 0.0;
 
         }
-
+    // Move this out of the loop since EVPT needs to be corrected wheter R > EVPT or not
+    et_struct->potential_et_m_per_timestep = et_struct->potential_et_m_per_timestep-et_struct->actual_et_m_per_timestep;
     }
 }
 
@@ -706,13 +620,11 @@ void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspirati
     
     if (et_struct->potential_et_m_per_timestep > 0){
         
-        if (soil_res->storage_m >= soil_res->storage_threshold_primary_m){
-        
-            et_struct->actual_et_m_per_timestep = min( et_struct->potential_et_m_per_timestep, soil_res->storage_m);
-
+        if (soil_res->storage_m >= soil_res->storage_threshold_primary_m){        
+            et_struct->actual_et_m_per_timestep = min(et_struct->potential_et_m_per_timestep, soil_res->storage_m);
             soil_res->storage_m -= et_struct->actual_et_m_per_timestep;
-
-            et_struct->potential_et_m_per_timestep = 0.0;
+	    // Modified - no reason to set potential et to zero
+            et_struct->potential_et_m_per_timestep = et_struct->potential_et_m_per_timestep - et_struct->actual_et_m_per_timestep;
         }                 
         else if (soil_res->storage_m > soil_parms->wilting_point_m && soil_res->storage_m < soil_res->storage_threshold_primary_m){
         
@@ -723,6 +635,7 @@ void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspirati
             et_struct->actual_et_m_per_timestep = Budyko * (et_struct->potential_et_m_per_timestep);
                            
             soil_res->storage_m -= et_struct->actual_et_m_per_timestep;
+            et_struct->potential_et_m_per_timestep = et_struct->potential_et_m_per_timestep - et_struct->actual_et_m_per_timestep;
         }
     }
 }
