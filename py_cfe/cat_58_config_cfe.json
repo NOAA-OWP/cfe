@@ -11,8 +11,15 @@
                    "slop":1.0,
                    "smcmax":0.439,
                    "wltsmc":0.066,
-                   "D":2.0
+                   "D":2.0,
+                   "exponent_primary":1.0,
+                   "coeff_secondary":0.01,
+                   "exponent_secondary":1.0
                    },
+    "gw_coeff_primary":0.01,
+    "gw_exponent_primary":6.0,
+    "gw_coeff_secondary":0.0,
+    "gw_exponent_secondary":1.0,
     "max_gw_storage":16.0,
     "Cgw":0.01,
     "expon":6.0,

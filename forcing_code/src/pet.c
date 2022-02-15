@@ -128,7 +128,9 @@ extern int run_pet(pet_model* model)
     model->pet_m_per_s=pevapotranspiration_priestley_taylor_method(model);
   if(model->pet_options.use_penman_monteith_method ==1)
     model->pet_m_per_s=pevapotranspiration_penman_monteith_method(model);
-
+  if(model->pet_m_per_s<0) {
+    model->pet_m_per_s = 0;
+  }
   if (model->bmi.verbose >=1){
     printf("\n");
     printf("_______________________________________________________________________________\n");
