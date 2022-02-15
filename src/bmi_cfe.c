@@ -11,9 +11,9 @@
 
 #define CFE_DEGUG 0
 
-#define INPUT_VAR_NAME_COUNT 2
-#define OUTPUT_VAR_NAME_COUNT 6
-#define STATE_VAR_NAME_COUNT 89   // must match var_info array size
+#define INPUT_VAR_NAME_COUNT 4
+#define OUTPUT_VAR_NAME_COUNT 9
+#define STATE_VAR_NAME_COUNT 90   // must match var_info array size
 
 #define PARAM_VAR_NAME_COUNT 10
 static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
@@ -152,8 +152,11 @@ Variable var_info[] = {
     { 84, "Schaake_adjusted_magic_constant_by_soil_type",   "double", 1},
     { 85, "a_Xinanjiang_inflection_point_parameter",        "double", 1},
     { 86, "b_Xinanjiang_shape_parameter",                   "double", 1},
-    { 87, "x_Xinanjiang_shape_parameter",                   "double", 1}
+    { 87, "x_Xinanjiang_shape_parameter",                   "double", 1},
     //---------------------------------------
+    /*Soil Freeze-thaw model paramaters*/
+    { 88, "soil__ice_fraction_schaake",			    "double", 1}, //should it be here?? I don't see other input/outut variables in this list- AJ
+    { 89, "soil__ice_fraction_xinan",			    "double", 1}
 };
 
 int i = 0;
@@ -162,13 +165,14 @@ int j = 0;
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
 static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "RAIN_RATE",
-        /* xinanjiang_dev
-        "SCHAAKE_OUTPUT_RUNOFF",*/
         "DIRECT_RUNOFF",
         "GIUH_RUNOFF",
         "NASH_LATERAL_RUNOFF",
         "DEEP_GW_TO_CHANNEL_FLUX",
-        "Q_OUT"
+        "Q_OUT",
+	"SMCT",
+	"SMCT_CHANGE",
+	"SURF_RUNOFF_SCHEME",
 };
 
 static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
@@ -177,7 +181,10 @@ static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
         "double",
         "double",
         "double",
-        "double"
+        "double",
+	"double",
+	"double",
+	"int"
 };
 
 static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
@@ -186,7 +193,10 @@ static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
         1,
         1,
         1,
-        1
+        1,
+	1,
+	1,
+	1
 };
 
 static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
@@ -195,7 +205,10 @@ static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
         "m",
         "m",
         "m",
-        "m"
+        "m",
+	"m",
+	"m",
+	""
 };
 
 static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
@@ -204,7 +217,10 @@ static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
         0,
         0,
         0,
-        0
+        0,
+	0,
+	0,
+	0
 };
 
 static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
@@ -213,38 +229,53 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
         "node",
         "node",
         "node",
-        "node"
+        "node",
+	"domain",
+	"domain",
+	" "
 };
 
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
 static const char *input_var_names[INPUT_VAR_NAME_COUNT] = {
         "atmosphere_water__liquid_equivalent_precipitation_rate",
-        "water_potential_evaporation_flux"
+        "water_potential_evaporation_flux",
+	"soil__ice_fraction_schaake",
+	"soil__ice_fraction_xinan"
 };
 
 static const char *input_var_types[INPUT_VAR_NAME_COUNT] = {
         "double",
-        "double"
+        "double",
+	"double",
+	"double"
 };
 
 static const char *input_var_units[INPUT_VAR_NAME_COUNT] = {
         "mm h-1", //"atmosphere_water__liquid_equivalent_precipitation_rate"
-        "m s-1"   //"water_potential_evaporation_flux"
+        "m s-1",   //"water_potential_evaporation_flux"
+	"m",    // ice fraction in meters
+	"",     // ice fraction [-]
 };
 
 static const int input_var_item_count[INPUT_VAR_NAME_COUNT] = {
         1,
-        1
+        1,
+	1,
+	1
 };
 
 static const char input_var_grids[INPUT_VAR_NAME_COUNT] = {
         0,
-        0
+        0,
+	0,
+	0
 };
 
 static const char *input_var_locations[INPUT_VAR_NAME_COUNT] = {
         "node",
-        "node"
+        "node",
+	"domain",
+	"node"
 };
 
 static int Get_start_time (Bmi *self, double * time)
@@ -402,7 +433,8 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     int is_a_Xinanjiang_inflection_point_parameter_set = FALSE;
     int is_b_Xinanjiang_shape_parameter_set = FALSE;
     int is_x_Xinanjiang_shape_parameter_set = FALSE;
-
+    int is_urban_decimal_fraction_set = FALSE;
+    
     // Keep track these in particular, because the "true" storage value may be a ratio and need both storage and max
     int is_gw_max_set = FALSE;
     int is_gw_storage_set = FALSE;
@@ -665,6 +697,10 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
                 model->direct_runoff_params_struct.x_Xinanjiang_shape_parameter = strtod(param_value, NULL);
                 is_x_Xinanjiang_shape_parameter_set = TRUE;
             }
+	    if (strcmp(param_key, "urban_decimal_fraction") == 0) {
+	      model->direct_runoff_params_struct.urban_decimal_fraction = strtod(param_value, NULL);
+		is_urban_decimal_fraction_set = TRUE;
+	    }
         }
     }
 
@@ -819,7 +855,13 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             printf("Config param 'x_Xinanjiang_shape_parameter' not found in config file\n");
 #endif
             return BMI_FAILURE;
-        }   
+        }
+	if (is_urban_decimal_fraction_set == FALSE) {
+#if CFE_DEGUG >= 1
+	  printf("Config param 'urban_decimal_fraction' not found in config file\n");
+#endif
+	  return BMI_FAILURE;
+	}  
     }
 
     if(model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake){
@@ -1065,6 +1107,9 @@ static int Initialize (Bmi *self, const char *file)
     // Set all the mass balance trackers to zero.
     initialize_volume_trackers(cfe_bmi_data_ptr);
 
+    cfe_bmi_data_ptr->soil_reservoir.ice_fraction_schaake = 0.0;
+    cfe_bmi_data_ptr->soil_reservoir.ice_fraction_xinan = 0.0;
+    
     return BMI_SUCCESS;
 }
 
@@ -1515,6 +1560,27 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
+    if (strcmp (name, "SURF_RUNOFF_SCHEME") == 0) {
+      cfe_state_struct *cfe_ptr;
+      cfe_ptr = (cfe_state_struct *) self->data;
+      *dest = (void*)&cfe_ptr->direct_runoff_params_struct.surface_partitioning_scheme;
+      return BMI_SUCCESS;
+    }
+    
+    if (strcmp (name, "SMCT") == 0) {
+      cfe_state_struct *cfe_ptr;
+      cfe_ptr = (cfe_state_struct *) self->data;
+      *dest = (void*)&cfe_ptr->soil_reservoir.storage_m;
+      return BMI_SUCCESS;
+    }
+
+    if (strcmp (name, "SMCT_CHANGE") == 0) {
+      cfe_state_struct *cfe_ptr;
+      cfe_ptr = (cfe_state_struct *) self->data;
+      *dest = (void*)&cfe_ptr->soil_reservoir.storage_change_m;
+      return BMI_SUCCESS;
+    }
+    
     /***********************************************************/
     /***********    INPUT    ***********************************/
     /***********************************************************/
@@ -1531,6 +1597,19 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
+    if (strcmp (name, "soil__ice_fraction_schaake") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->soil_reservoir.ice_fraction_schaake;
+        return BMI_SUCCESS;
+    }
+    if (strcmp (name, "soil__ice_fraction_xinan") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->soil_reservoir.ice_fraction_xinan;
+        return BMI_SUCCESS;
+    }
+    
     return BMI_FAILURE;
 }
 
@@ -2672,22 +2751,20 @@ extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr){
 /**************************************************************************/
 extern void print_cfe_flux_header(){
     printf("#    ,            hourly ,  direct,   giuh ,lateral,  base,   total\n");
-    printf("#Time,           rainfall,  runoff,  runoff, flow  ,  flow,  discharge\n");
-    printf("# (h),             (mm)   ,  (mm) ,   (mm) , (mm)  ,  (mm),    (mm)\n");
+    printf("Time [h],rainfall [mm],runoff [mm],runoff [mm],flow [mm],flow [mm],discharge [mm],storage [mm],ice_fraction_schaake [mm], ice_fraction_xinan [-]\n");
 }
 extern void print_cfe_flux_at_timestep(cfe_state_struct* cfe_ptr){
-    printf("%d %lf %lf %lf %lf %lf %lf\n",
+  printf("%d, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf\n",
                            cfe_ptr->current_time_step,
                            cfe_ptr->timestep_rainfall_input_m*1000.0,
-                           
-                           /* xinanjiang_dev
-                           *cfe_ptr->flux_Schaake_output_runoff_m*1000.0,*/
                            *cfe_ptr->flux_output_direct_runoff_m*1000.0,
-
                            *cfe_ptr->flux_giuh_runoff_m*1000.0,
                            *cfe_ptr->flux_nash_lateral_runoff_m*1000.0, 
                            *cfe_ptr->flux_from_deep_gw_to_chan_m*1000.0,
-                           *cfe_ptr->flux_Qout_m*1000.0 );
+	                   *cfe_ptr->flux_Qout_m*1000.0,
+	                   cfe_ptr->soil_reservoir.storage_m*1000.0,
+	                   cfe_ptr->soil_reservoir.ice_fraction_schaake*1000.0,
+	                   cfe_ptr->soil_reservoir.ice_fraction_xinan);
 }
 
 extern void mass_balance_check(cfe_state_struct* cfe_ptr){
