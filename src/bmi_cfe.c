@@ -939,7 +939,9 @@ static int Initialize (Bmi *self, const char *file)
     cfe_bmi_data_ptr->et_struct.potential_et_m_per_s = 0;
     cfe_bmi_data_ptr->et_struct.actual_et_m_per_timestep = 0;
     cfe_bmi_data_ptr->et_struct.potential_et_m_per_timestep = 0;
-
+    cfe_bmi_data_ptr->et_struct.reduced_potential_et_m_per_timestep = 0;
+    cfe_bmi_data_ptr->et_struct.actual_et_from_rain_m_per_timestep = 0;
+    cfe_bmi_data_ptr->et_struct.actual_et_from_soil_m_per_timestep = 0;
     // Set all the mass balance trackers to zero.
     initialize_volume_trackers(cfe_bmi_data_ptr);
 
@@ -2428,6 +2430,9 @@ extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr){
     cfe_ptr->vol_struct.vol_in_gw_start = cfe_ptr->gw_reservoir.storage_m;  
     cfe_ptr->vol_struct.volstart          += cfe_ptr->soil_reservoir.storage_m;    // initial mass balance checks in soil reservoir
     cfe_ptr->vol_struct.vol_soil_start     = cfe_ptr->soil_reservoir.storage_m;
+    cfe_ptr->vol_struct.vol_et_from_soil = 0;
+    cfe_ptr->vol_struct.vol_et_from_rain = 0;
+    cfe_ptr->vol_struct.vol_et_to_atm = 0;
 }
 
 /**************************************************************************/
@@ -2507,10 +2512,11 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     printf("schaake residual: %6.4e m\n",schaake_residual);  // should equal 0.0
     if(!is_fabs_less_than_epsilon(schaake_residual,1.0e-12))
                   printf("WARNING: SCHAAKE PARTITIONING MASS BALANCE CHECK FAILED\n");*/
-    direct_residual = cfe_ptr->vol_struct.volin - cfe_ptr->vol_struct.vol_runoff - cfe_ptr->vol_struct.vol_infilt;
+    direct_residual = cfe_ptr->vol_struct.volin - cfe_ptr->vol_struct.vol_runoff - cfe_ptr->vol_struct.vol_infilt-cfe_ptr->vol_struct.vol_et_from_rain;
     printf(" DIRECT RUNOFF MASS BALANCE\n");
     printf("  surface runoff: %8.4lf m\n",cfe_ptr->vol_struct.vol_runoff);
     printf("    infiltration: %8.4lf m\n",cfe_ptr->vol_struct.vol_infilt);
+    printf("    vol_et_from_rain: %8.4lf m\n",cfe_ptr->vol_struct.vol_et_from_rain);
     printf("direct residual: %6.4e m\n",direct_residual);  // should equal 0.0
     if(!is_fabs_less_than_epsilon(direct_residual,1.0e-12))
                   printf("WARNING: DIRECT RUNOFF PARTITIONING MASS BALANCE CHECK FAILED\n");
@@ -2532,7 +2538,7 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     /* xinanjiang_dev 
     soil_residual=cfe_ptr->vol_struct.vol_soil_start + cfe_ptr->vol_struct.vol_sch_infilt -      */
     soil_residual=cfe_ptr->vol_struct.vol_soil_start + cfe_ptr->vol_struct.vol_infilt -
-                  cfe_ptr->vol_struct.vol_soil_to_lat_flow - vol_soil_end - cfe_ptr->vol_struct.vol_to_gw;
+                  cfe_ptr->vol_struct.vol_soil_to_lat_flow - vol_soil_end - cfe_ptr->vol_struct.vol_to_gw - cfe_ptr->vol_struct.vol_et_from_soil;
                   
     printf(" SOIL WATER CONCEPTUAL RESERVOIR MASS BALANCE\n");
     printf("   init soil vol: %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_start);     
@@ -2542,7 +2548,8 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     printf("  vol. into soil: %8.4lf m\n",cfe_ptr->vol_struct.vol_infilt);
     printf("vol.soil2latflow: %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_to_lat_flow);
     printf(" vol. soil to gw: %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_to_gw);
-    printf(" final vol. soil: %8.4lf m\n",vol_soil_end);   
+    printf(" final vol. soil: %8.4lf m\n",vol_soil_end);  
+    printf(" vol. et from soil: %8.4lf m\n",cfe_ptr->vol_struct.vol_et_from_soil);  
     printf("vol. soil resid.: %6.4e m\n",soil_residual);
     if(!is_fabs_less_than_epsilon(soil_residual,1.0e-12))
                    printf("WARNING: SOIL CONCEPTUAL RESERVOIR MASS BALANCE CHECK FAILED\n");

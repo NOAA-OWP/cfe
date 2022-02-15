@@ -48,7 +48,7 @@ extern void cfe(
 // ####    Reason: so we don't have to re-write domain science code to de-reference a whole bunch of pointers
 // ####        Note: all of thes variables are storages in [m] or fluxes in [m/timestep]    
     double soil_reservoir_storage_deficit_m = *soil_reservoir_storage_deficit_m_ptr;   // storage [m]
-
+    
     /* xinanjiang_dev: rename to the general "direct runoff"
     double Schaake_output_runoff_m          = *Schaake_output_runoff_m_ptr;            // Schaake partitioned runoff this timestep [m]*/
     double direct_output_runoff_m          = *flux_output_direct_runoff_m;            // Schaake partitioned runoff this timestep [m]*/
@@ -68,20 +68,35 @@ extern void cfe(
     double primary_flux=0.0;      // pointers to these variables passed to conceptual nonlinear reservoir which has two outlets, primary & secondary
     double secondary_flux=0.0;    // pointers to these variables passed to conceptual nonlinear reservoir which has two outlets, primary & secondary
     double lateral_flux=0.0;      // flux from soil to lateral flow Nash cascade +to cascade  [m/timestep]
-    double percolation_flux=0.0;  // flux from soil to gw nonlinear researvoir, +downward  [m/timestep]
-
+    double percolation_flux=0.0;  // flux from soil to gw nonlinear researvoir, +downward  [m/timestep] 
+    
   //##################################################
   // partition rainfall using Schaake function
   //##################################################
 
-  soil_reservoir_storage_deficit_m=(NWM_soil_params_struct.smcmax*NWM_soil_params_struct.D-soil_reservoir_struct->storage_m);
+  
 
   evap_struct->potential_et_m_per_timestep = evap_struct->potential_et_m_per_s * time_step_size;
+  evap_struct->reduced_potential_et_m_per_timestep = evap_struct->potential_et_m_per_s * time_step_size;
+ 
+  evap_struct->actual_et_from_rain_m_per_timestep = 0;
+  if(timestep_rainfall_input_m > 0) {et_from_rainfall(&timestep_rainfall_input_m,evap_struct);}
+ 
+  massbal_struct->vol_et_from_rain = massbal_struct->vol_et_from_rain + evap_struct->actual_et_from_rain_m_per_timestep;
+  massbal_struct->vol_et_to_atm = massbal_struct->vol_et_to_atm + evap_struct->actual_et_from_rain_m_per_timestep;
+  massbal_struct->volout=massbal_struct->volout+evap_struct->actual_et_from_rain_m_per_timestep;
 
-  et_from_rainfall(&timestep_rainfall_input_m,evap_struct);
-  massbal_struct->vol_et_from_rain = massbal_struct->vol_et_from_rain + evap_struct->actual_et_m_per_timestep;
-  massbal_struct->vol_et_to_atm = massbal_struct->vol_et_to_atm + evap_struct->actual_et_m_per_timestep;
-  massbal_struct->volout=massbal_struct->volout+evap_struct->actual_et_m_per_timestep;
+  // LKC: Change this. Now evaporation happens before runoff calculation. This was creating issues since it modifies storage_m and not storage_deficit 
+  evap_struct->actual_et_from_soil_m_per_timestep = 0;
+  if(soil_reservoir_struct->storage_m > NWM_soil_params_struct.wilting_point_m) 
+   {et_from_soil(soil_reservoir_struct, evap_struct, &NWM_soil_params_struct);}
+  massbal_struct->vol_et_from_soil = massbal_struct->vol_et_from_soil + evap_struct->actual_et_from_soil_m_per_timestep;
+  massbal_struct->vol_et_to_atm = massbal_struct->vol_et_to_atm + evap_struct->actual_et_from_soil_m_per_timestep;
+  massbal_struct->volout=massbal_struct->volout+evap_struct->actual_et_from_soil_m_per_timestep; 
+  
+  // LKC: This needs to be calcualted here after et_from_soil since soil_reservoir_struct->storage_m changes
+  soil_reservoir_storage_deficit_m=(NWM_soil_params_struct.smcmax*NWM_soil_params_struct.D-soil_reservoir_struct->storage_m);
+  
   // NEW FLO
   if(0.0 < timestep_rainfall_input_m) 
     {
@@ -109,7 +124,7 @@ extern void cfe(
     direct_output_runoff_m = 0.0;
     infiltration_depth_m = 0.0;
     }
-  et_from_soil(soil_reservoir_struct, evap_struct, &NWM_soil_params_struct);
+
 
   // check to make sure that there is storage available in soil to hold the water that does not runoff
   //--------------------------------------------------------------------------------------------------
@@ -118,7 +133,12 @@ extern void cfe(
     direct_output_runoff_m+=(infiltration_depth_m-soil_reservoir_storage_deficit_m);  // put infiltration that won't fit back into runoff
     infiltration_depth_m=soil_reservoir_storage_deficit_m;
     soil_reservoir_struct->storage_m=soil_reservoir_struct->storage_max_m;
+    // LKC: should the deficit of soil be set to zero here - if the condition is reached, soil is full
+    soil_reservoir_storage_deficit_m = 0;
     }
+    
+   
+    
 #ifdef DEBUG
   /* xinanjiang_dev
   printf("After Schaake function: rain:%8.5lf mm  runoff:%8.5lf mm  infiltration:%8.5lf mm  residual:%e m\n",
@@ -143,6 +163,8 @@ extern void cfe(
     massbal_struct->vol_runoff+=diff;  // send excess water back to GIUH runoff  edit FLO
     massbal_struct->vol_infilt-=diff;  // correct overprediction of infilt.      edit FLO
     direct_output_runoff_m+=diff; // bug found by Nels.  This was missing and fixes it. 
+    // LKC: again here
+    soil_reservoir_storage_deficit_m = 0;
     }
 
   massbal_struct->vol_to_soil              += infiltration_depth_m; 
@@ -590,18 +612,18 @@ void et_from_rainfall(double *timestep_rainfall_input_m, struct evapotranspirati
 
         if (*timestep_rainfall_input_m > et_struct->potential_et_m_per_timestep){
     
-            et_struct->actual_et_m_per_timestep = et_struct->potential_et_m_per_timestep;
-            *timestep_rainfall_input_m -= et_struct->actual_et_m_per_timestep;
+            et_struct->actual_et_from_rain_m_per_timestep = et_struct->potential_et_m_per_timestep;
+            *timestep_rainfall_input_m -= et_struct->actual_et_from_rain_m_per_timestep;
         }
 
         else{
             // LKC: This was incorrectly set to potential instead of actual
-	    et_struct->actual_et_m_per_timestep = *timestep_rainfall_input_m;          
+	    et_struct->actual_et_from_rain_m_per_timestep = *timestep_rainfall_input_m;          
             *timestep_rainfall_input_m = 0.0;
 
         }
     // Move this out of the loop since EVPT needs to be corrected wheter R > EVPT or not
-    et_struct->potential_et_m_per_timestep = et_struct->potential_et_m_per_timestep-et_struct->actual_et_m_per_timestep;
+    et_struct->reduced_potential_et_m_per_timestep = et_struct->potential_et_m_per_timestep-et_struct->actual_et_from_rain_m_per_timestep;
     }
 }
 
@@ -618,25 +640,23 @@ void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspirati
     double Budyko_denominator;
     double Budyko;
     
-    if (et_struct->potential_et_m_per_timestep > 0){
+    if (et_struct->reduced_potential_et_m_per_timestep > 0){
         
         if (soil_res->storage_m >= soil_res->storage_threshold_primary_m){        
-            et_struct->actual_et_m_per_timestep = min(et_struct->potential_et_m_per_timestep, soil_res->storage_m);
-            soil_res->storage_m -= et_struct->actual_et_m_per_timestep;
-	    // Modified - no reason to set potential et to zero
-            et_struct->potential_et_m_per_timestep = et_struct->potential_et_m_per_timestep - et_struct->actual_et_m_per_timestep;
+            et_struct->actual_et_from_soil_m_per_timestep = min(et_struct->reduced_potential_et_m_per_timestep, soil_res->storage_m);
         }                 
         else if (soil_res->storage_m > soil_parms->wilting_point_m && soil_res->storage_m < soil_res->storage_threshold_primary_m){
         
             Budyko_numerator = soil_res->storage_m - soil_parms->wilting_point_m;
             Budyko_denominator = soil_res->storage_threshold_primary_m - soil_parms->wilting_point_m;
             Budyko = Budyko_numerator / Budyko_denominator;
-                           
-            et_struct->actual_et_m_per_timestep = Budyko * (et_struct->potential_et_m_per_timestep);
-                           
-            soil_res->storage_m -= et_struct->actual_et_m_per_timestep;
-            et_struct->potential_et_m_per_timestep = et_struct->potential_et_m_per_timestep - et_struct->actual_et_m_per_timestep;
+            // LKC: Include check to guarantee EAT is not larger than soil storage               
+            et_struct->actual_et_from_soil_m_per_timestep = min(Budyko * (et_struct->reduced_potential_et_m_per_timestep), soil_res->storage_m);
+                                                   
         }
+        
+        soil_res->storage_m -= et_struct->actual_et_from_soil_m_per_timestep;
+        et_struct->reduced_potential_et_m_per_timestep = et_struct->reduced_potential_et_m_per_timestep - et_struct->actual_et_from_soil_m_per_timestep;
     }
 }
 
