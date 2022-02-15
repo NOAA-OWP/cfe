@@ -11,9 +11,10 @@
 
 #define CFE_DEGUG 0
 
+
 #define INPUT_VAR_NAME_COUNT 4
-#define OUTPUT_VAR_NAME_COUNT 13
-#define STATE_VAR_NAME_COUNT 89   // must match var_info array size
+#define OUTPUT_VAR_NAME_COUNT 12
+#define STATE_VAR_NAME_COUNT 90   // must match var_info array size
 
 #define PARAM_VAR_NAME_COUNT 10
 static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
@@ -155,7 +156,6 @@ Variable var_info[] = {
 	{ 88, "b_Xinanjiang_shape_parameter",                   "double", 1},
 	{ 89, "x_Xinanjiang_shape_parameter",                   "double", 1},
 	//---------------------------------------
-    
 };
 
 int i = 0;
@@ -175,7 +175,9 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "POTENTIAL_ET",
         "ACTUAL_ET",
         "GW_STORAGE",
-        "SOIL_STORAGE"
+        "SOIL_STORAGE",
+	"SOIL_STORAGE_CHANGE",
+	"SURF_RUNOFF_SCHEME"
 };
 
 static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
@@ -191,7 +193,9 @@ static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
         "double",
         "double",
         "double",
-        "double"
+        "double",
+	"double",
+	"int"
 };
 
 static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
@@ -207,7 +211,9 @@ static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
         1,
         1,
         1,
-        1
+        1,
+	1,
+	1
 };
 
 static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
@@ -223,7 +229,9 @@ static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
         "m",
         "m",
         "m",
-        "m"
+        "m",
+	"m",
+	""
 };
 
 static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
@@ -239,7 +247,9 @@ static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
         0,
         0,
         0,
-        0
+        0,
+	0,
+	0
 };
 
 static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
@@ -256,6 +266,8 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
         "node",
         "node",
         "node"
+	"node",
+	" "
 };
 
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
@@ -461,7 +473,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     /* Ice fraction */
     int is_ice_fraction_set = FALSE;
     int is_ice_content_threshold_set = FALSE;
-	
+    
     // Keep track these in particular, because the "true" storage value may be a ratio and need both storage and max
     int is_gw_max_set = FALSE;
     int is_gw_storage_set = FALSE;
@@ -1669,6 +1681,21 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
+    if (strcmp (name, "SURF_RUNOFF_SCHEME") == 0) {
+      cfe_state_struct *cfe_ptr;
+      cfe_ptr = (cfe_state_struct *) self->data;
+      *dest = (void*)&cfe_ptr->direct_runoff_params_struct.surface_partitioning_scheme;
+      return BMI_SUCCESS;
+    }
+    
+
+    if (strcmp (name, "SOIL_STORAGE_CHANGE") == 0) {
+      cfe_state_struct *cfe_ptr;
+      cfe_ptr = (cfe_state_struct *) self->data;
+      *dest = (void*)&cfe_ptr->soil_reservoir.storage_change_m;
+      return BMI_SUCCESS;
+    }
+    
     /***********************************************************/
     /***********    INPUT    ***********************************/
     /***********************************************************/

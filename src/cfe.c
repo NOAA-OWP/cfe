@@ -516,6 +516,7 @@ else
    int cv_frz = 3; // should this be moved to config file as well, probably not.
    double frz_fact = smcmax/field_capacity_m * (0.412 / 0.468);
    double frzx = ice_content_threshold * frz_fact;
+
    double acrt = cv_frz * frzx / ice_fraction_schaake;
    double sum1 =1;
    
@@ -616,7 +617,7 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
   // Calculate the impervious runoff (see eq. 309 from Knoben et al).
   impervious_runoff_m = impervious_fraction * water_input_depth_m;
 
-  // Calculate total estimated pervious runoff. 
+  // Calculate total estimated pervious runoff.
   if ((tension_water_m/max_tension_water_m) <= (0.5 - parms->a_Xinanjiang_inflection_point_parameter)) {
     pervious_runoff_m = (1 - impervious_fraction) * water_input_depth_m * 
 						(pow((0.5 - parms->a_Xinanjiang_inflection_point_parameter), 
