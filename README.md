@@ -1,62 +1,63 @@
 # Conceptual Functional Equivalent (CFE) Model
-This model is designed to be a simplified (conceptual) model of the runoff scheme in the National Water Model.
+CFE is a simplified (conceptual) model of the runoff scheme in the National Water Model. It was written by Fred Ogden, and this repository includes both the original author code and a version of CFE that has an implementation of the [Basic Model Interface (BMI)](https://bmi.readthedocs.io/en/latest/).
 
-CFE was written by Fred Ogden, and this repository includes an implementation of the [Basic Model Interface (BMI)](https://bmi.readthedocs.io/en/latest/).
-There are multiple ways to run CFE.
-1. As written by the original author.
-This includes a full program to read and process atmospheric forcing data, print the model output and check for mass balance closure. This code can be run from the [original_author_code](./original_author_code) directory. This code does not have a BMI implementation.
-2. Through the BMI commands. This method will be used by the Next Generation National Water Model (Nextgen NWM). See [Compiling BMI Code](#compiling-bmi-code)
+There are multiple ways to run CFE:
 
-## Direct Runoff 
-The user has the option to pick a particular direct runoff (aka surface partitioning) method:
-1. Schaake function (configuration: `surface_partitioning_scheme=Schaake`)
-2. XinanJiang function (configuration: `surface_partitioning_scheme=Xinanjiang`).
-If XinanJiang is choosen these parameters need to be included in the configuration file:
-      ```
-      a_Xinanjiang_inflection_point_parameter
-      b_Xinanjiang_shape_parameter
-      x_Xinanjiang_shape_parameter
-      ```
-## Compiling BMI Code
-There are three unique examples for running cfe-bmi within a *pseudo* framework
+1. Through the BMI commands. There are script options, detailed below, for running the model in standalone mode and BMI allows the Next Generation Water Resources Modeling Framework to run CFE and couple it to surface routines. See [Compiling BMI Code](#compiling-bmi-code)
+2. As written by the original author. This includes a full program to read and process atmospheric forcing data, print the model output and check for mass balance closure. This code can be run from the [original_author_code](./original_author_code) directory. This code does not have a BMI implementation.
+
+## Compiling and running CFE
+
+There are three unique examples for running CFE as described below. They assume you have [GCC](https://gcc.gnu.org) on your machine. 
+
+1. `./make_and_run_bmi.sh`: Have CFE read in its own forcing file
+2. `./make_and_run_bmi_pass_forcings.sh`: Use an external module to read in a forcing file and pass those data using BMI
+3. `./make_and_run_bmi_pass_forcings_pet.sh`: Use external modules to read in a forcing file and calculate potential evapotranspiration, and pass those data using BMI
+
 ### 1. Read local forcing file
-The BMI functionality was developed as a standalone module in C. 
-To compile this code use these steps:
-1. `module load gnu/10.1.0`
-2. `gcc -lm ./src/main.c ./src/cfe.c ./src/bmi_cfe.c -o run_bmi_cfe`
-This will generate an executable called `run_cfe_bmi`. 
-To run this executable you must pass the path to the corresponding configuration file: 
-3.  `./run_bmi_cfe ./configs/cat_58_bmi_config_cfe.txt`  
+To compile and run CFE with locally read forcing data: `./make_and_run_bmi.sh`
 
-Alternatively, Included in this repository is an environment file (env_cheyenne.sh), and a [make and run file](./make_and_run_bmi.sh), which will compile the code and run an example.
-If you are on the Cheyenne computer, or if you can modify these files to your machine, you can simply follow these two steps to run this code:
-1. `source env_cheyenne.sh`
-2. `./make_and_run_bmi.sh`
+You can also build the model and run from the command line:
 
-Lastly, you can also use `MAKE` to run CFE BMI in stand alone, independent of a framework
+1. `gcc -lm ./src/main.c ./src/cfe.c ./src/bmi_cfe.c -o run_bmi_cfe`. This will generate an executable called `run_cfe_bmi`.
+2.  Then run the model with example forcing data: `./run_bmi_cfe ./configs/cat_58_bmi_config_cfe.txt`  
+
+Or, you can use `make` to build CFE and run it by reading in a local forcing file:
+ 
 1. `cd src/`
 2. `make clean; make` 
 3.  `cd ..`  
 4. `./run_cfe_bmi ./configs/cat_89_bmi_config_cfe.txt`  
 
 ### 2. CFE Model gets forcings passed from BMI
-The CFE was designed to read its own forcing file, but we have added an option to get forcings passed in through BMI.
-To test this functionality we need to also include the AORC BMI model when compiling.
-The steps are very similar to the example above, but with just adding two additional src files, which come from the AORC BMI Module in the [forcing_code](./forcing_code) directory.  
-1. `module load gnu/10.1.0`
-2. `gcc -lm ./src/main_pass_forcings.c ./src/cfe.c ./src/bmi_cfe.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c  -o run_cfe_bmi_pass_forcings`  
-This should generate an executable called `run_cfe_bmi_pass_forcings`.
-To run this executable you must pass the path to the corresponding configuration files for **BOTH** CFE and AORC (in that order): 
-3. `./run_cfe_bmi_pass_forcings ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt`
 
-### 3. CFE Model gets forcings AND Potential Evapotranspiration passed from BMI
-The CFE has functionality to remove mass through evapotranspiration (directly from precipitation and from soil using the Bydukko function).
-The steps to test this functionality are very similar to the example above, but with just adding two additional src files, which come from the AORC BMI Module in the [forcing_code](./forcing_code) directory.  
-1. `module load gnu/10.1.0`
-2. `gcc -lm ./src/main_cfe_aorc_pet.c ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c ./src/cfe.c ./src/bmi_cfe.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c -o run_cfe_aorc_et_bmi`  
-This should generate an executable called `run_cfe_bmi_pass_forcings`.
-To run this executable you must pass the path to the corresponding configuration files for **ALL** CFE, PET and AORC (in that order): 
-3. `./run_cfe_aorc_et_bmi ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt ./configs/cat_89_bmi_config_pet_pass.txt`
+CFE was designed to read its own forcing file, but we have added an option to get forcings passed in through BMI using its `set_value` functionality. To demonstrate this functionality we have included the BMI-enabled AORC forcing read module. To compile and run CFE this way: `./make_and_run_bmi_pass_forcings.sh`
+
+You can also follow these steps:  
+
+1. `gcc -lm ./src/main_pass_forcings.c ./src/cfe.c ./src/bmi_cfe.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c  -o run_cfe_bmi_pass_forcings`. This generates an executable called `run_cfe_bmi_pass_forcings`. 
+2. To run this executable you must pass the path to the corresponding configuration files for **BOTH** CFE and AORC (in that order): `./run_cfe_bmi_pass_forcings ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt`
+
+### 3. CFE Model gets forcings AND potential evapotranspiration passed from BMI
+CFE can remove mass from the modeled system through evapotranspiration (directly from precipitation and from the soil using the Budyko function). To compile and run CFE this way: `./make_and_run_bmi_pass_forcings_pet.sh`.
+
+You can also follow these steps:  
+
+1. `gcc -lm ./src/main_cfe_aorc_pet.c ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c ./src/cfe.c ./src/bmi_cfe.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c -o run_cfe_aorc_et_bmi`. This generates an executable called `run_cfe_aorc_et_bmi`.
+2. To run this executable you must pass the path to the corresponding configuration files for CFE, PET and AORC (in that order):  `./run_cfe_aorc_et_bmi ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt ./configs/cat_89_bmi_config_pet_pass.txt`
+
+## Direct Runoff 
+In CFE the user has the option to pick a particular direct runoff (aka surface partitioning) method:
+
+1. Schaake function (configuration: `surface_partitioning_scheme=Schaake`)
+2. XinanJiang function (configuration: `surface_partitioning_scheme=Xinanjiang`).
+
+If XinanJiang is choosen these parameters need to be included in the configuration file:
+      ```
+      a_Xinanjiang_inflection_point_parameter
+      b_Xinanjiang_shape_parameter
+      x_Xinanjiang_shape_parameter
+      ```
 
 ## The CFE was based on the t-shirt approximation of the National Water Model
 Development here was based off the t-shirt approximation of the hydrologic routing functionality of the National Water Model v 1.2, 2.0, and 2.1
