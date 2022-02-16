@@ -387,9 +387,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     int is_soil_params__expon_set = FALSE;
     int is_soil_params__expon2_set = FALSE;
     int is_Cgw_set = FALSE;
-    int is_Cgw2_set = FALSE;
     int is_expon_set = FALSE;
-    int is_expon2_set = FALSE;
     int is_alpha_fc_set = FALSE;
     int is_soil_storage_set = FALSE;
     int is_K_nash_set = FALSE;
@@ -507,19 +505,9 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             is_Cgw_set = TRUE;
             continue;
         }
-        if (strcmp(param_key, "Cgw_secondary") == 0) {
-            model->gw_reservoir.coeff_secondary = strtod(param_value, NULL);
-            is_Cgw2_set = TRUE;
-            continue;
-        }
         if (strcmp(param_key, "expon") == 0) {
             model->gw_reservoir.exponent_primary = strtod(param_value, NULL);
             is_expon_set = TRUE;
-            continue;
-        }
-        if (strcmp(param_key, "expon_secondary") == 0) {
-            model->gw_reservoir.exponent_secondary = strtod(param_value, NULL);
-            is_expon2_set = TRUE;
             continue;
         }
         if (strcmp(param_key, "gw_storage") == 0) {
@@ -683,18 +671,6 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     if (is_expon_set == FALSE) {
 #if CFE_DEGUG >= 1
         printf("Config param 'expon' not found in config file\n");
-#endif
-        return BMI_FAILURE;
-    }
-    if (is_Cgw2_set == FALSE) {
-#if CFE_DEGUG >= 1
-        printf("Config param 'Cgw_secondary' not found in config file\n");
-#endif
-        return BMI_FAILURE;
-    }
-    if (is_expon2_set == FALSE) {
-#if CFE_DEGUG >= 1
-        printf("Config param 'expon_secondary' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
@@ -993,8 +969,8 @@ static int Initialize (Bmi *self, const char *file)
     cfe_bmi_data_ptr->gw_reservoir.is_exponential = TRUE;
     cfe_bmi_data_ptr->gw_reservoir.storage_threshold_primary_m = 0.0;    // 0.0 means no threshold applied
     cfe_bmi_data_ptr->gw_reservoir.storage_threshold_secondary_m = 0.0;  // 0.0 means no threshold applied
-    //cfe_bmi_data_ptr->gw_reservoir.coeff_secondary = 0.0;                // 0.0 means that secondary outlet is not applied
-    //cfe_bmi_data_ptr->gw_reservoir.exponent_secondary = 1.0;             // linear
+    cfe_bmi_data_ptr->gw_reservoir.coeff_secondary = 0.0;                // 0.0 means that secondary outlet is not applied
+    cfe_bmi_data_ptr->gw_reservoir.exponent_secondary = 1.0;             // linear
 
     // Initialize soil conceptual reservoirs
     init_soil_reservoir(cfe_bmi_data_ptr, alpha_fc, max_soil_storage, S_soil, is_S_soil_ratio);
