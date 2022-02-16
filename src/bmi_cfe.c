@@ -652,15 +652,20 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     }
     if (is_soil_params__expon_set == FALSE) {
 #if CFE_DEGUG >= 1
-        printf("Config param 'soil_params.expon' not found in config file\n");
+        printf("Config param 'soil_params.expon' not found in config file, defaulting to 1 (linear)\n");
 #endif
-        return BMI_FAILURE;
+        model->soil_reservoir.exponent_primary = 1.0;
+        //is_soil_params__expon_set == TRUE;
+        // Don't return BMI_FAILURE, this is a optional config
+        //return BMI_FAILURE;
     }
     if (is_soil_params__expon2_set == FALSE) {
 #if CFE_DEGUG >= 1
-        printf("Config param 'soil_params.expon_secondary' not found in config file\n");
+        printf("Config param 'soil_params.expon_secondary' not found in config file, defaulting to 1 (linear)\n");
 #endif
-        return BMI_FAILURE;
+        model->soil_reservoir.exponent_secondary = 1.0;
+        // Don't return BMI_FAILURE, this is a optional config
+        //return BMI_FAILURE;
     }
     if (is_Cgw_set == FALSE) {
 #if CFE_DEGUG >= 1
