@@ -1,7 +1,6 @@
 forcing_file=BMI
 soil_params.depth=2.0
 soil_params.b=4.05
-soil_params.mult=1000.0
 soil_params.satdk=0.00000338
 soil_params.satpsi=0.355
 soil_params.slop=0.01
