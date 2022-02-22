@@ -132,13 +132,16 @@ extern void parse_aorc_line_cfe(char *theString,long *year,long *month, long *da
 
 extern void get_word_cfe(char *theString,int *start,int *end,char *theWord,int *wordlen);
 
-int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* alpha_fc, double* soil_storage,
-                     int* is_soil_storage_ratio);
+/*int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* alpha_fc, double* soil_storage,
+                     int* is_soil_storage_ratio);*/
+int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* alpha_fc, double* soil_storage);
 
-extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, double max_storage, double storage,
-                     int is_storage_ratios);
 
-extern double init_reservoir_storage(int is_ratio, double amount, double max_amount);
+/*extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, double max_storage, double storage,
+                     int is_storage_ratios);*/
+extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, double storage);
+
+//extern double init_reservoir_storage(int is_ratio, double amount, double max_amount);
 
 extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr);
 
