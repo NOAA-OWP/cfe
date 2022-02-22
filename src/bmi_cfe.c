@@ -324,8 +324,10 @@ static int count_delimited_values(char* string_val, char* delimiter)
     return count;
 }
 
-int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* alpha_fc, double* soil_storage,
+/*int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* alpha_fc, double* soil_storage,
                      int* is_soil_storage_ratio)
+{*/
+int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* alpha_fc, double* soil_storage)
 {
     int config_line_count, max_config_line_length;
     // Note that this determines max line length including the ending return character, if present
@@ -410,8 +412,8 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     // Default value
     double refkdt = 3.0;
 
-    int is_gw_storage_ratio = FALSE;
-    double gw_storage_literal;
+    //int is_gw_storage_ratio = FALSE;
+    //double gw_storage_literal;
     // Also keep track of Nash stuff and properly set at the end of reading the config file
     int num_nash_lf = 2;
     char* nash_storage_string_val;
@@ -495,9 +497,9 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             model->gw_reservoir.storage_max_m = strtod(param_value, NULL);
             is_gw_max_set = TRUE;
             // Also set the true storage if storage was already read and was a ratio, and so we were waiting for this
-            if (is_gw_storage_set == TRUE && is_gw_storage_ratio == TRUE) {
+/*            if (is_gw_storage_set == TRUE && is_gw_storage_ratio == TRUE) {
                 model->gw_reservoir.storage_m = (gw_storage_literal / 100.0) * model->gw_reservoir.storage_max_m;
-            }
+            }*/
             continue;
         }
         if (strcmp(param_key, "Cgw") == 0) {
@@ -511,8 +513,9 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             continue;
         }
         if (strcmp(param_key, "gw_storage") == 0) {
+            model->gw_reservoir.storage_m = strtod(param_value, NULL);
             is_gw_storage_set = TRUE;
-            char* trailing_chars;
+/*            char* trailing_chars;
             gw_storage_literal = strtod(param_value, &trailing_chars);
             if (strcmp(trailing_chars, "%") == 0) {
                 is_gw_storage_ratio = TRUE;
@@ -523,7 +526,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             }
             if (is_gw_storage_ratio == TRUE && is_gw_max_set == TRUE) {
                 model->gw_reservoir.storage_m = (gw_storage_literal / 100.0) * model->gw_reservoir.storage_max_m;
-            }
+            }*/
             continue;
         }
         if (strcmp(param_key, "alpha_fc") == 0) {
@@ -532,10 +535,11 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             continue;
         }
         if (strcmp(param_key, "soil_storage") == 0) {
-            char* trailing_chars;
+/*            char* trailing_chars;
             double parsed_value = strtod(param_value, &trailing_chars);
             *is_soil_storage_ratio = strcmp(trailing_chars, "%") == 0 ? TRUE : FALSE;
-            *soil_storage = *is_soil_storage_ratio == TRUE ? (parsed_value / 100.0) : parsed_value;
+            *soil_storage = *is_soil_storage_ratio == TRUE ? (parsed_value / 100.0) : parsed_value;*/
+            *soil_storage = strtod(param_value, NULL);
             is_soil_storage_set = TRUE;
             continue;
         }
@@ -855,17 +859,18 @@ static int Initialize (Bmi *self, const char *file)
 
     cfe_bmi_data_ptr->current_time_step = 0;
 
-    double alpha_fc, max_soil_storage, S_soil;
-    int is_S_soil_ratio;
+    double alpha_fc, /*max_soil_storage,*/ S_soil;
+    //int is_S_soil_ratio;
 
-    int config_read_result = read_init_config_cfe(file, cfe_bmi_data_ptr, &alpha_fc, &S_soil, &is_S_soil_ratio);
+    int config_read_result = read_init_config_cfe(file, cfe_bmi_data_ptr, &alpha_fc, &S_soil);
     if (config_read_result == BMI_FAILURE)
         return BMI_FAILURE;
 
     // time_step_size is set to 3600 in the "new_bmi_cfe" function.
     cfe_bmi_data_ptr->timestep_h = cfe_bmi_data_ptr->time_step_size / 3600.0;
      
-    max_soil_storage = cfe_bmi_data_ptr->NWM_soil_params.D * cfe_bmi_data_ptr->NWM_soil_params.smcmax;
+    // JG NOTE: this is done in init_soil_reservoir
+    //max_soil_storage = cfe_bmi_data_ptr->NWM_soil_params.D * cfe_bmi_data_ptr->NWM_soil_params.smcmax;
 
 
     /***********************************************************************
@@ -978,7 +983,7 @@ static int Initialize (Bmi *self, const char *file)
     cfe_bmi_data_ptr->gw_reservoir.exponent_secondary = 1.0;             // linear
 
     // Initialize soil conceptual reservoirs
-    init_soil_reservoir(cfe_bmi_data_ptr, alpha_fc, max_soil_storage, S_soil, is_S_soil_ratio);
+    init_soil_reservoir(cfe_bmi_data_ptr, alpha_fc, S_soil);
 
     // Initialize the runoff queue to empty to start with
     cfe_bmi_data_ptr->runoff_queue_m_per_timestep = malloc(sizeof(double) * cfe_bmi_data_ptr->num_giuh_ordinates + 1);
@@ -2498,8 +2503,10 @@ extern void run_cfe(cfe_state_struct* cfe_ptr){
 }
 
 // Functions for setting up CFE data, i.e., initializing...
-extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, double max_storage, double storage,
+/*extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, double max_storage, double storage,
                                 int is_storage_ratios)
+{*/
+extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, double storage)
 {
     // calculate the activation storage for the secondary lateral flow outlet in the soil nonlinear reservoir.
     // following the method in the NWM/t-shirt parameter equivalence document, assuming field capacity soil
@@ -2543,10 +2550,15 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, doub
     //cfe_ptr->soil_reservoir.exponent_secondary = 1.0;
     // making them the same, but they don't have 2B
     cfe_ptr->soil_reservoir.storage_threshold_secondary_m = cfe_ptr->soil_reservoir.storage_threshold_primary_m;
-    cfe_ptr->soil_reservoir.storage_m = init_reservoir_storage(is_storage_ratios, storage, max_storage);
+
+    // Negative amounts are always ignored and just considered emtpy
+    if (storage < 0.0) storage = 0.0;
+    cfe_ptr->soil_reservoir.storage_m = storage;
+
+    //cfe_ptr->soil_reservoir.storage_m = init_reservoir_storage(is_storage_ratios, storage, max_storage);
 }
 
-extern double init_reservoir_storage(int is_ratio, double amount, double max_amount) {
+/*extern double init_reservoir_storage(int is_ratio, double amount, double max_amount) {
     // Negative amounts are always ignored and just considered emtpy
     if (amount < 0.0) {
         return 0.0;
@@ -2564,7 +2576,7 @@ extern double init_reservoir_storage(int is_ratio, double amount, double max_amo
     else {
         return amount;
     }
-}
+}*/
 
 extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr){
     cfe_ptr->vol_struct.volin = 0;
