@@ -2750,8 +2750,8 @@ extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr){
 /**************************************************************************/
 /**************************************************************************/
 extern void print_cfe_flux_header(){
-    printf("#    ,            hourly ,  direct,   giuh ,lateral,  base,   total\n");
-    printf("Time [h],rainfall [mm],runoff [mm],runoff [mm],flow [mm],flow [mm],discharge [mm],storage [mm],ice_fraction_schaake [mm], ice_fraction_xinan [-]\n");
+    printf("#    ,            hourly ,  direct,   giuh ,lateral,  base,   total, storage, ice fraction, ice fraction \n");
+    printf("Time [h],rainfall [mm],runoff [mm],runoff [mm],flow [mm],flow [mm],discharge [mm],storage [mm],schaake [mm],xinan [-]\n");
 }
 extern void print_cfe_flux_at_timestep(cfe_state_struct* cfe_ptr){
   printf("%d, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf\n",
