@@ -440,7 +440,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
 #if CFE_DEGUG >= 1
         printf("Config Value - Param: '%s' | Value: '%s' | Units: '%s'\n", param_key, param_value, param_units);
 #endif
-        printf(" %s | Value: %s | Units: %s\n", param_key, param_value, param_units);
+        //printf(" %s | Value: %s | Units: %s\n", param_key, param_value, param_units);
 
         if (strcmp(param_key, "forcing_file") == 0) {
             model->forcing_file = strdup(param_value);
