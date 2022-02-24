@@ -440,7 +440,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
 #if CFE_DEGUG >= 1
         printf("Config Value - Param: '%s' | Value: '%s' | Units: '%s'\n", param_key, param_value, param_units);
 #endif
-        //printf(" %s | Value: %s | Units: %s\n", param_key, param_value, param_units);
+        printf(" %s | Value: %s | Units: %s\n", param_key, param_value, param_units);
 
         if (strcmp(param_key, "forcing_file") == 0) {
             model->forcing_file = strdup(param_value);
@@ -492,16 +492,34 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         if (strcmp(param_key, "soil_params.slope") == 0 || strcmp(param_key, "soil_params.slop") == 0) {
             model->NWM_soil_params.slop = strtod(param_value, NULL);
             is_soil_params__slop_set = TRUE;
+            // Check if units are present and print warning if missing from config file
+            if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEGUG >= 1            
+                printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
+#endif
+            }
             continue;
         }
         if (strcmp(param_key, "soil_params.smcmax") == 0 || strcmp(param_key, "soil_params.maxsmc") == 0) {
             model->NWM_soil_params.smcmax = strtod(param_value, NULL);
             is_soil_params__smcmax_set = TRUE;
+            // Check if units are present and print warning if missing from config file
+            if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEGUG >= 1            
+                printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
+#endif
+            }
             continue;
         }
         if (strcmp(param_key, "soil_params.wltsmc") == 0) {
             model->NWM_soil_params.wltsmc = strtod(param_value, NULL);
             is_soil_params__wltsmc_set = TRUE;
+            // Check if units are present and print warning if missing from config file
+            if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEGUG >= 1            
+                printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
+#endif
+            }
             continue;
         }
         if (strcmp(param_key, "soil_params.expon") == 0) {
@@ -517,6 +535,12 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         if (strcmp(param_key, "max_gw_storage") == 0) {
             model->gw_reservoir.storage_max_m = strtod(param_value, NULL);
             is_gw_max_set = TRUE;
+            // Check if units are present and print warning if missing from config file
+            if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEGUG >= 1            
+                printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
+#endif
+            }
             // Also set the true storage if storage was already read and was a ratio, and so we were waiting for this
 /*            if (is_gw_storage_set == TRUE && is_gw_storage_ratio == TRUE) {
                 model->gw_reservoir.storage_m = (gw_storage_literal / 100.0) * model->gw_reservoir.storage_max_m;
@@ -526,6 +550,12 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         if (strcmp(param_key, "Cgw") == 0) {
             model->gw_reservoir.coeff_primary = strtod(param_value, NULL);
             is_Cgw_set = TRUE;
+            // Check if units are present and print warning if missing from config file
+            if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEGUG >= 1            
+                printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
+#endif
+            }
             continue;
         }
         if (strcmp(param_key, "expon") == 0) {
@@ -536,6 +566,12 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         if (strcmp(param_key, "gw_storage") == 0) {
             model->gw_reservoir.storage_m = strtod(param_value, NULL);
             is_gw_storage_set = TRUE;
+            // Check if units are present and print warning if missing from config file
+            if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEGUG >= 1            
+                printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
+#endif
+            }
 /*            char* trailing_chars;
             gw_storage_literal = strtod(param_value, &trailing_chars);
             if (strcmp(trailing_chars, "%") == 0) {
@@ -562,6 +598,12 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             *soil_storage = *is_soil_storage_ratio == TRUE ? (parsed_value / 100.0) : parsed_value;*/
             *soil_storage = strtod(param_value, NULL);
             is_soil_storage_set = TRUE;
+            // Check if units are present and print warning if missing from config file
+            if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEGUG >= 1            
+                printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
+#endif
+            }
             continue;
         }
         if (strcmp(param_key, "number_nash_reservoirs") == 0 || strcmp(param_key, "N_nash") == 0) {
