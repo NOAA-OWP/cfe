@@ -425,7 +425,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     // Additionally,
 
     for (i = 0; i < config_line_count; i++) {
-        char *param_key, *param_value;
+        char *param_key, *param_value, *param_units;
         fgets(config_line, max_config_line_length + 1, fp);
 #if CFE_DEGUG >= 3
         printf("Line value: ['%s']\n", config_line);
@@ -433,11 +433,14 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         char* config_line_ptr = config_line;
         config_line_ptr = strsep(&config_line_ptr, "\n");
         param_key = strsep(&config_line_ptr, "=");
-        param_value = strsep(&config_line_ptr, "=");
+        //param_value = strsep(&config_line_ptr, "=");
+        param_value = strsep(&config_line_ptr, "[");
+        param_units = strsep(&config_line_ptr, "]");
 
-#if CFE_DEGUG >= 2
-        printf("Config Value - Param: '%s' | Value: '%s'\n", param_key, param_value);
+#if CFE_DEGUG >= 1
+        printf("Config Value - Param: '%s' | Value: '%s' | Units: '%s'\n", param_key, param_value, param_units);
 #endif
+        //printf(" %s | Value: %s | Units: %s\n", param_key, param_value, param_units);
 
         if (strcmp(param_key, "forcing_file") == 0) {
             model->forcing_file = strdup(param_value);
@@ -451,6 +454,12 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         if (strcmp(param_key, "soil_params.D") == 0 || strcmp(param_key, "soil_params.depth") == 0) {
             model->NWM_soil_params.D = strtod(param_value, NULL);
             is_soil_params__depth_set = TRUE;
+            // Check if units are present and print warning if missing from config file
+            if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEGUG >= 1            
+                printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
+#endif
+            }
             continue;
         }
         if (strcmp(param_key, "soil_params.bb") == 0 || strcmp(param_key, "soil_params.b") == 0) {
@@ -461,11 +470,23 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         if (strcmp(param_key, "soil_params.satdk") == 0) {
             model->NWM_soil_params.satdk = strtod(param_value, NULL);
             is_soil_params__satdk_set = TRUE;
+            // Check if units are present and print warning if missing from config file
+            if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEGUG >= 1            
+                printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
+#endif
+            }
             continue;
         }
         if (strcmp(param_key, "soil_params.satpsi") == 0) {
             model->NWM_soil_params.satpsi = strtod(param_value, NULL);
             is_soil_params__satpsi_set = TRUE;
+            // Check if units are present and print warning if missing from config file
+            if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEGUG >= 1            
+                printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
+#endif
+            }
             continue;
         }
         if (strcmp(param_key, "soil_params.slope") == 0 || strcmp(param_key, "soil_params.slop") == 0) {
