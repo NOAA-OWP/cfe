@@ -12,8 +12,8 @@
 #define CFE_DEGUG 0
 
 #define INPUT_VAR_NAME_COUNT 4
-#define OUTPUT_VAR_NAME_COUNT 9
-#define STATE_VAR_NAME_COUNT 90   // must match var_info array size
+#define OUTPUT_VAR_NAME_COUNT 11
+#define STATE_VAR_NAME_COUNT 89   // must match var_info array size
 
 #define PARAM_VAR_NAME_COUNT 10
 static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
@@ -172,6 +172,8 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
 	"SMCT",
 	"SMCT_CHANGE",
 	"SURF_RUNOFF_SCHEME",
+        "POTENTIAL_ET",
+        "ACTUAL_ET"
 };
 
 static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
@@ -183,7 +185,9 @@ static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
         "double",
 	"double",
 	"double",
-	"int"
+	"int",
+        "double",
+        "double"
 };
 
 static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
@@ -195,7 +199,9 @@ static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
         1,
 	1,
 	1,
-	1
+	1,
+        1,
+        1
 };
 
 static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
@@ -207,7 +213,9 @@ static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
         "m",
 	"m",
 	"m",
-	""
+	"none",
+        "m",
+        "m"
 };
 
 static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
@@ -219,7 +227,9 @@ static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
         0,
 	0,
 	0,
-	0
+	0,
+        0,
+        0
 };
 
 static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
@@ -231,7 +241,9 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
         "node",
 	"node",
 	"node",
-	" "
+	"node",
+        "node",
+        "node"
 };
 
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
@@ -1615,6 +1627,20 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
       cfe_ptr = (cfe_state_struct *) self->data;
       *dest = (void*)&cfe_ptr->soil_reservoir.storage_change_m;
       return BMI_SUCCESS;
+    }
+    
+    if (strcmp (name, "POTENTIAL_ET") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr-> et_struct.potential_et_m_per_timestep;
+        return BMI_SUCCESS;
+    }
+
+    if (strcmp (name, "ACTUAL_ET") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr-> et_struct.actual_et_m_per_timestep;
+        return BMI_SUCCESS;
     }
     
     /***********************************************************/
