@@ -94,6 +94,7 @@ extern void cfe(
   massbal_struct->vol_et_to_atm = massbal_struct->vol_et_to_atm + evap_struct->actual_et_from_soil_m_per_timestep;
   massbal_struct->volout=massbal_struct->volout+evap_struct->actual_et_from_soil_m_per_timestep; 
   
+  evap_struct->actual_et_m_per_timestep=evap_struct->actual_et_from_rain_m_per_timestep+evap_struct->actual_et_from_soil_m_per_timestep;
   // LKC: This needs to be calcualted here after et_from_soil since soil_reservoir_struct->storage_m changes
   soil_reservoir_storage_deficit_m=(NWM_soil_params_struct.smcmax*NWM_soil_params_struct.D-soil_reservoir_struct->storage_m);
   
