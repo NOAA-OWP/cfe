@@ -265,9 +265,9 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
         "node",
         "node",
         "node",
-        "node"
+        "node",
 	"node",
-	" "
+	"node"
 };
 
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
@@ -473,7 +473,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     /* Ice fraction */
     int is_ice_fraction_set = FALSE;
     int is_ice_content_threshold_set = FALSE;
-    
+
     // Keep track these in particular, because the "true" storage value may be a ratio and need both storage and max
     int is_gw_max_set = FALSE;
     int is_gw_storage_set = FALSE;
@@ -1681,18 +1681,17 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
-    if (strcmp (name, "SURF_RUNOFF_SCHEME") == 0) {
-      cfe_state_struct *cfe_ptr;
-      cfe_ptr = (cfe_state_struct *) self->data;
-      *dest = (void*)&cfe_ptr->direct_runoff_params_struct.surface_partitioning_scheme;
-      return BMI_SUCCESS;
-    }
-    
-
     if (strcmp (name, "SOIL_STORAGE_CHANGE") == 0) {
       cfe_state_struct *cfe_ptr;
       cfe_ptr = (cfe_state_struct *) self->data;
       *dest = (void*)&cfe_ptr->soil_reservoir.storage_change_m;
+      return BMI_SUCCESS;
+    }
+    
+    if (strcmp (name, "SURF_RUNOFF_SCHEME") == 0) {
+      cfe_state_struct *cfe_ptr;
+      cfe_ptr = (cfe_state_struct *) self->data;
+      *dest = (void*)&cfe_ptr->direct_runoff_params_struct.surface_partitioning_scheme;
       return BMI_SUCCESS;
     }
     
@@ -2167,7 +2166,6 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[88] = &(state->direct_runoff_params_struct.b_Xinanjiang_shape_parameter );
     ptr_list[89] = &(state->direct_runoff_params_struct.x_Xinanjiang_shape_parameter );
     //-------------------------------------------------------------
-    
     
     return BMI_SUCCESS;
 }

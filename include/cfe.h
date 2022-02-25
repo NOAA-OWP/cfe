@@ -153,7 +153,6 @@ struct direct_runoff_parameters_structure{
     double x_Xinanjiang_shape_parameter;
     double urban_decimal_fraction;
     double ice_content_threshold; // ice content above which soil is impermeable
-
 };
 typedef struct direct_runoff_parameters_structure direct_runoff_parameters_structure;
 

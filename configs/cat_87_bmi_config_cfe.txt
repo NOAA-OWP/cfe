@@ -26,3 +26,6 @@ b_Xinanjiang_shape_parameter=1
 x_Xinanjiang_shape_parameter=1
 urban_decimal_fraction=0.0
 DEBUG=0
+#surface_partitioning_scheme=Schaake
+#ice_fraction=0
+#ice_content_threshold=0.15
