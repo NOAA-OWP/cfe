@@ -106,17 +106,17 @@ extern void cfe(
     {
     if (direct_runoff_params_struct.surface_partitioning_scheme == Schaake)
       {
-      Schaake_partitioning_scheme(timestep_h,direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type,soil_reservoir_storage_deficit_m,
-                                  timestep_rainfall_input_m,soil_reservoir_struct->ice_fraction_schaake,NWM_soil_params_struct.smcmax,
-				  &direct_output_runoff_m,&infiltration_depth_m);
+	Schaake_partitioning_scheme(timestep_h, soil_reservoir_struct->storage_threshold_primary_m,
+				    direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type,soil_reservoir_storage_deficit_m,
+				    timestep_rainfall_input_m,NWM_soil_params_struct.smcmax,&direct_output_runoff_m,&infiltration_depth_m,
+				    soil_reservoir_struct->ice_fraction_schaake,direct_runoff_params_struct.ice_content_threshold);
       }
     else if (direct_runoff_params_struct.surface_partitioning_scheme == Xinanjiang)
       {
       Xinanjiang_partitioning_scheme(timestep_rainfall_input_m, soil_reservoir_struct->storage_threshold_primary_m,
                                      soil_reservoir_struct->storage_max_m, soil_reservoir_struct->storage_m,
-                                     &direct_runoff_params_struct,
-				     soil_reservoir_struct->ice_fraction_xinan,
-                                     &direct_output_runoff_m, &infiltration_depth_m);
+                                     &direct_runoff_params_struct, &direct_output_runoff_m, &infiltration_depth_m,
+				     soil_reservoir_struct->ice_fraction_xinan);
       }
     else
       {
@@ -424,10 +424,10 @@ return;
 //##############################################################
 //#########   SCHAAKE RUNOFF PARTITIONING SCHEME   #############
 //##############################################################
-void Schaake_partitioning_scheme(double timestep_h, double Schaake_adjusted_magic_constant_by_soil_type, 
-           double column_total_soil_moisture_deficit_m,
-	   double water_input_depth_m,double ice_fraction_schaake, double smcmax,
-	   double *surface_runoff_depth_m,double *infiltration_depth_m)
+void Schaake_partitioning_scheme(double timestep_h, double field_capacity_m, double Schaake_adjusted_magic_constant_by_soil_type, 
+				 double column_total_soil_moisture_deficit_m,
+				 double water_input_depth_m, double smcmax, double *surface_runoff_depth_m,
+				 double *infiltration_depth_m, double ice_fraction_schaake, double ice_content_threshold)
 {
 
 
@@ -506,15 +506,16 @@ else
 
 
  // impermeable fraction due to frozen soil
- double factor = 1;
- double smc_ref = 0.249; // taken from noahmp soil_params file for sandy loam
- double frzk = 0.15; // taken from noahmp GENPARM.TBL
- int cv_frz = 3;
-
+ double factor = 1.0;
+ //field_capacity_m = SMCREF in NOAH_MP
+ // ice_content_threshold = frzk in NOAH_MP
+ //double frzk = 0.15; // Ice content above which soil is impermeable 
+ int cv_frz = 3; // should this be moved to config file as well, probably not.
+ 
  if (ice_fraction_schaake > 1.0E-2) {
    
-   double frz_fact = smcmax/smc_ref * (0.412 / 0.468);
-   double frzx = frzk * frz_fact;
+   double frz_fact = smcmax/field_capacity_m * (0.412 / 0.468);
+   double frzx = ice_content_threshold * frz_fact;
    double acrt = cv_frz * frzx / ice_fraction_schaake;
    double sum1 =1;
    
@@ -544,8 +545,8 @@ return;
 void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_capacity_m,
                                     double max_soil_moisture_storage_m, double column_total_soil_water_m,
                                     struct direct_runoff_parameters_structure *parms,
-				    double ice_fraction_xinan,
-                                    double *surface_runoff_depth_m, double *infiltration_depth_m)
+				    double *surface_runoff_depth_m, double *infiltration_depth_m,
+				    double ice_fraction_xinan)
 {
   //------------------------------------------------------------------------
   //  This module takes the water_input_depth_m and separates it into surface_runoff_depth_m

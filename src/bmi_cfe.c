@@ -230,8 +230,8 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
         "node",
         "node",
         "node",
-	"domain",
-	"domain",
+	"node",
+	"node",
 	" "
 };
 
@@ -254,7 +254,7 @@ static const char *input_var_units[INPUT_VAR_NAME_COUNT] = {
         "mm h-1", //"atmosphere_water__liquid_equivalent_precipitation_rate"
         "m s-1",   //"water_potential_evaporation_flux"
 	"m",    // ice fraction in meters
-	"",     // ice fraction [-]
+	"none",     // ice fraction [-]
 };
 
 static const int input_var_item_count[INPUT_VAR_NAME_COUNT] = {
@@ -274,7 +274,7 @@ static const char input_var_grids[INPUT_VAR_NAME_COUNT] = {
 static const char *input_var_locations[INPUT_VAR_NAME_COUNT] = {
         "node",
         "node",
-	"domain",
+	"node",
 	"node"
 };
 
@@ -435,6 +435,10 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     int is_x_Xinanjiang_shape_parameter_set = FALSE;
     int is_urban_decimal_fraction_set = FALSE;
     
+    /* Ice fraction */
+    int is_ice_fraction_set = FALSE;
+    int is_ice_content_threshold_set = FALSE;
+	
     // Keep track these in particular, because the "true" storage value may be a ratio and need both storage and max
     int is_gw_max_set = FALSE;
     int is_gw_storage_set = FALSE;
@@ -683,6 +687,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             if (strcmp(param_value, "Xinanjiang")==0 || strcmp(param_value, "xinanjiang")==0 || strcmp(param_value,"2")==0)
                 model->direct_runoff_params_struct.surface_partitioning_scheme = Xinanjiang;
             is_direct_runoff_method_set = TRUE;
+	    continue;
         }
         if (model->direct_runoff_params_struct.surface_partitioning_scheme == Xinanjiang) {  //Check that logical statement is correct
             if (strcmp(param_key, "a_Xinanjiang_inflection_point_parameter") == 0){
@@ -702,6 +707,21 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
 		is_urban_decimal_fraction_set = TRUE;
 	    }
         }
+
+	/* Ice fraction: if set to true and runoff scheme is Schaake, additional parameters are needed in the config file, 
+        *//////////////////////////////////////////////////////////////////////////////
+        if (strcmp(param_key, "ice_fraction") == 0) {
+	  if ( strcmp(param_value, "true")==0 || strcmp(param_value, "True")==0 || strcmp(param_value,"1")==0)
+	    is_ice_fraction_set = TRUE;
+	  continue;
+        }
+
+	if (is_ice_fraction_set == TRUE && model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake) {
+	  if (strcmp(param_key, "ice_content_threshold") == 0) {
+	    model->direct_runoff_params_struct.ice_content_threshold = strtod(param_value, NULL);
+	    is_ice_content_threshold_set = TRUE;
+            }
+	}
     }
 
     if (is_forcing_file_set == FALSE) {
@@ -870,7 +890,18 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     printf("Schaake Magic Constant calculated\n");
 #endif
     }
+    
 
+    if (is_ice_fraction_set == TRUE && model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake) {
+
+      if(!is_ice_content_threshold_set) {
+#if CFE_DEGUG >= 1
+	printf("ice_fraction and Schaake scheme are set to TRUE but param 'ice_fraction_threshold' not found in config file\n");
+	exit(-9);
+#endif
+      }
+    }
+     
 #if CFE_DEGUG >= 1
     printf("All CFE config params present\n");
 #endif    
@@ -2049,7 +2080,12 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[85] = &(state->direct_runoff_params_struct.a_Xinanjiang_inflection_point_parameter );
     ptr_list[86] = &(state->direct_runoff_params_struct.b_Xinanjiang_shape_parameter );
     ptr_list[87] = &(state->direct_runoff_params_struct.x_Xinanjiang_shape_parameter );
-    //-------------------------------------------------------------                
+    //-------------------------------------------------------------
+    //---------------------------------------
+    /*Ice fraction parameters used in runoff schemes (input from Soil Freeze-thaw model)*/
+    ptr_list[88] = &(state->soil_reservoir.ice_fraction_schaake);
+    ptr_list[89] = &(state->soil_reservoir.ice_fraction_xinan);
+    
     return BMI_SUCCESS;
 }
 

@@ -152,21 +152,21 @@ struct direct_runoff_parameters_structure{
     double b_Xinanjiang_shape_parameter;
     double x_Xinanjiang_shape_parameter;
     double urban_decimal_fraction;
+  double ice_content_threshold; // ice content above which soil is impermeable
 };
 typedef struct direct_runoff_parameters_structure direct_runoff_parameters_structure;
 
 
 // function prototypes
 // --------------------------------
-extern void Schaake_partitioning_scheme(double dt, double magic_number, double deficit, double qinsur,double ice_fraction_schaake, double smcmax,
-                                        double *runsrf, double *pddum);
+extern void Schaake_partitioning_scheme(double dt, double field_capacity_m, double magic_number, double deficit, double qinsur,
+					double smcmax, double *runsrf, double *pddum, double ice_fraction_schaake, double ice_content_threshold);
 
 // xinanjiang_dev: XinJiang function written by Rachel adapted by Jmframe and FLO, 
 extern void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_capacity_m,
-                                    double max_soil_moisture_storage_m, double column_total_soil_water_m,
-                                    struct direct_runoff_parameters_structure *parms,
-				    double ice_fraction_xinan,
-                                    double *surface_runoff_depth_m, double *infiltration_depth_m);
+					   double max_soil_moisture_storage_m, double column_total_soil_water_m,
+					   struct direct_runoff_parameters_structure *parms, double *surface_runoff_depth_m,
+					   double *infiltration_depth_m, double ice_fraction_xinan);
 
 extern void conceptual_reservoir_flux_calc(struct conceptual_reservoir *da_reservoir,
                                            double *primary_flux_m, double *secondary_flux_m);
