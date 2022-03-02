@@ -15,6 +15,13 @@ The user has the option to pick a particular direct runoff (aka surface partitio
 2. b_Xinanjiang_shape_parameter
 3. x_Xinanjiang_shape_parameter 
 
+## Running CFE coupled with soil freeze-thaw model (SFT)
+1. SFT model provides `icefraction` to cfe runoff schemes (Schaake and XinanJiang)
+2. If runoff schemem is XinanJiang, no additional parameters are needed in the cfe config files. The frameowrk will pass the parameter `ice_fraction_xina` to cfe.
+3. If runoff scheme is Schaake, 
+ * `ice_fraction` : (type boolean) if coupled this parameter needs to be `true` (options: True, true, 1). 
+ * `ice_content_threshold` : (type double, unit m), must be specified when `ice_fraction=1`
+ 
 # Compiling this code to run examples with a "pseudo" or "mini" framework.
 ## Read local forcing file
 The BMI functionality was developed as a standalone module in C. To compile this code the developer used these steps:
