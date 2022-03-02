@@ -510,10 +510,9 @@ else
  //field_capacity_m = SMCREF in NOAH_MP
  // ice_content_threshold = frzk in NOAH_MP
  //double frzk = 0.15; // Ice content above which soil is impermeable 
- int cv_frz = 3; // should this be moved to config file as well, probably not.
  
  if (ice_fraction_schaake > 1.0E-2) {
-   
+   int cv_frz = 3; // should this be moved to config file as well, probably not.
    double frz_fact = smcmax/field_capacity_m * (0.412 / 0.468);
    double frzx = ice_content_threshold * frz_fact;
    double acrt = cv_frz * frzx / ice_fraction_schaake;
