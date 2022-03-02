@@ -719,7 +719,13 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
 	  if (strcmp(param_key, "ice_content_threshold") == 0) {
 	    model->direct_runoff_params_struct.ice_content_threshold = strtod(param_value, NULL);
 	    is_ice_content_threshold_set = TRUE;
+	     // Check if units are present and print warning if missing from config file
+            if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEGUG >= 1            
+	      printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
+#endif
             }
+	  }
 	}
     }
 

@@ -28,4 +28,4 @@ urban_decimal_fraction=0.0
 DEBUG=0
 #surface_partitioning_scheme=Schaake
 #ice_fraction=0
-#ice_content_threshold=0.15
+#ice_content_threshold=0.15[m]
