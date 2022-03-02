@@ -51,112 +51,111 @@ Variable var_info[] = {
 	{ 11, "storage_threshold_secondary_m",    "double", 1 },
 	{ 12, "coeff_secondary",                  "double", 1 },
 	{ 13, "exponent_secondary",               "double", 1 },
+	{ 14, "soil__ice_fraction_schaake",	  "double", 1}, /* input from Soil Freeze-thaw model */
+	{ 15, "soil__ice_fraction_xinan",	  "double", 1}, /* input from Soil Freeze-thaw model */
 	//------------------------------
 	// Vars in gw reservoir struct
 	// type: conceptual_reservoir
 	//------------------------------
-	{ 14, "is_exponential",                   "int",    1 },
-	{ 15, "storage_max_m",                    "double", 1 },
-	{ 16, "storage_m",                        "double", 1 },
-	{ 17, "coeff_primary",                    "double", 1 },
-	{ 18, "exponent_primary",                 "double", 1 },
-	{ 19, "storage_threshold_primary_m",      "double", 1 },
-	{ 20, "storage_threshold_secondary_m",    "double", 1 },
-	{ 21, "coeff_secondary",                  "double", 1 },
-	{ 22, "exponent_secondary",               "double", 1 },
+	{ 16, "is_exponential",                   "int",    1 },
+	{ 17, "storage_max_m",                    "double", 1 },
+	{ 18, "storage_m",                        "double", 1 },
+	{ 19, "coeff_primary",                    "double", 1 },
+	{ 20, "exponent_primary",                 "double", 1 },
+	{ 21, "storage_threshold_primary_m",      "double", 1 },
+	{ 22, "storage_threshold_secondary_m",    "double", 1 },
+	{ 23, "coeff_secondary",                  "double", 1 },
+	{ 24, "exponent_secondary",               "double", 1 },
 	//---------------------------------
 	// Vars in NWM_soil_params struct
 	//---------------------------------
-	{ 23, "smcmax",          "double", 1 },
-	{ 24, "wltsmc",          "double", 1 },
-	{ 25, "satdk",           "double", 1 },
-	{ 26, "satpsi",          "double", 1 },
-	{ 27, "bb",              "double", 1 },
-	{ 28, "slop",            "double", 1 },
-	{ 29, "D",               "double", 1 },
-	{ 30, "wilting_point_m", "double", 1 },
+	{ 25, "smcmax",          "double", 1 },
+	{ 26, "wltsmc",          "double", 1 },
+	{ 27, "satdk",           "double", 1 },
+	{ 28, "satpsi",          "double", 1 },
+	{ 29, "bb",              "double", 1 },
+	{ 30, "slop",            "double", 1 },
+	{ 31, "D",               "double", 1 },
+	{ 32, "wilting_point_m", "double", 1 },
 	//--------------------
 	// Vars in et_struct
 	//--------------------
-	{ 31, "potential_et_m_per_s",        "double", 1 },
-	{ 32, "potential_et_m_per_timestep", "double", 1 }, //TODO Doesn't appear to be used, but this is uninitialized
-	{ 33, "actual_et_m_per_timestep",    "double", 1 },
+	{ 33, "potential_et_m_per_s",        "double", 1 },
+	{ 34, "potential_et_m_per_timestep", "double", 1 }, //TODO Doesn't appear to be used, but this is uninitialized
+	{ 35, "actual_et_m_per_timestep",    "double", 1 },
 	//------------------------------
 	// Vars in vol_tracking_struct
 	//------------------------------
-	{ 34, "vol_sch_runoff",        "double", 1 },
-	{ 35, "vol_sch_infilt",        "double", 1 },
-	{ 36, "vol_to_soil",           "double", 1 },
-	{ 37, "vol_to_gw",             "double", 1 },
-	{ 38, "vol_soil_to_gw",        "double", 1 },
-	{ 39, "vol_soil_to_lat_flow",  "double", 1 },
-	{ 40, "volstart",              "double", 1 },
-	{ 41, "volout",                "double", 1 },
-	{ 42, "volin",                 "double", 1 },
-	{ 43, "vol_from_gw",           "double", 1 },
-	{ 44, "vol_out_giuh",          "double", 1 },
-	{ 45, "vol_in_nash",           "double", 1 },
-	{ 46, "vol_out_nash",          "double", 1 },
-	{ 47, "vol_in_gw_start",       "double", 1 },
-	{ 48, "vol_soil_start",        "double", 1 },
+	{ 36, "vol_sch_runoff",        "double", 1 },
+	{ 37, "vol_sch_infilt",        "double", 1 },
+	{ 38, "vol_to_soil",           "double", 1 },
+	{ 39, "vol_to_gw",             "double", 1 },
+	{ 40, "vol_soil_to_gw",        "double", 1 },
+	{ 41, "vol_soil_to_lat_flow",  "double", 1 },
+	{ 42, "volstart",              "double", 1 },
+	{ 43, "volout",                "double", 1 },
+	{ 44, "volin",                 "double", 1 },
+	{ 45, "vol_from_gw",           "double", 1 },
+	{ 46, "vol_out_giuh",          "double", 1 },
+	{ 47, "vol_in_nash",           "double", 1 },
+	{ 48, "vol_out_nash",          "double", 1 },
+	{ 49, "vol_in_gw_start",       "double", 1 },
+	{ 50, "vol_soil_start",        "double", 1 },
 	//-----------------------------------------         
 	// More top-level, static allocation vars
 	//-----------------------------------------
-	{ 49, "epoch_start_time",      "long", 1 },
-	{ 50, "num_timesteps",         "int",  1 },
-	{ 51, "current_time_step",     "int",  1 },
-	{ 52, "time_step_size",        "int",  1 },
-	{ 53, "is_forcing_from_bmi",   "int",  1 },
-	{ 54, "forcing_file",                                 "string", 1 },  // strlen
-	//{ 56, "Schaake_adjusted_magic_constant_by_soil_type", "double", 1 }, 
-    	{ 55, "surface_partitioning_scheme", "int", 1 }, // from direct_runoff_params_struct
-	{ 56, "num_lateral_flow_nash_reservoirs",             "int",    1 },
-	{ 57, "K_lf",                                         "double", 1 },
-	{ 58, "K_nash",                                       "double", 1 },
-	{ 59, "num_giuh_ordinates",                           "int",    1 },
+	{ 51, "epoch_start_time",      "long", 1 },
+	{ 52, "num_timesteps",         "int",  1 },
+	{ 53, "current_time_step",     "int",  1 },
+	{ 54, "time_step_size",        "int",  1 },
+	{ 55, "is_forcing_from_bmi",   "int",  1 },
+	{ 56, "forcing_file",                                 "string", 1 },  // strlen
+    	{ 57, "surface_partitioning_scheme", "int", 1 }, // from direct_runoff_params_struct
+	{ 58, "num_lateral_flow_nash_reservoirs",             "int",    1 },
+	{ 59, "K_lf",                                         "double", 1 },
+	{ 60, "K_nash",                                       "double", 1 },
+	{ 61, "num_giuh_ordinates",                           "int",    1 },
 	//---------------------------------------
 	// Vars in aorc_forcing_data_cfe struct
 	//---------------------------------------
-	{ 60, "precip_kg_per_m2",               "double", 1 },
-	{ 61, "incoming_longwave_W_per_m2",     "double", 1 },
-	{ 62, "incoming_shortwave_W_per_m2",    "double", 1 },
-	{ 63, "surface_pressure_Pa",            "double", 1 },
-	{ 64, "specific_humidity_2m_kg_per_kg", "double", 1 },
-	{ 65, "air_temperature_2m_K",           "double", 1 },
-	{ 66, "u_wind_speed_10m_m_per_s",       "double", 1 },
-	{ 67, "v_wind_speed_10m_m_per_s",       "double", 1 },
-	{ 68, "latitude",                       "double", 1 },
-	{ 69, "longitude",                      "double", 1 },
-	{ 70, "time",                           "long",   1 },
+	{ 62, "precip_kg_per_m2",               "double", 1 },
+	{ 63, "incoming_longwave_W_per_m2",     "double", 1 },
+	{ 64, "incoming_shortwave_W_per_m2",    "double", 1 },
+	{ 65, "surface_pressure_Pa",            "double", 1 },
+	{ 66, "specific_humidity_2m_kg_per_kg", "double", 1 },
+	{ 67, "air_temperature_2m_K",           "double", 1 },
+	{ 68, "u_wind_speed_10m_m_per_s",       "double", 1 },
+	{ 69, "v_wind_speed_10m_m_per_s",       "double", 1 },
+	{ 70, "latitude",                       "double", 1 },
+	{ 71, "longitude",                      "double", 1 },
+	{ 72, "time",                           "long",   1 },
 	//------------------------------------------         
 	// More top-level, dynamic allocation vars
 	// (all pointers except verbosity)
 	//------------------------------------------
-	{ 71, "forcing_data_precip_kg_per_m2",  "double*", 1 },
-	{ 72, "forcing_data_time",              "long*",   1 },
-	{ 73, "giuh_ordinates",                 "double*", 1 },  // num_giuh
-	{ 74, "nash_storage",                   "double*", 1 },  // num_lat_flow
-	{ 75, "runoff_queue_m_per_timestep",    "double*", 1 },  // num_giuh
-	{ 76, "flux_Schaake_output_runoff_m",   "double*", 1 },
-	{ 77, "flux_giuh_runoff_m",             "double*", 1 },
-	{ 78, "flux_nash_lateral_runoff_m",     "double*", 1 },
-	{ 79, "flux_from_deep_gw_to_chan_m",    "double*", 1 },
-	{ 80, "flux_perc_m",                    "double*", 1 },
-	{ 81, "flux_lat_m",                     "double*", 1 },
-	{ 82, "flux_Qout_m",                    "double*", 1 },
-	{ 83, "verbosity",                      "int",     1 },
-    //---------------------------------------
-    // direct_runoff_params_struct vars
-    // xinanjiang or schaake flag [56]
-    //---------------------------------------
-    { 84, "Schaake_adjusted_magic_constant_by_soil_type",   "double", 1},
-    { 85, "a_Xinanjiang_inflection_point_parameter",        "double", 1},
-    { 86, "b_Xinanjiang_shape_parameter",                   "double", 1},
-    { 87, "x_Xinanjiang_shape_parameter",                   "double", 1},
-    //---------------------------------------
-    /*Soil Freeze-thaw model paramaters*/
-    { 88, "soil__ice_fraction_schaake",			    "double", 1}, //should it be here?? I don't see other input/outut variables in this list- AJ
-    { 89, "soil__ice_fraction_xinan",			    "double", 1}
+	{ 73, "forcing_data_precip_kg_per_m2",  "double*", 1 },
+	{ 74, "forcing_data_time",              "long*",   1 },
+	{ 75, "giuh_ordinates",                 "double*", 1 },  // num_giuh
+	{ 76, "nash_storage",                   "double*", 1 },  // num_lat_flow
+	{ 77, "runoff_queue_m_per_timestep",    "double*", 1 },  // num_giuh
+	{ 78, "flux_Schaake_output_runoff_m",   "double*", 1 },
+	{ 79, "flux_giuh_runoff_m",             "double*", 1 },
+	{ 80, "flux_nash_lateral_runoff_m",     "double*", 1 },
+	{ 81, "flux_from_deep_gw_to_chan_m",    "double*", 1 },
+	{ 82, "flux_perc_m",                    "double*", 1 },
+	{ 83, "flux_lat_m",                     "double*", 1 },
+	{ 84, "flux_Qout_m",                    "double*", 1 },
+	{ 85, "verbosity",                      "int",     1 },
+	//---------------------------------------
+	// direct_runoff_params_struct vars
+	// xinanjiang or schaake flag [56]
+	//---------------------------------------
+	{ 86, "Schaake_adjusted_magic_constant_by_soil_type",   "double", 1},
+	{ 87, "a_Xinanjiang_inflection_point_parameter",        "double", 1},
+	{ 88, "b_Xinanjiang_shape_parameter",                   "double", 1},
+	{ 89, "x_Xinanjiang_shape_parameter",                   "double", 1},
+	//---------------------------------------
+    
 };
 
 int i = 0;
@@ -1975,83 +1974,85 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[11] = &(state->soil_reservoir.storage_threshold_secondary_m );  
     ptr_list[12] = &(state->soil_reservoir.coeff_secondary );      
     ptr_list[13] = &(state->soil_reservoir.exponent_secondary );
+    ptr_list[14] = &(state->soil_reservoir.ice_fraction_schaake);
+    ptr_list[15] = &(state->soil_reservoir.ice_fraction_xinan);
     //------------------------------
     // Vars in gw reservoir struct
     //------------------------------ 
-    ptr_list[14] = &(state->gw_reservoir.is_exponential );
-    ptr_list[15] = &(state->gw_reservoir.storage_max_m );
-    ptr_list[16] = &(state->gw_reservoir.storage_m );
-    ptr_list[17] = &(state->gw_reservoir.coeff_primary );
-    ptr_list[18] = &(state->gw_reservoir.exponent_primary );
-    ptr_list[19] = &(state->gw_reservoir.storage_threshold_primary_m );    
-    ptr_list[20] = &(state->gw_reservoir.storage_threshold_secondary_m );
-    ptr_list[21] = &(state->gw_reservoir.coeff_secondary );
-    ptr_list[22] = &(state->gw_reservoir.exponent_secondary );
+    ptr_list[16] = &(state->gw_reservoir.is_exponential );
+    ptr_list[17] = &(state->gw_reservoir.storage_max_m );
+    ptr_list[18] = &(state->gw_reservoir.storage_m );
+    ptr_list[19] = &(state->gw_reservoir.coeff_primary );
+    ptr_list[20] = &(state->gw_reservoir.exponent_primary );
+    ptr_list[21] = &(state->gw_reservoir.storage_threshold_primary_m );    
+    ptr_list[22] = &(state->gw_reservoir.storage_threshold_secondary_m );
+    ptr_list[23] = &(state->gw_reservoir.coeff_secondary );
+    ptr_list[24] = &(state->gw_reservoir.exponent_secondary );
     //---------------------------------
     // Vars in NWM_soil_params struct
     //---------------------------------
-    ptr_list[23] = &(state->NWM_soil_params.smcmax );
-    ptr_list[24] = &(state->NWM_soil_params.wltsmc);
-    ptr_list[25] = &(state->NWM_soil_params.satdk);
-    ptr_list[26] = &(state->NWM_soil_params.satpsi); 
-    ptr_list[27] = &(state->NWM_soil_params.bb);
-    ptr_list[28] = &(state->NWM_soil_params.slop);
-    ptr_list[29] = &(state->NWM_soil_params.D);
-    ptr_list[30] = &(state->NWM_soil_params.wilting_point_m);
+    ptr_list[25] = &(state->NWM_soil_params.smcmax );
+    ptr_list[26] = &(state->NWM_soil_params.wltsmc);
+    ptr_list[27] = &(state->NWM_soil_params.satdk);
+    ptr_list[28] = &(state->NWM_soil_params.satpsi); 
+    ptr_list[29] = &(state->NWM_soil_params.bb);
+    ptr_list[30] = &(state->NWM_soil_params.slop);
+    ptr_list[31] = &(state->NWM_soil_params.D);
+    ptr_list[32] = &(state->NWM_soil_params.wilting_point_m);
     //--------------------
     // Vars in et_struct
     //--------------------       
-    ptr_list[31] = &(state->et_struct.potential_et_m_per_s );
-    ptr_list[32] = &(state->et_struct.potential_et_m_per_timestep );
-    ptr_list[33] = &(state->et_struct.actual_et_m_per_timestep );
+    ptr_list[33] = &(state->et_struct.potential_et_m_per_s );
+    ptr_list[34] = &(state->et_struct.potential_et_m_per_timestep );
+    ptr_list[35] = &(state->et_struct.actual_et_m_per_timestep );
     //------------------------------
     // Vars in vol_tracking_struct
     //------------------------------
-    ptr_list[34] = &(state->vol_struct.vol_runoff );
-    ptr_list[35] = &(state->vol_struct.vol_infilt );
-    ptr_list[36] = &(state->vol_struct.vol_to_soil );
-    ptr_list[37] = &(state->vol_struct.vol_to_gw );
-    ptr_list[38] = &(state->vol_struct.vol_soil_to_gw );
-    ptr_list[39] = &(state->vol_struct.vol_soil_to_lat_flow );
-    ptr_list[40] = &(state->vol_struct.volstart );
-    ptr_list[41] = &(state->vol_struct.volout );
-    ptr_list[42] = &(state->vol_struct.volin );
-    ptr_list[43] = &(state->vol_struct.vol_from_gw ); 
-    ptr_list[44] = &(state->vol_struct.vol_out_giuh );
-    ptr_list[45] = &(state->vol_struct.vol_in_nash );
-    ptr_list[46] = &(state->vol_struct.vol_out_nash );
-    ptr_list[47] = &(state->vol_struct.vol_in_gw_start );
-    ptr_list[48] = &(state->vol_struct.vol_soil_start );
+    ptr_list[36] = &(state->vol_struct.vol_runoff );
+    ptr_list[37] = &(state->vol_struct.vol_infilt );
+    ptr_list[38] = &(state->vol_struct.vol_to_soil );
+    ptr_list[39] = &(state->vol_struct.vol_to_gw );
+    ptr_list[40] = &(state->vol_struct.vol_soil_to_gw );
+    ptr_list[41] = &(state->vol_struct.vol_soil_to_lat_flow );
+    ptr_list[42] = &(state->vol_struct.volstart );
+    ptr_list[43] = &(state->vol_struct.volout );
+    ptr_list[44] = &(state->vol_struct.volin );
+    ptr_list[45] = &(state->vol_struct.vol_from_gw ); 
+    ptr_list[46] = &(state->vol_struct.vol_out_giuh );
+    ptr_list[47] = &(state->vol_struct.vol_in_nash );
+    ptr_list[48] = &(state->vol_struct.vol_out_nash );
+    ptr_list[49] = &(state->vol_struct.vol_in_gw_start );
+    ptr_list[50] = &(state->vol_struct.vol_soil_start );
     //-----------------------------------------         
     // More top-level, static allocation vars
     //-----------------------------------------
-    ptr_list[49] = &(state->epoch_start_time ); 
-    ptr_list[50] = &(state->num_timesteps );
-    ptr_list[51] = &(state->current_time_step );
-    ptr_list[52] = &(state->time_step_size );
-    ptr_list[53] = &(state->is_forcing_from_bmi );
-    ptr_list[54] = state->forcing_file;
+    ptr_list[51] = &(state->epoch_start_time ); 
+    ptr_list[52] = &(state->num_timesteps );
+    ptr_list[53] = &(state->current_time_step );
+    ptr_list[54] = &(state->time_step_size );
+    ptr_list[55] = &(state->is_forcing_from_bmi );
+    ptr_list[56] = state->forcing_file;
     // ####### ptr_list[55] = &(state->forcing_file ); 
-    ptr_list[55] = &(state->direct_runoff_params_struct.surface_partitioning_scheme );
+    ptr_list[57] = &(state->direct_runoff_params_struct.surface_partitioning_scheme );
     // ptr_list[56] = &(state->Schaake_adjusted_magic_constant_by_soil_type );
-    ptr_list[56] = &(state->num_lateral_flow_nash_reservoirs);
-    ptr_list[57] = &(state->K_lf);
-    ptr_list[58] = &(state->K_nash);
-    ptr_list[59] = &(state->num_giuh_ordinates);
+    ptr_list[58] = &(state->num_lateral_flow_nash_reservoirs);
+    ptr_list[59] = &(state->K_lf);
+    ptr_list[60] = &(state->K_nash);
+    ptr_list[61] = &(state->num_giuh_ordinates);
     //---------------------------------------
     // Vars in aorc_forcing_data_cfe struct
     //---------------------------------------
-    ptr_list[60] = &(state->aorc.precip_kg_per_m2 );
-    ptr_list[61] = &(state->aorc.incoming_longwave_W_per_m2 );
-    ptr_list[62] = &(state->aorc.incoming_shortwave_W_per_m2 );
-    ptr_list[63] = &(state->aorc.surface_pressure_Pa );
-    ptr_list[64] = &(state->aorc.specific_humidity_2m_kg_per_kg );
-    ptr_list[65] = &(state->aorc.air_temperature_2m_K );
-    ptr_list[66] = &(state->aorc.u_wind_speed_10m_m_per_s );
-    ptr_list[67] = &(state->aorc.v_wind_speed_10m_m_per_s );
-    ptr_list[68] = &(state->aorc.latitude );
-    ptr_list[69] = &(state->aorc.longitude );
-    ptr_list[70] = &(state->aorc.time );
+    ptr_list[62] = &(state->aorc.precip_kg_per_m2 );
+    ptr_list[63] = &(state->aorc.incoming_longwave_W_per_m2 );
+    ptr_list[64] = &(state->aorc.incoming_shortwave_W_per_m2 );
+    ptr_list[65] = &(state->aorc.surface_pressure_Pa );
+    ptr_list[66] = &(state->aorc.specific_humidity_2m_kg_per_kg );
+    ptr_list[67] = &(state->aorc.air_temperature_2m_K );
+    ptr_list[68] = &(state->aorc.u_wind_speed_10m_m_per_s );
+    ptr_list[69] = &(state->aorc.v_wind_speed_10m_m_per_s );
+    ptr_list[70] = &(state->aorc.latitude );
+    ptr_list[71] = &(state->aorc.longitude );
+    ptr_list[72] = &(state->aorc.time );
     //------------------------------------------         
     // More top-level, dynamic allocation vars
     //----------------------------------------------------
@@ -2059,32 +2060,29 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     // Do not append "&".
     // Last one, verbosity, is not a pointer.
     //------------------------------------------
-    ptr_list[71] = state->forcing_data_precip_kg_per_m2;
-    ptr_list[72] = state->forcing_data_time;
-    ptr_list[73] = state->giuh_ordinates;
-    ptr_list[74] = state->nash_storage;
-    ptr_list[75] = state->runoff_queue_m_per_timestep;
-    ptr_list[76] = state->flux_output_direct_runoff_m;
-    ptr_list[77] = state->flux_giuh_runoff_m;
-    ptr_list[78] = state->flux_nash_lateral_runoff_m;
-    ptr_list[79] = state->flux_from_deep_gw_to_chan_m;
-    ptr_list[80] = state->flux_perc_m;
-    ptr_list[81] = state->flux_lat_m;
-    ptr_list[82] = state->flux_Qout_m;
-    ptr_list[83] = &(state->verbosity); 
+    ptr_list[73] = state->forcing_data_precip_kg_per_m2;
+    ptr_list[74] = state->forcing_data_time;
+    ptr_list[75] = state->giuh_ordinates;
+    ptr_list[76] = state->nash_storage;
+    ptr_list[77] = state->runoff_queue_m_per_timestep;
+    ptr_list[78] = state->flux_output_direct_runoff_m;
+    ptr_list[79] = state->flux_giuh_runoff_m;
+    ptr_list[80] = state->flux_nash_lateral_runoff_m;
+    ptr_list[81] = state->flux_from_deep_gw_to_chan_m;
+    ptr_list[82] = state->flux_perc_m;
+    ptr_list[83] = state->flux_lat_m;
+    ptr_list[84] = state->flux_Qout_m;
+    ptr_list[85] = &(state->verbosity); 
     //---------------------------------------
     // direct_runoff_params_struct vars
     // xinanjiang or schaake flag [56]
     //---------------------------------------
-    ptr_list[84] = &(state->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type );
-    ptr_list[85] = &(state->direct_runoff_params_struct.a_Xinanjiang_inflection_point_parameter );
-    ptr_list[86] = &(state->direct_runoff_params_struct.b_Xinanjiang_shape_parameter );
-    ptr_list[87] = &(state->direct_runoff_params_struct.x_Xinanjiang_shape_parameter );
+    ptr_list[86] = &(state->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type );
+    ptr_list[87] = &(state->direct_runoff_params_struct.a_Xinanjiang_inflection_point_parameter );
+    ptr_list[88] = &(state->direct_runoff_params_struct.b_Xinanjiang_shape_parameter );
+    ptr_list[89] = &(state->direct_runoff_params_struct.x_Xinanjiang_shape_parameter );
     //-------------------------------------------------------------
-    //---------------------------------------
-    /*Ice fraction parameters used in runoff schemes (input from Soil Freeze-thaw model)*/
-    ptr_list[88] = &(state->soil_reservoir.ice_fraction_schaake);
-    ptr_list[89] = &(state->soil_reservoir.ice_fraction_xinan);
+    
     
     return BMI_SUCCESS;
 }
