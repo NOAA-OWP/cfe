@@ -616,9 +616,6 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
   impervious_runoff_m = impervious_fraction * water_input_depth_m;
 
   // Calculate total estimated pervious runoff. 
-  // NOTE: If the impervious surface runoff due to frozen soils is added,
-  // the pervious_runoff_m equation will need to be adjusted by the fraction of pervious area.
-  // Calculate total estimated pervious runoff. 
   if ((tension_water_m/max_tension_water_m) <= (0.5 - parms->a_Xinanjiang_inflection_point_parameter)) {
     pervious_runoff_m = (1 - impervious_fraction) * water_input_depth_m * 
 						(pow((0.5 - parms->a_Xinanjiang_inflection_point_parameter), 
