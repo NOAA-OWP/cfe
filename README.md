@@ -16,11 +16,13 @@ The user has the option to pick a particular direct runoff (aka surface partitio
 3. x_Xinanjiang_shape_parameter 
 
 ## Running CFE coupled with soil freeze-thaw model (SFT)
-1. SFT model provides `icefraction` to cfe runoff schemes (Schaake and XinanJiang)
+1. SFT model provides `ice fraction` to cfe runoff schemes (Schaake `ice_fraction_schaake` and XinanJiang `ice_fraction_xinan`)
 2. If runoff scheme is XinanJiang, no additional parameters are needed in the cfe config files. The framework will pass the parameter `ice_fraction_xina` to cfe.
 3. If runoff scheme is Schaake, 
   * `ice_fraction` : (type boolean) if coupled this parameter needs to be `true` (options: True, true, 1). 
   * `ice_content_threshold` : (type double, unit m), must be specified when `ice_fraction=1`.
+  
+**Note:** The coupling requires both models to run within the ngen (or pseudo) framework. By defualt `ice fraction` is zero, and these changes do not effect the basic functionality of cfe when uncoupled.
  
 # Compiling this code to run examples with a "pseudo" or "mini" framework.
 ## Read local forcing file
