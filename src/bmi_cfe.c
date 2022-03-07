@@ -11,7 +11,7 @@
 
 #define CFE_DEGUG 0
 
-#define INPUT_VAR_NAME_COUNT 2
+#define INPUT_VAR_NAME_COUNT 4
 #define OUTPUT_VAR_NAME_COUNT 12
 
 #define STATE_VAR_NAME_COUNT 90   // must match var_info array size
@@ -193,7 +193,7 @@ static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
         "double",
         "double",
         "double",
-        "double",
+        "double"
 	"double",
 	"int"
 };
@@ -273,32 +273,44 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
 static const char *input_var_names[INPUT_VAR_NAME_COUNT] = {
         "atmosphere_water__liquid_equivalent_precipitation_rate",
-        "water_potential_evaporation_flux"
+        "water_potential_evaporation_flux",
+	"soil__ice_fraction_schaake",
+	"soil__ice_fraction_xinan"
 };
 
 static const char *input_var_types[INPUT_VAR_NAME_COUNT] = {
         "double",
-        "double"
+        "double",
+	"double",
+	"double"
 };
 
 static const char *input_var_units[INPUT_VAR_NAME_COUNT] = {
         "mm h-1", //"atmosphere_water__liquid_equivalent_precipitation_rate"
         "m s-1",   //"water_potential_evaporation_flux"
+	"m",    // ice fraction in meters
+	"none",     // ice fraction [-]
 };
 
 static const int input_var_item_count[INPUT_VAR_NAME_COUNT] = {
         1,
-        1
+        1,
+	1,
+	1
 };
 
 static const char input_var_grids[INPUT_VAR_NAME_COUNT] = {
         0,
-        0
+        0,
+	0,
+	0
 };
 
 static const char *input_var_locations[INPUT_VAR_NAME_COUNT] = {
         "node",
-        "node"
+        "node",
+	"node",
+	"node"
 };
 
 static int Get_start_time (Bmi *self, double * time)
