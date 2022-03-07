@@ -1,6 +1,6 @@
 # Python version of the NWM Conceptual Functional Equivalent (CFE) model
 
-This directory contains a Python version of the same CFE model as written in C contained in the `../src/` directory. This version is intended for learning and quick prototyping model development, but should also be fully functional within the Nextgen Framework.
+Note this version is currently under development.
 
 # Files
 ## environment.yml: 
