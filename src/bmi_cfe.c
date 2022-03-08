@@ -169,9 +169,6 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "NASH_LATERAL_RUNOFF",
         "DEEP_GW_TO_CHANNEL_FLUX",
         "Q_OUT",
-	"SMCT",
-	"SMCT_CHANGE",
-	"SURF_RUNOFF_SCHEME",
         "POTENTIAL_ET",
         "ACTUAL_ET",
         "GW_STORAGE",
@@ -187,9 +184,6 @@ static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
         "double",
         "double",
         "double",
-	"double",
-	"double",
-	"int",
         "double",
         "double",
         "double",
@@ -210,10 +204,7 @@ static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
 	1,
         1,
         1,
-        1,
-        1,
-	1,
-	1
+        1
 };
 
 static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
@@ -223,15 +214,12 @@ static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
         "m",
         "m",
         "m",
-	"m",
-	"m",
-	"none",
         "m",
         "m",
         "m",
         "m",
 	"m",
-	""
+	"none"
 };
 
 static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
@@ -246,10 +234,7 @@ static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
 	0,
         0,
         0,
-        0,
-        0,
-	0,
-	0
+        0
 };
 
 static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
@@ -264,10 +249,7 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
 	"node",
         "node",
         "node",
-        "node",
-        "node",
-	"node",
-	"node"
+        "node"
 };
 
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
@@ -1630,27 +1612,6 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
     if (strcmp (name, "Q_OUT") == 0) {
         *dest = ((cfe_state_struct *)(self->data))->flux_Qout_m;
         return BMI_SUCCESS;
-    }
-
-    if (strcmp (name, "SURF_RUNOFF_SCHEME") == 0) {
-      cfe_state_struct *cfe_ptr;
-      cfe_ptr = (cfe_state_struct *) self->data;
-      *dest = (void*)&cfe_ptr->direct_runoff_params_struct.surface_partitioning_scheme;
-      return BMI_SUCCESS;
-    }
-    
-    if (strcmp (name, "SMCT") == 0) {
-      cfe_state_struct *cfe_ptr;
-      cfe_ptr = (cfe_state_struct *) self->data;
-      *dest = (void*)&cfe_ptr->soil_reservoir.storage_m;
-      return BMI_SUCCESS;
-    }
-
-    if (strcmp (name, "SMCT_CHANGE") == 0) {
-      cfe_state_struct *cfe_ptr;
-      cfe_ptr = (cfe_state_struct *) self->data;
-      *dest = (void*)&cfe_ptr->soil_reservoir.storage_change_m;
-      return BMI_SUCCESS;
     }
     
     if (strcmp (name, "POTENTIAL_ET") == 0) {
