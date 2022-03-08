@@ -193,7 +193,7 @@ static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
         "double",
         "double",
         "double",
-        "double"
+        "double",
 	"double",
 	"int"
 };
@@ -471,7 +471,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     int is_urban_decimal_fraction_set = FALSE;
     
     /* Ice fraction */
-    int is_ice_fraction_set = FALSE;
+    int is_sft_coupled_set = FALSE;
     int is_ice_content_threshold_set = FALSE;
 
     // Keep track these in particular, because the "true" storage value may be a ratio and need both storage and max
@@ -745,13 +745,13 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
 
 	/* Ice fraction: if set to true and runoff scheme is Schaake, additional parameters are needed in the config file, 
         *//////////////////////////////////////////////////////////////////////////////
-        if (strcmp(param_key, "ice_fraction") == 0) {
+        if (strcmp(param_key, "sft_coupled") == 0) {
 	  if ( strcmp(param_value, "true")==0 || strcmp(param_value, "True")==0 || strcmp(param_value,"1")==0)
-	    is_ice_fraction_set = TRUE;
+	    is_sft_coupled_set = TRUE;
 	  continue;
         }
 
-	if (is_ice_fraction_set == TRUE && model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake) {
+	if (is_sft_coupled_set == TRUE && model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake) {
 	  if (strcmp(param_key, "ice_content_threshold") == 0) {
 	    model->direct_runoff_params_struct.ice_content_threshold = strtod(param_value, NULL);
 	    is_ice_content_threshold_set = TRUE;
@@ -933,11 +933,11 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     }
     
 
-    if (is_ice_fraction_set == TRUE && model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake) {
+    if (is_sft_coupled_set == TRUE && model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake) {
 
       if(!is_ice_content_threshold_set) {
 #if CFE_DEGUG >= 1
-	printf("ice_fraction and Schaake scheme are set to TRUE but param 'ice_fraction_threshold' not found in config file\n");
+	printf("sft_coupled and Schaake scheme are set to TRUE but param 'ice_fraction_threshold' not found in config file\n");
 	exit(-9);
 #endif
       }
