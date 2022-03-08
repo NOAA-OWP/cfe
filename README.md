@@ -3,7 +3,7 @@ CFE is a simplified (conceptual) model of the runoff scheme in the National Wate
 
 There are multiple ways to run CFE:
 
-1. Through the BMI commands. There are script options, detailed below, for running the model in standalone mode and BMI allows the Next Generation Water Resources Modeling Framework to run CFE and couple it to surface routines. See [Compiling BMI Code](#compiling-bmi-code)
+1. Through the BMI commands. There are script options, detailed below, for running the model in standalone mode and BMI allows the Next Generation Water Resources Modeling Framework to run CFE and couple it to surface routines. See [Compiling and running CFE](#compiling-and-running-cfe)
 2. As written by the original author. This includes a full program to read and process atmospheric forcing data, print the model output and check for mass balance closure. This code can be run from the [original_author_code](./original_author_code) directory. This code does not have a BMI implementation.
 
 ## Compiling and running CFE
