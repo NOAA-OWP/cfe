@@ -22,7 +22,7 @@ The user has the option to pick a particular direct runoff (aka surface partitio
   * `ice_fraction` : (type boolean) if coupled this parameter needs to be `true` (options: True, true, 1). 
   * `ice_content_threshold` : (type double, unit m), must be specified when `ice_fraction=1`.
   
-**Note:** The coupling requires both models to run within the ngen (or pseudo) framework. By defualt `ice fraction` is zero, and these changes do not effect the basic functionality of cfe when uncoupled.
+**Note:** See SFT-enabled sample configuration file [here](./configs/cat_87_bmi_config_cfe.txt). By defualt `ice fraction` is zero, and these changes do not effect the basic functionality of cfe when uncoupled.
  
 # Compiling this code to run examples with a "pseudo" or "mini" framework.
 ## Read local forcing file
