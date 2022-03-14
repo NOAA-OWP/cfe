@@ -16,6 +16,7 @@
 
 #define STATE_VAR_NAME_COUNT 90   // must match var_info array size
 
+
 #define PARAM_VAR_NAME_COUNT 10
 static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
     "maxsmc", "satdk", "slope", "b", "multiplier", "Klf", 
@@ -173,8 +174,9 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "ACTUAL_ET",
         "GW_STORAGE",
         "SOIL_STORAGE",
-	"SOIL_STORAGE_CHANGE",
-	"SURF_RUNOFF_SCHEME"
+	      "SOIL_STORAGE_CHANGE",
+	      "SURF_RUNOFF_SCHEME"
+
 };
 
 static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
@@ -188,8 +190,8 @@ static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
         "double",
         "double",
         "double",
-	"double",
-	"int"
+      	"double",
+	      "int"
 };
 
 static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
@@ -199,9 +201,9 @@ static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
         1,
         1,
         1,
-	1,
-	1,
-	1,
+      	1,
+	      1,
+	      1,
         1,
         1,
         1
@@ -218,8 +220,8 @@ static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
         "m",
         "m",
         "m",
-	"m",
-	"none"
+      	"m",
+	      "none"
 };
 
 static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
@@ -229,9 +231,9 @@ static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
         0,
         0,
         0,
-	0,
-	0,
-	0,
+      	0,
+	      0,
+	      0,
         0,
         0,
         0
@@ -244,9 +246,9 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
         "node",
         "node",
         "node",
-	"node",
-	"node",
-	"node",
+      	"node",
+	      "node",
+	      "node",
         "node",
         "node",
         "node"
@@ -1641,7 +1643,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         *dest = (void*)&cfe_ptr-> soil_reservoir.storage_m;
         return BMI_SUCCESS;
     }
-
+  
     if (strcmp (name, "SOIL_STORAGE_CHANGE") == 0) {
       cfe_state_struct *cfe_ptr;
       cfe_ptr = (cfe_state_struct *) self->data;
@@ -1656,6 +1658,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
       return BMI_SUCCESS;
     }
     
+
     /***********************************************************/
     /***********    INPUT    ***********************************/
     /***********************************************************/
