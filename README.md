@@ -81,17 +81,25 @@ You can also follow these steps:
 In CFE the user has the option to pick a particular direct runoff (aka surface partitioning) method:
 
 1. Schaake function (configuration: `surface_partitioning_scheme=Schaake`)
-2. XinanJiang function (configuration: `surface_partitioning_scheme=Xinanjiang`).
+2. XinanJiang function (configuration: `surface_partitioning_scheme=Xinanjiang`). When using this runoff method the user must also include three parameters.
+### If XinanJiang is choosen these parameters need to be included in the configuration file:
+1. a_Xinanjiang_inflection_point_parameter
+2. b_Xinanjiang_shape_parameter
+3. x_Xinanjiang_shape_parameter 
 
-If XinanJiang is choosen these parameters need to be included in the configuration file:
-      ```
-      a_Xinanjiang_inflection_point_parameter
-      b_Xinanjiang_shape_parameter
-      x_Xinanjiang_shape_parameter
-      ```
+## Running CFE coupled with soil freeze-thaw model (SFT)
+1. SFT model provides `ice fraction` to cfe runoff schemes (Schaake `ice_fraction_schaake` and XinanJiang `ice_fraction_xinan`)
+2. If runoff scheme is XinanJiang, no additional parameters are needed in the cfe config files. The framework will pass the parameter `ice_fraction_xina` to cfe.
+3. If runoff scheme is Schaake, 
+  * `ice_fraction` : (type boolean) if coupled this parameter needs to be `true` (options: True, true, 1). 
+  * `ice_content_threshold` : (type double, unit m), must be specified when `ice_fraction=1`.
+  
+**Note:** See SFT-enabled sample configuration file [here](./configs/cat_87_bmi_config_cfe.txt). By defualt `ice fraction` is zero, and these changes do not effect the basic functionality of cfe when uncoupled.
+ 
 
-## The CFE was based on the t-shirt approximation of the National Water Model
-Development here was based off the t-shirt approximation of the hydrologic routing functionality of the National Water Model v 1.2, 2.0, and 2.1
+# The CFE was based on the t-shirt approximation of the National Water Model
+# t-shirt approximation of the hydrologic routing functionality of the National Water Model v 1.2, 2.0, and 2.1
+>>>>>>> 648bc99 (ajk/cfe icefraction (#49))
 This code was developed to test the hypothesis that the National Water Model runoff generation, vadose zone
 dynamics, and conceptual groundwater model can be greatly simplified by acknowledging that it is truly a 
 conceptual model.
