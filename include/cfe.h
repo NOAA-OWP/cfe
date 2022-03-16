@@ -86,6 +86,8 @@ double storage_threshold_secondary_m;
 double coeff_secondary;
 double exponent_secondary;
 double ice_fraction_schaake, ice_fraction_xinan;
+double *smc_profile; //soil moisture content profile
+int nz; // number of soil layers
 };
 
 struct NWM_soil_parameters

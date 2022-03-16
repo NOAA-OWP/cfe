@@ -11,7 +11,7 @@
 
 #define CFE_DEGUG 0
 
-#define INPUT_VAR_NAME_COUNT 4
+#define INPUT_VAR_NAME_COUNT 5
 #define OUTPUT_VAR_NAME_COUNT 12
 
 #define STATE_VAR_NAME_COUNT 90   // must match var_info array size
@@ -157,6 +157,7 @@ Variable var_info[] = {
 	{ 88, "b_Xinanjiang_shape_parameter",                   "double", 1},
 	{ 89, "x_Xinanjiang_shape_parameter",                   "double", 1},
 	//---------------------------------------
+	{ 90, "soil_moisture_profile",                   "double", 1},
 };
 
 int i = 0;
@@ -174,8 +175,8 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "ACTUAL_ET",
         "GW_STORAGE",
         "SOIL_STORAGE",
-	      "SOIL_STORAGE_CHANGE",
-	      "SURF_RUNOFF_SCHEME"
+	"SOIL_STORAGE_CHANGE",
+	"SURF_RUNOFF_SCHEME"
 
 };
 
@@ -191,7 +192,7 @@ static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
         "double",
         "double",
       	"double",
-	      "int"
+	"int"
 };
 
 static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
@@ -202,8 +203,8 @@ static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
         1,
         1,
       	1,
-	      1,
-	      1,
+	1,
+	1,
         1,
         1,
         1
@@ -221,7 +222,7 @@ static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
         "m",
         "m",
       	"m",
-	      "none"
+	"none"
 };
 
 static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
@@ -232,23 +233,23 @@ static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
         0,
         0,
       	0,
-	      0,
-	      0,
+	0,
+	0,
         0,
         0,
         0
 };
 
 static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
-        "node",
-        "node",
+  "node",
+  "node",
         "node",
         "node",
         "node",
         "node",
       	"node",
-	      "node",
-	      "node",
+	"node",
+	"node",
         "node",
         "node",
         "node"
@@ -259,12 +260,14 @@ static const char *input_var_names[INPUT_VAR_NAME_COUNT] = {
         "atmosphere_water__liquid_equivalent_precipitation_rate",
         "water_potential_evaporation_flux",
 	"soil__ice_fraction_schaake",
-	"soil__ice_fraction_xinan"
+	"soil__ice_fraction_xinan",
+	"soil_moisture_profile"
 };
 
 static const char *input_var_types[INPUT_VAR_NAME_COUNT] = {
         "double",
         "double",
+	"double",
 	"double",
 	"double"
 };
@@ -274,11 +277,13 @@ static const char *input_var_units[INPUT_VAR_NAME_COUNT] = {
         "m s-1",   //"water_potential_evaporation_flux"
 	"m",    // ice fraction in meters
 	"none",     // ice fraction [-]
+	"none"
 };
 
 static const int input_var_item_count[INPUT_VAR_NAME_COUNT] = {
         1,
         1,
+	1,
 	1,
 	1
 };
@@ -287,12 +292,14 @@ static const char input_var_grids[INPUT_VAR_NAME_COUNT] = {
         0,
         0,
 	0,
+	0,
 	0
 };
 
 static const char *input_var_locations[INPUT_VAR_NAME_COUNT] = {
         "node",
         "node",
+	"node",
 	"node",
 	"node"
 };
@@ -1165,7 +1172,9 @@ static int Initialize (Bmi *self, const char *file)
 
     cfe_bmi_data_ptr->soil_reservoir.ice_fraction_schaake = 0.0;
     cfe_bmi_data_ptr->soil_reservoir.ice_fraction_xinan = 0.0;
-    
+
+    cfe_bmi_data_ptr->soil_reservoir.nz = 4;// 4 needs to be read from config file
+    cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*4); // 4 needs to be read from config file
     return BMI_SUCCESS;
 }
 
@@ -1585,12 +1594,6 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
-    /* xinanjiang_dev
-        changing the name to the more general "direct runoff"
-    if (strcmp (name, "SCHAAKE_OUTPUT_RUNOFF") == 0) {
-        *dest = (void*) ((cfe_state_struct *)(self->data))->flux_Schaake_output_runoff_m;
-        return BMI_SUCCESS;
-    }*/
     if (strcmp (name, "DIRECT_RUNOFF") == 0) {
         *dest = (void*) ((cfe_state_struct *)(self->data))->flux_output_direct_runoff_m;
         return BMI_SUCCESS;
@@ -1687,6 +1690,11 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         *dest = (void*)&cfe_ptr->soil_reservoir.ice_fraction_xinan;
         return BMI_SUCCESS;
     }
+
+    if (strcmp (name, "soil_moisture_profile") == 0){
+      *dest = (void *) ((cfe_state_struct *)(self->data))->soil_reservoir.smc_profile;
+      return BMI_SUCCESS;
+    }
     
     return BMI_FAILURE;
 }
@@ -1755,7 +1763,15 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
     // For now, all variables are non-array scalar values, with only 1 item of type double
 
     // Thus, there is only ever one value to return (len must be 1) and it must always be from index 0
-    if (len > 1 || inds[0] != 0)
+    //AJ: modifying it to work with soil moisture column for root zone depth based AET
+    if (strcmp(name, "soil_moisture_profile") == 0){
+      void *ptr = NULL;
+      //      ptr = (double*) malloc (sizeof (double)*4);
+      status = Get_value_ptr(self, name, &ptr);
+      len = ((cfe_state_struct *)(self->data))->soil_reservoir.nz;
+      memcpy(ptr, src, var_item_size * len);
+    }
+    else if (len > 1 || inds[0] != 0)
         return BMI_FAILURE;
 
     void* ptr;
@@ -1795,7 +1811,8 @@ static int Set_value (Bmi *self, const char *name, void *array)
 
     // Then we can just ...
     return Set_value_at_indices(self, name, inds, 1, array);
-
+    
+    
 /*  This is the sample code from read the docs
     void * dest = NULL;
     int nbytes = 0;
