@@ -52,7 +52,7 @@ class CFE():
             
         # ________________________________________________
         if cfe_state.previous_flux_perc_m > cfe_state.soil_reservoir_storage_deficit_m:
-            diff = cfe_state.previous_flux_perc_m - cfe_state.soil_reservoir_storage_deficit
+            diff = cfe_state.previous_flux_perc_m - cfe_state.soil_reservoir_storage_deficit_m
             cfe_state.infiltration_depth_m = cfe_state.soil_reservoir_storage_deficit_m
             cfe_state.vol_sch_runoff += diff
             cfe_state.vol_sch_infilt -= diff
