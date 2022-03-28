@@ -53,8 +53,8 @@ Variable var_info[] = {
 	{ 11, "storage_threshold_secondary_m",    "double", 1 },
 	{ 12, "coeff_secondary",                  "double", 1 },
 	{ 13, "exponent_secondary",               "double", 1 },
-	{ 14, "soil__ice_fraction_schaake",	  "double", 1}, /* input from Soil Freeze-thaw model */
-	{ 15, "soil__ice_fraction_xinan",	  "double", 1}, /* input from Soil Freeze-thaw model */
+	{ 14, "ice_fraction_schaake",	          "double", 1}, /* input from Soil Freeze-thaw model */
+	{ 15, "ice_fraction_xinan",	          "double", 1}, /* input from Soil Freeze-thaw model */
 	//------------------------------
 	// Vars in gw reservoir struct
 	// type: conceptual_reservoir
@@ -258,8 +258,8 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
 static const char *input_var_names[INPUT_VAR_NAME_COUNT] = {
         "atmosphere_water__liquid_equivalent_precipitation_rate",
         "water_potential_evaporation_flux",
-	"soil__ice_fraction_schaake",
-	"soil__ice_fraction_xinan"
+	"ice_fraction_schaake",
+	"ice_fraction_xinan"
 };
 
 static const char *input_var_types[INPUT_VAR_NAME_COUNT] = {
@@ -1675,13 +1675,13 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
-    if (strcmp (name, "soil__ice_fraction_schaake") == 0) {
+    if (strcmp (name, "ice_fraction_schaake") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
         *dest = (void*)&cfe_ptr->soil_reservoir.ice_fraction_schaake;
         return BMI_SUCCESS;
     }
-    if (strcmp (name, "soil__ice_fraction_xinan") == 0) {
+    if (strcmp (name, "ice_fraction_xinan") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
         *dest = (void*)&cfe_ptr->soil_reservoir.ice_fraction_xinan;
