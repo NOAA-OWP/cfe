@@ -14,6 +14,37 @@ There are three unique examples for running CFE as described below. They assume 
 2. `./make_and_run_bmi_pass_forcings.sh`: Use an external module to read in a forcing file and pass those data using BMI
 3. `./make_and_run_bmi_pass_forcings_pet.sh`: Use external modules to read in a forcing file and calculate potential evapotranspiration, and pass those data using BMI
 
+## Configuration File
+A [configs/](./configs/) directory contains primiary configuration text files for three different catchments pertaining to each process identiified in   The table below details information for [catchment-87](./configs/cat_87_bmi_config_cfe.txt).
+| Variable | Datatype |  Limits  | Units | Role | Process | Description |
+| -------- | -------- | ------ | ----- | ---- | ------- | ----------- |
+| forcing_file | *char* | 256  |   | filename |   | path to forcing inputs csv; set to `BMI` if passed via `bmi.set_value*()`  |
+| soil_params.depth | *double* |   | meters [m]| state |  | soil depth  |
+| soil_params.b | *double* |   |   | state |   | beta exponent on Clapp-Hornberger (1978) soil water relations  |
+| soil_params.satdk | *double* |   |  meters/second [m s-1] | state |  | saturated hydraulic conductivity  |
+| soil_params.satpsi  | *double* |   |  meters [m] | state |  | saturated capillary head  |
+| soil_params.slop   | *double* |   |  meters/meters [m/m]| state |  | this factor (0-1) modifies the gradient of the hydraulic head at the soil bottom.  0=no-flow. |
+| soil_params.smcmax  | *double* |   |  meters/meters [m/m] | state |  | saturated soil moisture content  |
+| soil_params.wltsmc | *double* |   |  meters/meters [m/m] | state |   | wilting point soil moisture content  |
+| soil_params.expon  | *double* |   |  | parameter_adjustable |    | optional; defaults to `1.0`  |
+| soil_params.expon_secondary  | *double* |  |   | parameter_adjustable |  | optional; defaults to `1.0` |
+| max_gw_storage | *double* |   |  meters [m] | parameter_adjustable |  | maximum storage in the conceptual reservoir |
+| Cgw | *double* |   |  meters/hour [m h-1] | parameter_adjustable |  | the primary outlet coefficient |
+| expon | *double* |   |   | parameter_adjustable |  | exponent parameter (1.0 for linear reservoir) |
+| gw_storage | *double* |   |  meters/meters [m/m] | parameter_adjustable |  | initial condition for groundwater reservoir |
+| alpha_fc | *double* |   |   | parameter_adjustable |  | field capacity |
+| soil_storage| *double* |   | meters/meters [m/m] | parameter_adjustable |  | initial condition for soil reservoir  |
+| K_nash | *int* |   |   | parameter_adjustable |   | number of Nash lf reservoirs (optional, defaults to 2, ignored if storage values present)  |
+| K_lf | *double* |   |   | parameter_adjustable |  | Nash Config param - primary reservoir  |
+| nash_storage | *double* |   |   | parameter_adjustable |  | Nash Config param - secondary reservoir   |
+| giuh_ordinates   | *double* |   |   | parameter_adjustable |  | Giuh ordinates in dt time steps   |
+| num_timesteps  | *int* |   |  | time_info |  | set to `1` if `forcing_file=BMI`   |
+| verbosity | *int* | `0`-`3`  |   | option |   |  prints various debug and bmi info  |
+| surface_partitioning_scheme | *char* | `Xinanjiang` or `Schaake`  |  | parameter_adjustable | direct runoff |    |
+| a_Xinanjiang_inflection_point_parameter | *double* |   |  | parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
+| b_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable  | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
+| x_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
+
 ### 1. Read local forcing file
 To compile and run CFE with locally read forcing data: `./make_and_run_bmi.sh`
 
