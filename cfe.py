@@ -68,8 +68,8 @@ class CFE():
         self.conceptual_reservoir_flux_calc(cfe_state, cfe_state.soil_reservoir)
 
         # ________________________________________________
-        cfe_state.flux_perc_m = cfe_state.primary_flux
-        cfe_state.flux_lat_m = cfe_state.secondary_flux
+        cfe_state.flux_perc_m = cfe_state.primary_flux_m
+        cfe_state.flux_lat_m = cfe_state.secondary_flux_m
 
         # ________________________________________________
         cfe_state.gw_reservoir_storage_deficit_m = cfe_state.gw_reservoir['storage_max_m'] - cfe_state.gw_reservoir['storage_m']
@@ -98,11 +98,11 @@ class CFE():
         self.conceptual_reservoir_flux_calc(cfe_state, cfe_state.gw_reservoir) 
             
         # ________________________________________________
-        cfe_state.flux_from_deep_gw_to_chan_m = cfe_state.primary_flux
+        cfe_state.flux_from_deep_gw_to_chan_m = cfe_state.primary_flux_m
         cfe_state.vol_from_gw += cfe_state.flux_from_deep_gw_to_chan_m
         
         # ________________________________________________        
-        if not self.is_fabs_less_than_epsilon(cfe_state.secondary_flux, 1.0e-09):
+        if not self.is_fabs_less_than_epsilon(cfe_state.secondary_flux_m, 1.0e-09):
             print("problem with nonzero flux point 1\n")
                         
         # ________________________________________________                               
