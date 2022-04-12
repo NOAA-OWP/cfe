@@ -2,6 +2,7 @@ import time
 import numpy as np
 import pandas as pd
 
+
 class CFE():
     def __init__(self):
         super(CFE, self).__init__()
