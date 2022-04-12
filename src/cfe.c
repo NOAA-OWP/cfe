@@ -65,8 +65,8 @@ extern void cfe(
     // LOCAL VARIABLES, the values of which are not important to describe the model state.  They are like notes on scrap paper.
  
     double diff=0.0;
-    double primary_flux=0.0;      // pointers to these variables passed to conceptual nonlinear reservoir which has two outlets, primary & secondary
-    double secondary_flux=0.0;    // pointers to these variables passed to conceptual nonlinear reservoir which has two outlets, primary & secondary
+    double primary_flux_m=0.0;      // pointers to these variables passed to conceptual nonlinear reservoir which has two outlets, primary & secondary
+    double secondary_flux_m=0.0;    // pointers to these variables passed to conceptual nonlinear reservoir which has two outlets, primary & secondary
     double lateral_flux=0.0;      // flux from soil to lateral flow Nash cascade +to cascade  [m/timestep]
     double percolation_flux=0.0;  // flux from soil to gw nonlinear researvoir, +downward  [m/timestep] 
     
@@ -204,10 +204,10 @@ extern void cfe(
   massbal_struct->vol_soil_to_lat_flow     += flux_lat_m;  //TODO add this to nash cascade as input
   massbal_struct->volout=massbal_struct->volout+flux_lat_m;
   
-  conceptual_reservoir_flux_calc(gw_reservoir_struct,&primary_flux,&secondary_flux);
+  conceptual_reservoir_flux_calc(gw_reservoir_struct,&primary_flux_m,&secondary_flux_m);
   
   
-  flux_from_deep_gw_to_chan_m=primary_flux;  // m/h   <<<<<<<<<< BASE FLOW FLUX >>>>>>>>>
+  flux_from_deep_gw_to_chan_m=primary_flux_m;  // m/h   <<<<<<<<<< BASE FLOW FLUX >>>>>>>>>
   if(flux_from_deep_gw_to_chan_m >  gw_reservoir_struct->storage_m)  {
   flux_from_deep_gw_to_chan_m=gw_reservoir_struct->storage_m;
   // TODO: set a flag when flux larger than storage
@@ -218,7 +218,7 @@ extern void cfe(
   massbal_struct->vol_from_gw+=flux_from_deep_gw_to_chan_m;
   
   // in the instance of calling the gw reservoir the secondary flux should be zero- verify
-  if(is_fabs_less_than_epsilon(secondary_flux,1.0e-09)==FALSE) printf("problem with nonzero flux point 1\n");
+  if(is_fabs_less_than_epsilon(secondary_flux_m,1.0e-09)==FALSE) printf("problem with nonzero flux point 1\n");
 
   
   // adjust state of deep groundwater conceptual nonlinear reservoir
