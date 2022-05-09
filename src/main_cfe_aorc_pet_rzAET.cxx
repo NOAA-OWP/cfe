@@ -13,8 +13,8 @@
 #include "../forcing_code/include/bmi_aorc.h"
 
 #include "../bmi/bmi.hxx"
-#include "../smc_coupler/include/bmi_coupler.hxx"
-#include "../smc_coupler/include/smc_profile.hxx"
+#include "../smc_coupler/include/bmi_soil_moisture_profile.hxx"
+#include "../smc_coupler/include/soil_moisture_profile.hxx"
 
 #define FrozenFraction false
 /***************************************************************
@@ -52,7 +52,7 @@ void pass_forcing_from_aorc_to_cfe(Bmi *cfe_bmi_model, Bmi *aorc_bmi_model){
  * Function to pass parameters from CFE to Coupler and get soil 
  * moisture content from coupler to set in CFE.
  ****************************************************************/
-void pass_smc_from_coupler_to_cfe(Bmi *cfe_bmi_model,BmiCoupler coupler_bmi,int n_soil_layers) {
+void pass_smc_from_coupler_to_cfe(Bmi *cfe_bmi_model,BmiSoilMoistureProfile coupler_bmi,int n_soil_layers) {
 
   enum {Constant=1, Linear=2};
 
@@ -66,19 +66,19 @@ void pass_smc_from_coupler_to_cfe(Bmi *cfe_bmi_model,BmiCoupler coupler_bmi,int 
   cfe_bmi_model->get_value(cfe_bmi_model, "SOIL_STORAGE", storage_ptr);
   cfe_bmi_model->get_value(cfe_bmi_model, "SOIL_STORAGE_CHANGE", storage_change_ptr);
 
-  coupler_bmi.SetValue("soil__storage",storage_ptr);
-  coupler_bmi.SetValue("soil__storage_change",storage_change_ptr);
-  coupler_bmi.GetValue("soil__smc_profile_option_bmi",smc_option_bmi_ptr);
+  coupler_bmi.SetValue("soil_storage",storage_ptr);
+  coupler_bmi.SetValue("soil_storage_change",storage_change_ptr);
+  coupler_bmi.GetValue("soil_moisture_profile_option_bmi",smc_option_bmi_ptr);
 
   if (smc_option_bmi == Constant)
     coupler_bmi.Update();
   else if (smc_option_bmi == Linear) {
     double smc_layers[] = {0.25, 0.15, 0.1, 0.12};
-      coupler_bmi.SetValue("soil__moisture_content_layered",&smc_layers[0]);
+      coupler_bmi.SetValue("soil_moisture_layered",&smc_layers[0]);
       coupler_bmi.Update();
   }
   double *smct = new double[n_soil_layers + 1];
-  coupler_bmi.GetValue("soil__moisture_content_total",&smct[1]);
+  coupler_bmi.GetValue("soil_moisture_profile",&smct[1]);
   cfe_bmi_model->set_value(cfe_bmi_model, "soil_moisture_profile", &smct[0]);
 
 }
@@ -165,7 +165,7 @@ int
   printf("allocating memory to store entire BMI structure for PET\n");
   Bmi *pet_bmi_model = (Bmi *) malloc(sizeof(Bmi));
 
-  BmiCoupler coupler_bmi;
+  BmiSoilMoistureProfile coupler_bmi;
   
   /************************************************************************
       Registering the BMI model for CFE and AORC
