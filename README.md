@@ -1,6 +1,7 @@
 # Conceptual Functional Equivalent (CFE) Model
-<<<<<<< HEAD
-This model is designed to be a simplified (conceptual) model of the National Water Model, which is functionally equivalent.  CFE is a model written by Fred Ogden and was not originally BMI compatible.  To see the original author code, please refer to the `original_author_code` directory.  For more information on the hypotheses and ideas underpinning the CFE model, see the [T-shirt Approximation of the National Water Model versions 1.2, 2.0, and 2.1](https://github.com/NOAA-OWP/cfe/edit/AET_rootzone/README.md#t-shirt-approximation-of-the-national-water-model-versions-12-20-and-21) section.  The remainder of this document discusses the BMI enabled and expanded CFE model. 
+
+This model is designed to be a simplified (conceptual) model of the National Water Model, which is functionally equivalent.  CFE is a model written by Fred Ogden and was not originally BMI compatible.  To see the original author code, please refer to the `original_author_code` directory.  For more information on the hypotheses and ideas underpinning the CFE model, see the [T-shirt Approximation of the National Water Model versions 1.2, 2.0, and 2.1](https://github.com/NOAA-OWP/cfe/edit/AET_rootzone/README.md#t-shirt-approximation-of-the-national-water-model-versions-12-20-and-21) section of this document.  The remainder of this document discusses the BMI enabled and expanded CFE model. 
+
 
 There are multiple ways to run CFE:
 
@@ -113,13 +114,12 @@ The Soil Freeze-Thaw (SFT) model is a standalone model.  For detailed informatio
     * `ice_fraction` : (type boolean) if coupled this parameter needs to be `true` (options: True, true, 1). 
     * `ice_content_threshold` : (type double, unit m), must be specified when `ice_fraction=1`.
   
-<<<<<<< HEAD
 **Note:** See SFT-enabled sample configuration file [here](./configs/cat_87_bmi_config_cfe.txt). By defualt `ice fraction` is zero, and these changes do not effect the basic functionality of cfe when uncoupled.
  
 
 # The CFE was based on the t-shirt approximation of the National Water Model
 # t-shirt approximation of the hydrologic routing functionality of the National Water Model v 1.2, 2.0, and 2.1
->>>>>>> 648bc99 (ajk/cfe icefraction (#49))
+
 This code was developed to test the hypothesis that the National Water Model runoff generation, vadose zone
 dynamics, and conceptual groundwater model can be greatly simplified by acknowledging that it is truly a 
 conceptual model.
