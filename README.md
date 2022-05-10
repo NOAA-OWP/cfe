@@ -1,64 +1,47 @@
-# Conceptual Functional Equivalent Model
-This model is designed to be a simplified (conceptual) model of the National Water Model, which is functionally equivalent.
+# Conceptual Functional Equivalent (CFE) Model
+This model is designed to be a simplified (conceptual) model of the National Water Model, which is functionally equivalent.  CFE is a model written by Fred Ogden and was not originally BMI compatible.  To see the original author code, please refer to the `original_author_code` directory.  For more information on the hypotheses and ideas underpinning the CFE model, see the [T-shirt Approximation of the National Water Model versions 1.2, 2.0, and 2.1](https://github.com/NOAA-OWP/cfe/edit/AET_rootzone/README.md#t-shirt-approximation-of-the-national-water-model-versions-12-20-and-21) section.  The remainder of this document discusses the BMI enabled and expanded CFE model. 
 
-# CFE was written by Fred Ogden, and this repository includes a Basic Model Interface (BMI) to run the CFE
-There are actually multiple ways to run the CFE.
-1. As written by the original  author. This includes a full program to read and process atmospheric forcing data, print the model output and check for mass balance closure. This code can be run from the `original_author_code` directory.
-2. Through the BMI commands. This method will be used by the Next Generation U.S. National Water Model (Nextgen NWM). The `make_and_run_bmi.sh` script in the main directory does that for you through a main run file in the `./src` directory.
+# Running CFE
+This version of CFE is coupled to the [Soil Moisture Profiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) module which is used to estimate actual evapotranspiration (AET) from the deepest rootzone layer.  Therefore, you will need both repos to run the CFE model.  To run CFE:
 
+````
+git clone https://github.com/NOAA-OWP/cfe.git
+cd cfe
+git checkout AET_rootzone
+git clone https://github.com/NOAA-OWP/SoilMoistureProfiles.git smc_coupler
+mkdir build && cd build
+cmake ../
+make
+cd ..
+build/cfe_smp ./configs/laramie_bmi_config_cfe_pass.txt ./configs/laramie_bmi_config_aorc.txt ./configs/laramie_bmi_config_pet_pass.txt ./configs/laramie_bmi_config_smc_coupler.txt
+````
+
+**NOTE:** the configuration files must be passed in this order: (1) the CFE configuration file, (2) the forcing configuration file, (3) the potential evapotranspiration (PET) configuration file, and (4) the soil moisture profile configuration file
+
+# Options in CFE
 ## Direct runoff 
 The user has the option to pick a particular direct runoff (aka surface partitioning) method:
 1. Schaake function (configuration: `surface_partitioning_scheme=Schaake`)
-2. XinanJiang function (configuration: `surface_partitioning_scheme=Xinanjiang`). When using this runoff method the user must also include three parameters.
-### If XinanJiang is choosen these parameters need to be included in the configuration file:
+2. Xinanjiang function (configuration: `surface_partitioning_scheme=Xinanjiang`). When using this runoff method the user must also include three parameters.
+
+If the **Xinanjiang** scheme is choosen, three parameters need to be included in the configuration file:
 1. a_Xinanjiang_inflection_point_parameter
 2. b_Xinanjiang_shape_parameter
 3. x_Xinanjiang_shape_parameter 
 
-## Running CFE coupled with soil freeze-thaw model (SFT)
-1. SFT model provides `ice fraction` to cfe runoff schemes (Schaake `ice_fraction_schaake` and XinanJiang `ice_fraction_xinan`)
-2. If runoff scheme is XinanJiang, no additional parameters are needed in the cfe config files. The framework will pass the parameter `ice_fraction_xina` to cfe.
-3. If runoff scheme is Schaake, 
-  * `ice_fraction` : (type boolean) if coupled this parameter needs to be `true` (options: True, true, 1). 
-  * `ice_content_threshold` : (type double, unit m), must be specified when `ice_fraction=1`.
+## Soil freeze-thaw model (SFT)
+The Soil Freeze-Thaw (SFT) model is a standalone model.  For detailed information please refer to the [SFT repo](https://github.com/NOAA-OWP/SoilFreezeThaw).  A few things to note when coupling SFT to CFE:
+1. SFT model provides `ice fraction` to CFE runoff schemes (Schaake `ice_fraction_schaake` and Xinanjiang `ice_fraction_xinan`)
+2. If the runoff scheme is Xinanjiang, no additional parameters are needed in the CFE config files. The framework will pass the parameter `ice_fraction_xina` to CFE.
+3. If the runoff scheme is Schaake, the CFE config file will need additional parameters, namely:
+    * `ice_fraction` : (type boolean) if coupled this parameter needs to be `true` (options: True, true, 1). 
+    * `ice_content_threshold` : (type double, unit m), must be specified when `ice_fraction=1`.
   
-**Note:** See SFT-enabled sample configuration file [here](./configs/cat_87_bmi_config_cfe.txt). By defualt `ice fraction` is zero, and these changes do not effect the basic functionality of cfe when uncoupled.
- 
-# Compiling this code to run examples with a "pseudo" or "mini" framework.
-## Read local forcing file
-The BMI functionality was developed as a standalone module in C. To compile this code the developer used these steps:
-1. `module load gnu/10.1.0`
-2. `gcc -lm ./src/main.c ./src/cfe.c ./src/bmi_cfe.c -o run_bmi_cfe`
-This should generate an executable called **run_cfe_bmi**. To run this executable you must pass the path to the corresponding configuration file: `./run_bmi_cfe ./configs/cat_58_bmi_config_cfe.txt`  
-Included in this repository is an environment file (env_cheyenne.sh), and a "make and run" file (make_and_run_bmi.sh), which will compile the code and run an example. If you are on the Cheyenne computer, or if you can modify these files to your machine, you can simply follow these two steps to run this code:
-1. `source env_cheyenne.sh`
-2. `./make_and_run_bmi.sh`
-
-## CFE Model gets forcings passed from BMI
-The CFE was designed to read its own forcing file, but we have added an option to get forcings passed in through BMI. To test this functionality we need to also include the AORC BMI model when compiling. The steps are very similar to the example above, but with just adding two additional src files, which come from the AORC BMI Module in the `forcing_code` directory.  
-1. `module load gnu/10.1.0`
-2. `gcc -lm ./src/main_pass_forcings.c ./src/cfe.c ./src/bmi_cfe.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c  -o run_cfe_bmi_pass_forcings`  
-This should generate an executable called **run_cfe_bmi_pass_forcings**. To run this executable you must pass the path to the corresponding configuration files for **BOTH** CFE and AORC (in that order): `./run_cfe_bmi_pass_forcings ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt`
-
-## CFE Model gets forcings AND Potential Evapotranspiration passed from BMI
-The CFE has functionality to remove mass through evapotranspiration (directly from precipitation and from soil using the Bydukko function). The steps to test this functionality are very similar to the example above, but with just adding two additional src files, which come from the AORC BMI Module in the `forcing_code` directory.  
-1. `module load gnu/10.1.0`
-2. `gcc -lm ./src/main_cfe_aorc_pet.c ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c ./src/cfe.c ./src/bmi_cfe.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c -o run_cfe_aorc_et_bmi`  
-This should generate an executable called **run_cfe_bmi_pass_forcings**. To run this executable you must pass the path to the corresponding configuration files for **ALL** CFE, PET and AORC (in that order): `./run_cfe_aorc_et_bmi ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt ./configs/cat_89_bmi_config_pet_pass.txt`
-
-# Run CFE BMI in stand alone, independent of a framework
-make clean  
-make (the resulting executable is moved to parent directory in the Makefile script)  
-cd ..  
-./run_cfe_bmi ./configs/cat_89_bmi_config_cfe.txt  
+**Note:** See SFT-enabled sample configuration file [here](./configs/cat_87_bmi_config_cfe.txt). By defualt `ice fraction` is zero, and these changes do not effect the basic functionality of CFE when uncoupled.  
 
 
-# The CFE was based on the t-shirt approximation of the National Water Model
-# t-shirt approximation of the hydrologic routing functionality of the National Water Model v 1.2, 2.0, and 2.1
-This code was developed to test the hypothesis that the National Water Model runoff generation, vadose zone
-dynamics, and conceptual groundwater model can be greatly simplified by acknowledging that it is truly a 
-conceptual model. The hypothesis is supported by a number of observations made during a 2017-2018 deep dive
-into the NWM code. These are:
+# T-shirt Approximation of the National Water Model versions 1.2, 2.0, and 2.1
+The CFE code is based on the "t-shirt" approximation of the National Water Model (versions 1.2, 2.0, and 2.1).  The t-shirt approximation was developed to test the hypothesis that the National Water Model runoff generation, vadose zone dynamics, and conceptual groundwater model can be greatly simplified by acknowledging that it is truly a conceptual model. The hypothesis is supported by a number of observations made during a 2017-2018 deep dive into the NWM code. These are:
 1. Rainfall/throughfall/melt partitioning in the NWM is based on a simple curve-number like approach that was developed by Schaake et al. (1996) and which is very similar to the Probability Distributed Moisture (PDM) function by Moore, 1985.   The Schaake function is a single valued function of soil moisture deficit, predicts 100% runoff when the soil is saturated, like the curve-number method, and is fundamentally simple.
 2. Run-on infiltration is strictly not calculated.  Overland flow routing applies the Schaake function repeatedly to predict this phenomenon, which violates the underlying assumption of the PDM method that only rainfall  inputs affect soil moisture.
 3. The water-content based Richards' equation, applied using a coarse-discretization, can be replaced with a simple conceptual reservoir because it never allows saturation or infiltration-excess runoff unless deactivated by assuming no-flow lower boundary condition.  Since this form of Richards' equation cannot simulate heterogeneous soil layers, it can be replaced with a conceptual reservoir.
@@ -71,4 +54,4 @@ This code implements these assumptions using pure conceptualizations.  The formu
 4. The lateral flow is routed to the catchment outlet using a Nash-cascade of reservoirs to produce a mass-conserving delayed response, and eliminates the need for the 250 m lateral flow routing grid.
 5. The groundwater contribution to base flow is modeled using either (a) an exponential nonlinear reservoir identical to the one in the NWM formulation, or (b) a nonlinear reservoir forumulation, which can also be made linear by assuming an exponent value equal to 1.0.
 
-**This code was written entirely by Fred L. Ogden, May 22-24, 2020, in the service of the NOAA-NWS Office of Water Prediction, in Tuscaloosa, Alabama.**
+**The original author code was written entirely by Fred L. Ogden, May 22-24, 2020, in the service of the NOAA-NWS Office of Water Prediction, in Tuscaloosa, Alabama.**
