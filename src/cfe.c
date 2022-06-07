@@ -109,7 +109,7 @@ extern void cfe(
       {
 	Schaake_partitioning_scheme(timestep_h, soil_reservoir_struct->storage_threshold_primary_m,
 				    direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type,soil_reservoir_storage_deficit_m,
-				    timestep_rainfall_input_m,NWM_soil_params_struct.smcmax,&direct_output_runoff_m,&infiltration_depth_m,
+				    timestep_rainfall_input_m,NWM_soil_params_struct.smcmax,NWM_soil_params_struct.D,&direct_output_runoff_m,&infiltration_depth_m,
 				    soil_reservoir_struct->ice_fraction_schaake,direct_runoff_params_struct.ice_content_threshold);
       }
     else if (direct_runoff_params_struct.surface_partitioning_scheme == Xinanjiang)
@@ -427,7 +427,7 @@ return;
 //##############################################################
 void Schaake_partitioning_scheme(double timestep_h, double field_capacity_m, double Schaake_adjusted_magic_constant_by_soil_type, 
 				 double column_total_soil_moisture_deficit_m,
-				 double water_input_depth_m, double smcmax, double *surface_runoff_depth_m,
+				 double water_input_depth_m, double smcmax, double soil_depth, double *surface_runoff_depth_m,
 				 double *infiltration_depth_m, double ice_fraction_schaake, double ice_content_threshold)
 {
 
@@ -514,7 +514,8 @@ else
  
  if (ice_fraction_schaake > 1.0E-2) {
    int cv_frz = 3; // should this be moved to config file as well, probably not.
-   double frz_fact = smcmax/field_capacity_m * (0.412 / 0.468);
+   double field_capacity = field_capacity_m/soil_depth; // divide by the reservior depth to get SMCREF [m/m] (unitless)
+   double frz_fact = smcmax/field_capacity * (0.412 / 0.468); 
    double frzx = ice_content_threshold * frz_fact;
 
    double acrt = cv_frz * frzx / ice_fraction_schaake;
@@ -534,7 +535,7 @@ else
  *infiltration_depth_m = factor * (*infiltration_depth_m);
  
  *surface_runoff_depth_m = water_input_depth_m - (*infiltration_depth_m);
- 
+
 return;
 }
 
@@ -613,10 +614,9 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
   // from freeze-thaw model) using a weighted average. 
   impervious_fraction = (parms->urban_decimal_fraction * 0.95) + 
 			((1 - parms->urban_decimal_fraction) * ice_fraction_xinan);
-  
+
   // Calculate the impervious runoff (see eq. 309 from Knoben et al).
   impervious_runoff_m = impervious_fraction * water_input_depth_m;
-
   // Calculate total estimated pervious runoff.
   if ((tension_water_m/max_tension_water_m) <= (0.5 - parms->a_Xinanjiang_inflection_point_parameter)) {
     pervious_runoff_m = (1 - impervious_fraction) * water_input_depth_m * 
