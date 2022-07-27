@@ -586,7 +586,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             continue;
         }
         if (strcmp(param_key, "gw_storage") == 0) {
-            model->gw_reservoir.storage_m = strtod(param_value, NULL);
+            model->gw_reservoir.storage_m = strtod(param_value, NULL) * model->gw_reservoir.storage_max_m; //edited by RLM to fix units from [m/m] to [m]
             is_gw_storage_set = TRUE;
             // Check if units are present and print warning if missing from config file
             if ((param_units == NULL) || (strlen(param_units) < 1)) {
@@ -2665,7 +2665,7 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, doub
 
     // Negative amounts are always ignored and just considered emtpy
     if (storage < 0.0) storage = 0.0;
-    cfe_ptr->soil_reservoir.storage_m = storage;
+    cfe_ptr->soil_reservoir.storage_m = storage * cfe_ptr->NWM_soil_params.smcmax * cfe_ptr->NWM_soil_params.D; //edited by RLM to fix units from [m/m] to [m] in storage_m
 
     //cfe_ptr->soil_reservoir.storage_m = init_reservoir_storage(is_storage_ratios, storage, max_storage);
 }
