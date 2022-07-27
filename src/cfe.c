@@ -73,7 +73,6 @@ extern void cfe(
   //##################################################
   // partition rainfall using Schaake function
   //##################################################
-
   
 
   evap_struct->potential_et_m_per_timestep = evap_struct->potential_et_m_per_s * time_step_size;
@@ -97,7 +96,8 @@ extern void cfe(
   evap_struct->actual_et_m_per_timestep=evap_struct->actual_et_from_rain_m_per_timestep+evap_struct->actual_et_from_soil_m_per_timestep;
   // LKC: This needs to be calcualted here after et_from_soil since soil_reservoir_struct->storage_m changes
   soil_reservoir_storage_deficit_m=(NWM_soil_params_struct.smcmax*NWM_soil_params_struct.D-soil_reservoir_struct->storage_m);
-  
+
+ 
   // NEW FLO
   if(0.0 < timestep_rainfall_input_m) 
     {
@@ -556,36 +556,43 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
   max_free_water_m = max_soil_moisture_storage_m - field_capacity_m;
   max_tension_water_m = field_capacity_m;
 
-  // check that the free_water_m and tension_water_m do not exceed the maximum and if so, change to the max value
-  if(max_free_water_m < free_water_m) free_water_m = max_free_water_m;
-  if(max_tension_water_m < tension_water_m) tension_water_m = max_tension_water_m;
+  if (max_free_water_m <= 0 || max_tension_water_m <=0) { //edited by RLM; added logic block to handle parameter values of zero.
+      *surface_runoff_depth_m = 0.95 * water_input_depth_m;
+     
+  } else {
 
-  // NOTE: the impervious surface runoff assumptions due to frozen soil used in NWM 3.0 have not been included.
-  // We are assuming an impervious area due to frozen soils equal to 0 (see eq. 309 from Knoben et al).
+      // check that the free_water_m and tension_water_m do not exceed the maximum and if so, change to the max value
+      if(max_free_water_m < free_water_m) free_water_m = max_free_water_m;
+      if(max_tension_water_m < tension_water_m) tension_water_m = max_tension_water_m;
 
-  // The total (pervious) runoff is first estimated before partitioning into surface and subsurface components.
-  // See Knoben et al eq 310 for total runoff and eqs 313-315 for partitioning between surface and subsurface
-  // components.
+      // NOTE: the impervious surface runoff assumptions due to frozen soil used in NWM 3.0 have not been included.
+      // We are assuming an impervious area due to frozen soils equal to 0 (see eq. 309 from Knoben et al).
 
-  // Calculate total estimated pervious runoff. 
-  // NOTE: If the impervious surface runoff due to frozen soils is added,
-  // the pervious_runoff_m equation will need to be adjusted by the fraction of pervious area.
-  if ((tension_water_m/max_tension_water_m) <= (0.5 - parms->a_Xinanjiang_inflection_point_parameter)) {
-      pervious_runoff_m = water_input_depth_m * (pow((0.5 - parms->a_Xinanjiang_inflection_point_parameter), 
+      // The total (pervious) runoff is first estimated before partitioning into surface and subsurface components.
+      // See Knoben et al eq 310 for total runoff and eqs 313-315 for partitioning between surface and subsurface
+      // components.
+
+      // Calculate total estimated pervious runoff. 
+      // NOTE: If the impervious surface runoff due to frozen soils is added,
+      // the pervious_runoff_m equation will need to be adjusted by the fraction of pervious area.
+      if ((tension_water_m/max_tension_water_m) <= (0.5 - parms->a_Xinanjiang_inflection_point_parameter)) {
+          pervious_runoff_m = water_input_depth_m * (pow((0.5 - parms->a_Xinanjiang_inflection_point_parameter), 
                                                      (1.0 - parms->b_Xinanjiang_shape_parameter)) *
                                                  pow((1.0 - (tension_water_m/max_tension_water_m)),
                                                      parms->b_Xinanjiang_shape_parameter));
 
-  } else {
-      pervious_runoff_m = water_input_depth_m * (1.0 - pow((0.5 + parms->a_Xinanjiang_inflection_point_parameter), 
+      } else {
+          pervious_runoff_m = water_input_depth_m * (1.0 - pow((0.5 + parms->a_Xinanjiang_inflection_point_parameter), 
                                                          (1.0 - parms->b_Xinanjiang_shape_parameter)) * 
                                                      pow((1.0 - (tension_water_m/max_tension_water_m)),
                                                          (parms->b_Xinanjiang_shape_parameter)));
+      }
+      // Separate the surface water from the pervious runoff 
+      // NOTE: If impervious runoff is added to this subroutine, impervious runoff should be added to
+      // the surface_runoff_depth_m.
+      *surface_runoff_depth_m = pervious_runoff_m * (1.0 - pow((1.0 - (free_water_m/max_free_water_m)),parms->x_Xinanjiang_shape_parameter));
   }
-  // Separate the surface water from the pervious runoff 
-  // NOTE: If impervious runoff is added to this subroutine, impervious runoff should be added to
-  // the surface_runoff_depth_m.
-  *surface_runoff_depth_m = pervious_runoff_m * (1.0 - pow((1.0 - (free_water_m/max_free_water_m)),parms->x_Xinanjiang_shape_parameter));
+
 
   // The surface runoff depth is bounded by a minimum of 0 and a maximum of the water input depth.
   // Check that the estimated surface runoff is not less than 0.0 and if so, change the value to 0.0.
