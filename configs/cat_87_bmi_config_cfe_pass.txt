@@ -11,15 +11,9 @@ soil_params.expon_secondary=1.0[]
 max_gw_storage=0.25[m]
 Cgw=1.8e-05[m h-1]
 expon=6.0[]
-
-# gw_storage is the ground water as a decimal fraction of the maximum groundwater storage (max_gw_storage) for the initial timestep
 gw_storage=0.125[m/m]
-
 alpha_fc=0.33[]
-
-# soil_storage is the water in the soil as a decimal fraction of maximum soil water storage (smcmax * depth) for the initial timestep
 soil_storage=0.585626[m/m]
-
 K_nash=0.03[]
 K_lf=0.01[]
 nash_storage=0.0,0.0

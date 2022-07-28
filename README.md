@@ -31,9 +31,9 @@ A [configs/](./configs/) directory contains primiary configuration text files fo
 | max_gw_storage | *double* |   |  meters [m] | parameter_adjustable |  | maximum storage in the conceptual reservoir |
 | Cgw | *double* |   |  meters/hour [m h-1] | parameter_adjustable |  | the primary outlet coefficient |
 | expon | *double* |   |   | parameter_adjustable |  | exponent parameter (1.0 for linear reservoir) |
-| gw_storage | *double* |   |  meters/meters [m/m] | parameter_adjustable |  | initial condition for groundwater reservoir |
+| gw_storage | *double* |   |  meters/meters [m/m] | parameter_adjustable |  | initial condition for groundwater reservoir - it is the ground water as a decimal fraction of the maximum groundwater storage (max_gw_storage) for the initial timestep |
 | alpha_fc | *double* |   |   | parameter_adjustable |  | field capacity |
-| soil_storage| *double* |   | meters/meters [m/m] | parameter_adjustable |  | initial condition for soil reservoir  |
+| soil_storage| *double* |   | meters/meters [m/m] | parameter_adjustable |  | initial condition for soil reservoir - it is the water in the soil as a decimal fraction of maximum soil water storage (smcmax * depth) for the initial timestep |
 | K_nash | *int* |   |   | parameter_adjustable |   | number of Nash lf reservoirs (optional, defaults to 2, ignored if storage values present)  |
 | K_lf | *double* |   |   | parameter_adjustable |  | Nash Config param - primary reservoir  |
 | nash_storage | *double* |   |   | parameter_adjustable |  | Nash Config param - secondary reservoir   |
