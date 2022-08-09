@@ -2,7 +2,7 @@
     "forcing_file":"./cat58_01Dec2015.csv",
     "catchment_area_km2":15.617167355002097,
     "alpha_fc":0.33,
-    "scheme":"Schaake",
+    "scheme":"Xinanjiang",
     "soil_params":{
                    "depth":2.0,
                    "bb":4.05,

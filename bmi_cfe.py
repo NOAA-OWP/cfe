@@ -56,8 +56,8 @@ class BMI_CFE():
         #     since the input variable names could come from any forcing...
         #------------------------------------------------------
         self._var_name_units_map = {
-                                'land_surface_water__runoff_volume_flux':['streamflow_cfs','ft3 s-1'],
-                                'land_surface_water__runoff_depth':['total_discharge','m'],
+                                'land_surface_water__runoff_volume_flux':['streamflow_cms','m3 s-1'],
+                                'land_surface_water__runoff_depth':['total_discharge','m s-1'],
                                 #--------------   Dynamic inputs --------------------------------
                                 'atmosphere_water__time_integral_of_precipitation_mass_flux':['timestep_rainfall_input_m','kg m-2'],
                                 'water_potential_evaporation_flux':['potential_et_m_per_s','m s-1'],
@@ -184,7 +184,7 @@ class BMI_CFE():
         # ________________________________________________
         # Subsurface reservoirs
         self.gw_reservoir = {'is_exponential':True,
-                              'storage_max_m':1.0,
+                              'storage_max_m':self.max_gw_storage,
                               'coeff_primary':self.gw_coeff_primary,
                               'exponent_primary':self.gw_exponent_primary,
                               'storage_threshold_primary_m':0.0,
@@ -196,8 +196,9 @@ class BMI_CFE():
         self.vol_in_gw_start           = self.gw_reservoir['storage_m']
 
         self.soil_reservoir = {'is_exponential':False,
+                               'wilting_point_m':self.soil_params['wltsmc'] * self.soil_params['D'],
                                'storage_max_m':self.soil_params['smcmax'] * self.soil_params['D'],
-                               'coeff_primary':self.soil_params['satdk'] * self.soil_params['slop'] * 3600.0,
+                               'coeff_primary':self.soil_params['satdk'] * self.soil_params['slop'] * self.time_step_size,
                                'exponent_primary':self.soil_params['exponent_primary'],
                                'storage_threshold_primary_m':self.soil_params['smcmax'] * storage_thresh_pow_term*
                                                              (upper_lim-lower_lim),
@@ -267,6 +268,8 @@ class BMI_CFE():
     # Mass balance tracking
     def reset_volume_tracking(self):
         self.volstart             = 0
+        self.vol_et_from_soil     = 0
+        self.vol_et_from_rain     = 0
         self.vol_sch_runoff       = 0
         self.vol_sch_infilt       = 0
         self.vol_out_giuh         = 0
@@ -324,6 +327,7 @@ class BMI_CFE():
         self.gw_exponent_primary   = data_loaded['gw_exponent_primary']
         self.gw_coeff_secondary    = data_loaded['gw_coeff_secondary']
         self.gw_exponent_secondary = data_loaded['gw_exponent_secondary']
+        self.surface_partitioning_scheme= data_loaded['scheme']
 
         # OPTIONAL CONFIGURATIONS
         if 'stand_alone' in data_loaded.keys():
@@ -351,10 +355,10 @@ class BMI_CFE():
         self.vol_soil_end = self.soil_reservoir['storage_m']
         
         self.global_residual  = self.volstart + self.volin - self.volout - self.volend -self.vol_end_giuh
-        self.schaake_residual = self.volin - self.vol_sch_runoff - self.vol_sch_infilt
+        self.schaake_residual = self.volin - self.vol_sch_runoff - self.vol_sch_infilt - self.vol_et_from_rain
         self.giuh_residual    = self.vol_sch_runoff - self.vol_out_giuh - self.vol_end_giuh
         self.soil_residual    = self.vol_soil_start + self.vol_sch_infilt - \
-                                self.vol_soil_to_lat_flow - self.vol_soil_end - self.vol_to_gw
+                                self.vol_soil_to_lat_flow - self.vol_soil_end - self.vol_to_gw - self.vol_et_from_soil
         self.nash_residual    = self.vol_in_nash - self.vol_out_nash - self.vol_in_nash_end
         self.gw_residual      = self.vol_in_gw_start + self.vol_to_gw - self.vol_from_gw - self.vol_in_gw_end
         if verbose:            
@@ -454,11 +458,11 @@ class BMI_CFE():
     #------------------------------------------------------------ 
     def scale_output(self):
             
-        self.surface_runoff_m = self.total_discharge
-        self._values['land_surface_water__runoff_depth'] = self.surface_runoff_m/1000
-        self.streamflow_cms = self._values['land_surface_water__runoff_depth'] * self.output_factor_cms
+        self.surface_runoff_m = self.flux_Qout_m
+        self._values['land_surface_water__runoff_depth'] = self.surface_runoff_m
+        self.streamflow_cms = self.total_discharge
 
-        self._values['land_surface_water__runoff_volume_flux'] = self.streamflow_cms * (1/35.314)
+        self._values['land_surface_water__runoff_volume_flux'] = self.streamflow_cms
 
         self._values["DIRECT_RUNOFF"] = self.surface_runoff_depth_m
         self._values["GIUH_RUNOFF"] = self.flux_giuh_runoff_m
