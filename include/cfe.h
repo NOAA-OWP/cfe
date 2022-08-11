@@ -8,6 +8,8 @@
 #include <string.h>
 #include <assert.h>
 
+#include "giuh.h"
+
 #define TRUE 1
 #define FALSE 0
 #define MAX_NUM_GIUH_ORDINATES 10

@@ -77,7 +77,6 @@ extern void cfe(
   //##################################################
   // partition rainfall using Schaake function
   //##################################################
-
   
 
   evap_struct->potential_et_m_per_timestep = evap_struct->potential_et_m_per_s * time_step_size;
@@ -101,7 +100,8 @@ extern void cfe(
   evap_struct->actual_et_m_per_timestep=evap_struct->actual_et_from_rain_m_per_timestep+evap_struct->actual_et_from_soil_m_per_timestep;
   // LKC: This needs to be calcualted here after et_from_soil since soil_reservoir_struct->storage_m changes
   soil_reservoir_storage_deficit_m=(NWM_soil_params_struct.smcmax*NWM_soil_params_struct.D-soil_reservoir_struct->storage_m);
-  
+
+ 
   // NEW FLO
   if(0.0 < timestep_rainfall_input_m) 
     {
@@ -239,7 +239,7 @@ extern void cfe(
 
   /* xinanjiang_dev
   giuh_runoff_m = convolution_integral(Schaake_output_runoff_m,num_giuh_ordinates,    */
-  giuh_runoff_m = convolution_integral(direct_output_runoff_m,num_giuh_ordinates,
+  giuh_runoff_m = giuh_convolution_integral(direct_output_runoff_m,num_giuh_ordinates,
                                        giuh_ordinates_arr,runoff_queue_m_per_timestep_arr);
   massbal_struct->vol_out_giuh+=giuh_runoff_m;
 
@@ -315,36 +315,6 @@ return (outflow_m);
 
 }
 
-//##############################################################
-//############### GIUH CONVOLUTION INTEGRAL   ##################
-//##############################################################
-extern double convolution_integral(double runoff_m,int num_giuh_ordinates, 
-                                   double *giuh_ordinates, double *runoff_queue_m_per_timestep)
-{
-//##############################################################
-// This function solves the convolution integral involving N
-//  GIUH ordinates.
-//##############################################################
-double runoff_m_now;
-int N,i;
-
-N=num_giuh_ordinates;
-runoff_queue_m_per_timestep[N]=0.0;
-
-for(i=0;i<N;i++)
-  {
-  runoff_queue_m_per_timestep[i]+=giuh_ordinates[i]*runoff_m;
-  }
-runoff_m_now=runoff_queue_m_per_timestep[0];
-
-for(i=1;i<N;i++)  // shift all the entries in preperation ffor the next timestep
-  {
-  runoff_queue_m_per_timestep[i-1]=runoff_queue_m_per_timestep[i];
-  }
-runoff_queue_m_per_timestep[N-1]=0.0;
-
-return(runoff_m_now);
-}
 
 //##############################################################
 //########## SINGLE OUTLET EXPONENTIAL RESERVOIR ###############
@@ -605,9 +575,14 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
   max_free_water_m = max_soil_moisture_storage_m - field_capacity_m;
   max_tension_water_m = field_capacity_m;
 
-  // check that the free_water_m and tension_water_m do not exceed the maximum and if so, change to the max value
-  if(max_free_water_m < free_water_m) free_water_m = max_free_water_m;
-  if(max_tension_water_m < tension_water_m) tension_water_m = max_tension_water_m;
+  if (max_free_water_m <= 0 || max_tension_water_m <=0) { //edited by RLM; added logic block to handle parameter values of zero.
+      *surface_runoff_depth_m = 0.95 * water_input_depth_m;
+     
+  } else {
+
+      // check that the free_water_m and tension_water_m do not exceed the maximum and if so, change to the max value
+      if(max_free_water_m < free_water_m) free_water_m = max_free_water_m;
+      if(max_tension_water_m < tension_water_m) tension_water_m = max_tension_water_m;
 
    // estimate the fraction of the modeled area that is impervious (impervious_fraction) based on 
   // urban classification (hard coded 95% [0.95] impervious) and frozen soils (passed to cfe 
@@ -631,6 +606,11 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
                                                          (1.0 - parms->b_Xinanjiang_shape_parameter)) * 
                                                      pow((1.0 - (tension_water_m/max_tension_water_m)),
                                                          (parms->b_Xinanjiang_shape_parameter)));
+      }
+      // Separate the surface water from the pervious runoff 
+      // NOTE: If impervious runoff is added to this subroutine, impervious runoff should be added to
+      // the surface_runoff_depth_m.
+      *surface_runoff_depth_m = pervious_runoff_m * (1.0 - pow((1.0 - (free_water_m/max_free_water_m)),parms->x_Xinanjiang_shape_parameter));
   }
 
   // Separate the surface water from the pervious runoff 
