@@ -30,7 +30,7 @@ endif()
 
 message("generated exe = ${exe_name}")
 # set the project name
-project(cfe_smp)
+project(cfe)
 
 set(CMAKE_BUILD_TYPE Debug)
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
@@ -46,7 +46,6 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
 # add the executable
 
 ## cfe + aorc + pet + smp
-
 if(AETROOTZONE)
 add_executable(${exe_name} ./src/main_cfe_aorc_pet_rz_aet.cxx ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c)
 
@@ -63,9 +62,6 @@ if(AETROOTZONE)
 target_link_libraries(${exe_name} LINK_PUBLIC cfelib)
 endif()
 target_link_libraries(${exe_name} PRIVATE m)
-
-
-
 
 
 unset(BASE CACHE)

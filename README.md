@@ -91,6 +91,28 @@ CFE can remove mass from the modeled system through evapotranspiration (directly
 
 The user has the option to pick a particular direct runoff (aka surface partitioning) method:
 
+
+# Running CFE (this part needs to be udpated after mering - AJ)
+This version of CFE is coupled to the [Soil Moisture Profiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) module which is used to estimate actual evapotranspiration (AET) from the deepest rootzone layer.  Therefore, you will need both repos to run the CFE model.  To run CFE:
+
+````
+git clone https://github.com/NOAA-OWP/cfe.git
+cd cfe
+git checkout AET_rootzone
+git clone https://github.com/NOAA-OWP/SoilMoistureProfiles.git smc_coupler
+mkdir build && cd build
+cmake ../
+make
+cd ..
+build/cfe_smp ./configs/laramie_bmi_config_cfe_pass.txt ./configs/laramie_bmi_config_aorc.txt ./configs/laramie_bmi_config_pet_pass.txt ./configs/laramie_bmi_config_smc_coupler.txt
+````
+
+**NOTE:** the configuration files must be passed in this order: (1) the CFE configuration file, (2) the forcing configuration file, (3) the potential evapotranspiration (PET) configuration file, and (4) the soil moisture profile configuration file
+
+# Options in CFE
+## Direct runoff 
+The user has the option to pick a particular direct runoff (aka surface partitioning) method:
+
 1. Schaake function (configuration: `surface_partitioning_scheme=Schaake`)
 2. Xinanjiang function (configuration: `surface_partitioning_scheme=Xinanjiang`). When using this runoff method the user must also include three parameters.
 
@@ -100,7 +122,7 @@ If the **Xinanjiang** scheme is choosen, three parameters need to be included in
 3. x_Xinanjiang_shape_parameter 
 
 ## Rootzone-based Actual Evapotranspiration (AET)
-The user has the option to turn ON and OFF rootzone-based AET, default option if OFF. To turn it ON, the following parameters need to be included in the configuration file.
+The user has the option to turn ON and OFF rootzone-based AET, default option is OFF. To turn it ON, the following parameters need to be included in the configuration file.
 1. aet_rootzone=true
 2. soil_layer_depths=0.1,0.4,1.0,2.0 (this is just an example)
 3. max_root_zone_layer=2
@@ -132,4 +154,3 @@ This code implements these assumptions using pure conceptualizations.  The formu
 5. The groundwater contribution to base flow is modeled using either (a) an exponential nonlinear reservoir identical to the one in the NWM formulation, or (b) a nonlinear reservoir forumulation, which can also be made linear by assuming an exponent value equal to 1.0.
 
 **The original author code was written entirely by Fred L. Ogden, May 22-24, 2020, in the service of the NOAA-NWS Office of Water Prediction, in Tuscaloosa, Alabama.**
->>>>>>> 443ccd4 (Update README.md)

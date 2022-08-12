@@ -12,7 +12,7 @@
 
 #define CFE_DEGUG 0
 
-#define INPUT_VAR_NAME_COUNT 4
+#define INPUT_VAR_NAME_COUNT 5
 #define OUTPUT_VAR_NAME_COUNT 12
 
 #define STATE_VAR_NAME_COUNT 92   // must match var_info array size
@@ -181,8 +181,8 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "ACTUAL_ET",
         "GW_STORAGE",
         "SOIL_STORAGE",
-	      "SOIL_STORAGE_CHANGE",
-	      "SURF_RUNOFF_SCHEME"
+	"SOIL_STORAGE_CHANGE",
+	"SURF_RUNOFF_SCHEME"
 
 };
 
@@ -198,7 +198,7 @@ static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
         "double",
         "double",
       	"double",
-	      "int"
+	"int"
 };
 
 static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
@@ -209,8 +209,8 @@ static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
         1,
         1,
       	1,
-	      1,
-	      1,
+	1,
+	1,
         1,
         1,
         1
@@ -228,7 +228,7 @@ static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
         "m",
         "m",
       	"m",
-	      "none"
+	"none"
 };
 
 static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
@@ -239,23 +239,23 @@ static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
         0,
         0,
       	0,
-	      0,
-	      0,
+	0,
+	0,
         0,
         0,
         0
 };
 
 static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
-        "node",
-        "node",
+  "node",
+  "node",
         "node",
         "node",
         "node",
         "node",
       	"node",
-	      "node",
-	      "node",
+	"node",
+	"node",
         "node",
         "node",
         "node"
@@ -267,13 +267,13 @@ static const char *input_var_names[INPUT_VAR_NAME_COUNT] = {
         "water_potential_evaporation_flux",
 	"ice_fraction_schaake",
 	"ice_fraction_xinan",
-	//-- Root zone adjusted AET development -rlm -AJ --
 	"soil_moisture_profile"
 };
 
 static const char *input_var_types[INPUT_VAR_NAME_COUNT] = {
         "double",
         "double",
+	"double",
 	"double",
 	"double"
         
@@ -291,6 +291,7 @@ static const int input_var_item_count[INPUT_VAR_NAME_COUNT] = {
         1,
         1,
 	1,
+	1,
 	1
         
 };
@@ -299,6 +300,7 @@ static const char input_var_grids[INPUT_VAR_NAME_COUNT] = {
         0,
         0,
 	0,
+	0,
 	0
         
 };
@@ -306,6 +308,7 @@ static const char input_var_grids[INPUT_VAR_NAME_COUNT] = {
 static const char *input_var_locations[INPUT_VAR_NAME_COUNT] = {
         "node",
         "node",
+	"node",
 	"node",
 	"node"
         
@@ -479,6 +482,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     int is_giuh_originates_string_val_set = FALSE;
 
     /* ------ Root zone adjusted AET development -rlm ------- */
+    int is_aet_rootzone_set = FALSE;
     int is_soil_layer_depths_string_val_set = FALSE;
     int is_max_root_zone_layer_set = FALSE;
     /*--------------------------------------------------------*/
@@ -718,18 +722,29 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         }
 
         /*-------------------- Root zone AET development -rlm -----------------------*/
-        if (strcmp(param_key, "soil_layer_depths") == 0) {
+
+	if (strcmp(param_key, "aet_rootzone") == 0) {
+	  model->soil_reservoir.aet_root_zone = strtod(param_value, NULL);
+	  if ( strcmp(param_value, "true")==0 || strcmp(param_value, "True")==0 || strcmp(param_value,"1")==0)
+	    is_aet_rootzone_set = TRUE;
+	  continue;
+        }
+
+	if (is_aet_rootzone_set == TRUE ) {
+	  if (strcmp(param_key, "soil_layer_depths") == 0) {
 #if CFE_DEGUG >= 1   
             printf("Found configured soil depth values ('%s')\n", param_value);
 #endif
             soil_layer_depths_string_val = strdup(param_value);
             is_soil_layer_depths_string_val_set = TRUE;
             continue;
-        }
-        if (strcmp(param_key, "max_root_zone_layer") == 0) {
+	  }
+	  if (strcmp(param_key, "max_root_zone_layer") == 0) {
             model->soil_reservoir.max_root_zone_layer = strtod(param_value, NULL);
             is_max_root_zone_layer_set = TRUE;
-        }
+	  }
+	}
+
         /*--------------------------------------------------------------------------*/
 
         /* xinanjiang_dev: Need the option to run either runoff method in the config file, 
@@ -965,74 +980,130 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     char *copy, *value;
 
     /*------------------- Root zone AET development -rlm----------------------------- */
-    if (is_max_root_zone_layer_set == FALSE) {
+    if (is_aet_rootzone_set == TRUE ) {
+      if (is_max_root_zone_layer_set == FALSE) {
 #if CFE_DEGUG >= 1
         printf("Config param 'max_root_zone_layer' not found in config file\n");
 #endif
         return BMI_FAILURE;
-    }
-    if (is_soil_layer_depths_string_val_set == FALSE) {
+
+      }
+      if (is_soil_layer_depths_string_val_set == FALSE) {
 #if CFE_DEGUG >= 1
         printf("Soil layer depths string/values not set!\n");
 #endif
         return BMI_FAILURE;
     }
-
+      
 #if CFE_DEGUG >=1
-    printf("Soil layer depths string values found in config ('%s')\n", is_soil_layer_depths_string_val_set);
+      printf("Soil layer depths string values found in config ('%s')\n", is_soil_layer_depths_string_val_set);
 #endif
-
-    model->soil_reservoir.n_soil_layers = lround(count_delimited_values(soil_layer_depths_string_val, ","));
-printf("n_soil_layers set in bmi_cfe.c: %d\n", model->soil_reservoir.n_soil_layers);
-
+      
+      model->soil_reservoir.n_soil_layers = lround(count_delimited_values(soil_layer_depths_string_val, ","));
+      printf("n_soil_layers set in bmi_cfe.c: %d\n", model->soil_reservoir.n_soil_layers);
+      
 #if CFE_DEGUG >= 1
-    printf("Counted number of soil depths (%d)\n", model->soil_reservoir.n_soil_layers);
+      printf("Counted number of soil depths (%d)\n", model->soil_reservoir.n_soil_layers);
 #endif
 
-    if (model->soil_reservoir.n_soil_layers < 1)
+      if (model->soil_reservoir.n_soil_layers < 1)
         return BMI_FAILURE;
 
-    model->soil_reservoir.soil_layer_depths_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers + 1));
-    copy = soil_layer_depths_string_val;
+      model->soil_reservoir.soil_layer_depths_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers + 1));
+      copy = soil_layer_depths_string_val;
 
-    i = 1;
-    while((value = strsep(&copy, ",")) != NULL) {
+      i = 1;
+      while((value = strsep(&copy, ",")) != NULL) {
         model->soil_reservoir.soil_layer_depths_m[i++] = strtod(value, NULL);
-    }
+      }
 
-    free(soil_layer_depths_string_val);
+      free(soil_layer_depths_string_val);
 
-//Check that the last depth read in from the cfe config file (soil_layer_depths) matches the total depth (soil_params.depth)
-//from the cfe config file.
-    if(model->NWM_soil_params.D != model->soil_reservoir.soil_layer_depths_m[model->soil_reservoir.n_soil_layers]){
+      //Check that the last depth read in from the cfe config file (soil_layer_depths) matches the total depth (soil_params.depth)
+      //from the cfe config file.
+      if(model->NWM_soil_params.D != model->soil_reservoir.soil_layer_depths_m[model->soil_reservoir.n_soil_layers]){
         printf("WARNING: soil_params.depth is not equal to the last soil layer depth in the CFE config file!\n");
         return BMI_FAILURE;
+      }
+      
+      
+      // Calculate the thickness (delta) of each soil layer
+      if (is_aet_rootzone_set == TRUE ) {
+	model->soil_reservoir.delta_soil_layer_depth_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers + 1));
+	double previous_depth = 0;
+	double current_depth = 0;
+	for (int i=1; i <= model->soil_reservoir.n_soil_layers; i++){
+	  current_depth = model->soil_reservoir.soil_layer_depths_m[i];
+	  if (current_depth <= previous_depth)
+	    printf("WARNING: soil depths may be out of order.  One or more soil layer depths is less than or equal to the previous layer. Check CFE config file.\n");
+	  model->soil_reservoir.delta_soil_layer_depth_m[i] = current_depth - previous_depth;
+	  previous_depth = current_depth;
+	}
+	// Solve for the soil water content at field capacity via Clapp-Hornberger. See "Parameter Estimation for a Conceptual
+	// Functional Equivalent (CFE) Formulation of the National Water Model" equations 1-3 for detailed description. 
+													     double base = (*alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS)/(WATER_SPECIFIC_WEIGHT * model->NWM_soil_params.satpsi);
+	double exponent = -1/model->NWM_soil_params.bb; 
+	model->soil_reservoir.soil_water_content_field_capacity = model->NWM_soil_params.smcmax * pow(base, exponent);
+	
+      }
+      else {
+	model->soil_reservoir.aet_root_zone = FALSE;
+	model->soil_reservoir.n_soil_layers = 0;
+      }
+      
     }
+    
+#if CFE_DEGUG >=1
+      printf("Soil layer depths string values found in config ('%s')\n", is_soil_layer_depths_string_val_set);
+#endif
 
+      model->soil_reservoir.n_soil_layers = lround(count_delimited_values(soil_layer_depths_string_val, ","));
+      printf("n_soil_layers set in bmi_cfe.c: %d\n", model->soil_reservoir.n_soil_layers);
+
+#if CFE_DEGUG >= 1
+      printf("Counted number of soil depths (%d)\n", model->soil_reservoir.n_soil_layers);
+#endif
+
+      if (model->soil_reservoir.n_soil_layers < 1)
+	return BMI_FAILURE;
+
+      model->soil_reservoir.soil_layer_depths_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers + 1));
+      copy = soil_layer_depths_string_val;
+
+      i = 1;
+      while((value = strsep(&copy, ",")) != NULL) {
+        model->soil_reservoir.soil_layer_depths_m[i++] = strtod(value, NULL);
+      }
+
+      free(soil_layer_depths_string_val);
+
+      //Check that the last depth read in from the cfe config file (soil_layer_depths) matches the total depth (soil_params.depth)
+      //from the cfe config file.
+      if(model->NWM_soil_params.D != model->soil_reservoir.soil_layer_depths_m[model->soil_reservoir.n_soil_layers]){
+        printf("WARNING: soil_params.depth is not equal to the last soil layer depth in the CFE config file!\n");
+        return BMI_FAILURE;
+      }
+
+    }
 
 // Calculate the thickness (delta) of each soil layer
-    if (is_aet_rootzone_set == TRUE ) {
-      model->soil_reservoir.delta_soil_layer_depth_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers + 1));
-      double previous_depth = 0;
-      double current_depth = 0;
-      for (int i=1; i <= model->soil_reservoir.n_soil_layers; i++){
+    model->soil_reservoir.delta_soil_layer_depth_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers + 1));
+    double previous_depth = 0;
+    double current_depth = 0;
+    for (int i=1; i <= model->soil_reservoir.n_soil_layers; i++){
         current_depth = model->soil_reservoir.soil_layer_depths_m[i];
         if (current_depth <= previous_depth)
-	  printf("WARNING: soil depths may be out of order.  One or more soil layer depths is less than or equal to the previous layer. Check CFE config file.\n");
+             printf("WARNING: soil depths may be out of order.  One or more soil layer depths is less than or equal to the previous layer. Check CFE config file.\n");
         model->soil_reservoir.delta_soil_layer_depth_m[i] = current_depth - previous_depth;
         previous_depth = current_depth;
-      }
-      // Solve for the soil water content at field capacity via Clapp-Hornberger. See "Parameter Estimation for a Conceptual
-      // Functional Equivalent (CFE) Formulation of the National Water Model" equations 1-3 for detailed description. 
-													   double base = (*alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS)/(WATER_SPECIFIC_WEIGHT * model->NWM_soil_params.satpsi);
-      double exponent = -1/model->NWM_soil_params.bb; 
-      model->soil_reservoir.soil_water_content_field_capacity = model->NWM_soil_params.smcmax * pow(base, exponent);
+    }
+// Solve for the soil water content at field capacity via Clapp-Hornberger. See "Parameter Estimation for a Conceptual
+// Functional Equivalent (CFE) Formulation of the National Water Model" equations 1-3 for detailed description. 
+    double base = (*alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS)/(WATER_SPECIFIC_WEIGHT * model->NWM_soil_params.satpsi);
+    double exponent = -1/model->NWM_soil_params.bb; 
+    model->soil_reservoir.soil_water_content_field_capacity = model->NWM_soil_params.smcmax * pow(base, exponent);
 
-    }
-    else {
-      model->soil_reservoir.aet_root_zone = FALSE;
-      model->soil_reservoir.n_soil_layers = 0;
-    }
+>>>>>>> e948fc5 (Merge branch 'AET_rootzone' into ajk/sft_aet_giuh, and added option to turn on/off AET root zone.)
     /*--------------------END OF ROOT ZONE ADJUSTED AET DEVELOPMENT -rlm ------------------------------*/
      
 #if CFE_DEGUG >= 1
@@ -1125,7 +1196,7 @@ static int Initialize (Bmi *self, const char *file)
         cfe_bmi_data_ptr = (cfe_state_struct *) self->data;
 
     cfe_bmi_data_ptr->current_time_step = 0;
-
+   
     double alpha_fc, /*max_soil_storage,*/ S_soil;
     //int is_S_soil_ratio;
 
@@ -1165,6 +1236,7 @@ static int Initialize (Bmi *self, const char *file)
     //See issue #31
     *cfe_bmi_data_ptr->flux_perc_m = 0.0;
 
+
     /*******************************************************
        JMFRAME: Check to see where forcings come from
                 The options as of May 2021 are:
@@ -1180,6 +1252,7 @@ static int Initialize (Bmi *self, const char *file)
     }
     else
     {
+
         cfe_bmi_data_ptr->is_forcing_from_bmi = FALSE;
     
         // Figure out the number of lines first (also char count)
@@ -1221,6 +1294,7 @@ static int Initialize (Bmi *self, const char *file)
         fgets(line_str, max_forcing_line_length + 1, ffp);
         
         aorc_forcing_data_cfe forcings;
+
         for (i = 0; i < cfe_bmi_data_ptr->num_timesteps; i++) {
             fgets(line_str, max_forcing_line_length + 1, ffp);  // read in a line of AORC data.
             parse_aorc_line_cfe(line_str, &year, &month, &day, &hour, &minute, &dsec, &forcings);
@@ -1310,7 +1384,7 @@ static int Update (Bmi *self)
       // Set the current rainfall input to the right place in the forcing array.
       // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
       cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step] /1000;
-    
+
     //Adjust the rainfall input by a potential fraction of the time step
     cfe_ptr->timestep_rainfall_input_m *= cfe_ptr->time_step_fraction;
     //Accumulate volume for mass balance
@@ -1709,12 +1783,6 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
-    /* xinanjiang_dev
-        changing the name to the more general "direct runoff"
-    if (strcmp (name, "SCHAAKE_OUTPUT_RUNOFF") == 0) {
-        *dest = (void*) ((cfe_state_struct *)(self->data))->flux_Schaake_output_runoff_m;
-        return BMI_SUCCESS;
-    }*/
     if (strcmp (name, "DIRECT_RUNOFF") == 0) {
         *dest = (void*) ((cfe_state_struct *)(self->data))->flux_output_direct_runoff_m;
         return BMI_SUCCESS;
@@ -1899,6 +1967,7 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
       memcpy(ptr, src, var_item_size * len);
       
       return BMI_SUCCESS;
+
     }
     else if (len > 1 || inds[0] != 0)
         return BMI_FAILURE;
@@ -1940,7 +2009,8 @@ static int Set_value (Bmi *self, const char *name, void *array)
 
     // Then we can just ...
     return Set_value_at_indices(self, name, inds, 1, array);
-
+    
+    
 /*  This is the sample code from read the docs
     void * dest = NULL;
     int nbytes = 0;
