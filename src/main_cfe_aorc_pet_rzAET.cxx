@@ -68,7 +68,7 @@ void pass_smc_from_coupler_to_cfe(Bmi *cfe_bmi_model,BmiSoilMoistureProfile coup
 
   coupler_bmi.SetValue("soil_storage",storage_ptr);
   coupler_bmi.SetValue("soil_storage_change",storage_change_ptr);
-  coupler_bmi.GetValue("soil_moisture_profile_option_bmi",smc_option_bmi_ptr);
+  coupler_bmi.GetValue("soil_storage_model",smc_option_bmi_ptr);
 
   if (smc_option_bmi == Constant)
     coupler_bmi.Update();
@@ -196,8 +196,7 @@ int
 
   printf("Initializeing BMI Coupler model\n"); 
   const char *cfg_file_coupler = argv[4];      
-  coupler_bmi.Initialize(cfg_file_coupler); 
-  
+  coupler_bmi.Initialize(cfg_file_coupler);
   /************************************************************************
     Get the information from the configuration here in Main
   ************************************************************************/
