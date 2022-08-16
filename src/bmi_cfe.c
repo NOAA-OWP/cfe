@@ -1011,22 +1011,24 @@ printf("n_soil_layers set in bmi_cfe.c: %d\n", model->soil_reservoir.n_soil_laye
 
 
 // Calculate the thickness (delta) of each soil layer
-    model->soil_reservoir.delta_soil_layer_depth_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers + 1));
-    double previous_depth = 0;
-    double current_depth = 0;
-    for (int i=1; i <= model->soil_reservoir.n_soil_layers; i++){
+    if (is_aet_rootzone_set == TRUE ) {
+      model->soil_reservoir.delta_soil_layer_depth_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers + 1));
+      double previous_depth = 0;
+      double current_depth = 0;
+      for (int i=1; i <= model->soil_reservoir.n_soil_layers; i++){
         current_depth = model->soil_reservoir.soil_layer_depths_m[i];
         if (current_depth <= previous_depth)
-             printf("WARNING: soil depths may be out of order.  One or more soil layer depths is less than or equal to the previous layer. Check CFE config file.\n");
+	  printf("WARNING: soil depths may be out of order.  One or more soil layer depths is less than or equal to the previous layer. Check CFE config file.\n");
         model->soil_reservoir.delta_soil_layer_depth_m[i] = current_depth - previous_depth;
         previous_depth = current_depth;
-    }
-// Solve for the soil water content at field capacity via Clapp-Hornberger. See "Parameter Estimation for a Conceptual
-// Functional Equivalent (CFE) Formulation of the National Water Model" equations 1-3 for detailed description. 
-    double base = (*alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS)/(WATER_SPECIFIC_WEIGHT * model->NWM_soil_params.satpsi);
-    double exponent = -1/model->NWM_soil_params.bb; 
-    model->soil_reservoir.soil_water_content_field_capacity = model->NWM_soil_params.smcmax * pow(base, exponent);
+      }
+      // Solve for the soil water content at field capacity via Clapp-Hornberger. See "Parameter Estimation for a Conceptual
+      // Functional Equivalent (CFE) Formulation of the National Water Model" equations 1-3 for detailed description. 
+													   double base = (*alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS)/(WATER_SPECIFIC_WEIGHT * model->NWM_soil_params.satpsi);
+      double exponent = -1/model->NWM_soil_params.bb; 
+      model->soil_reservoir.soil_water_content_field_capacity = model->NWM_soil_params.smcmax * pow(base, exponent);
 
+    }
     /*--------------------END OF ROOT ZONE ADJUSTED AET DEVELOPMENT -rlm ------------------------------*/
      
 #if CFE_DEGUG >= 1
@@ -1266,8 +1268,14 @@ static int Initialize (Bmi *self, const char *file)
     cfe_bmi_data_ptr->soil_reservoir.ice_fraction_schaake = 0.0;
     cfe_bmi_data_ptr->soil_reservoir.ice_fraction_xinan = 0.0;
 
-    cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*cfe_bmi_data_ptr->soil_reservoir.n_soil_layers);
-    printf("At declaration of smc_profile size, soil_reservoir.n_soil_layers = %i\n", cfe_bmi_data_ptr->soil_reservoir.n_soil_layers); 
+    if (cfe_bmi_data_ptr->soil_reservoir.aet_root_zone == TRUE)
+      cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*cfe_bmi_data_ptr->soil_reservoir.n_soil_layers);
+    else
+      cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*1);
+    
+#if CFE_DEGUG > 0
+    printf("At declaration of smc_profile size, soil_reservoir.n_soil_layers = %i\n", cfe_bmi_data_ptr->soil_reservoir.n_soil_layers);
+#endif
 
     return BMI_SUCCESS;
 }
