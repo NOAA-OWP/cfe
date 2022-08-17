@@ -100,6 +100,7 @@ double wilting_point_m;
 // LKC: Add this two parameters since they belong to soils. Makes the parameter specification consistent
 double alpha_fc;
 double refkdt;
+double soil_storage;
 };
 
 struct evapotranspiration_structure {

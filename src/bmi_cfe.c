@@ -355,7 +355,7 @@ static int count_delimited_values(char* string_val, char* delimiter)
 /*int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* alpha_fc, double* soil_storage,
                      int* is_soil_storage_ratio)
 {*/
-int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* soil_storage)
+int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 {
     int config_line_count, max_config_line_length;
     // Note that this determines max line length including the ending return character, if present
@@ -626,7 +626,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             double parsed_value = strtod(param_value, &trailing_chars);
             *is_soil_storage_ratio = strcmp(trailing_chars, "%") == 0 ? TRUE : FALSE;
             *soil_storage = *is_soil_storage_ratio == TRUE ? (parsed_value / 100.0) : parsed_value;*/
-            *soil_storage = strtod(param_value, NULL);
+            model->NWM_soil_params.soil_storage = strtod(param_value, NULL);
             is_soil_storage_set = TRUE;
             // Check if units are present and print warning if missing from config file
             if ((param_units == NULL) || (strlen(param_units) < 1)) {
@@ -952,11 +952,11 @@ static int Initialize (Bmi *self, const char *file)
 
     cfe_bmi_data_ptr->current_time_step = 0;
 
-    // LKC: removed alpha_fc
-    double S_soil;
+    // LKC: removed alpha_fc and S_soil - both added to the soil structure in the model
+    //double S_soil;
     //int is_S_soil_ratio;
 
-    int config_read_result = read_init_config_cfe(file, cfe_bmi_data_ptr, &S_soil);
+    int config_read_result = read_init_config_cfe(file, cfe_bmi_data_ptr);
     if (config_read_result == BMI_FAILURE)
         return BMI_FAILURE;
 
@@ -1078,7 +1078,7 @@ static int Initialize (Bmi *self, const char *file)
 
     // Initialize soil conceptual reservoirs
     //LKC Remove alpha_fc
-    init_soil_reservoir(cfe_bmi_data_ptr, S_soil);
+    init_soil_reservoir(cfe_bmi_data_ptr);
 
     // Initialize the runoff queue to empty to start with
     cfe_bmi_data_ptr->runoff_queue_m_per_timestep = malloc(sizeof(double) * cfe_bmi_data_ptr->num_giuh_ordinates + 1);
@@ -1723,6 +1723,10 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
         return BMI_FAILURE;
     memcpy(ptr, src, var_item_size * len);
     
+    if (strcmp (name, "maxsmc") == 0 || strcmp (name, "alpha_fc") == 0 || strcmp (name, "wltsmc") == 0 || strcmp (name, "maxsmc") == 0 || strcmp (name, "b") == 0 || strcmp (name, "slope") == 0 || strcmp (name, "satpsi") == 0){
+        cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
+        init_soil_reservoir(cfe_ptr); 
+    }    
     /*
     * If we want to modify the number of nash cascades, we must also side effect other
     * variables.  This "should" work, based on current program structure
@@ -2686,7 +2690,7 @@ extern void run_cfe(cfe_state_struct* cfe_ptr){
 /*extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, double max_storage, double storage,
                                 int is_storage_ratios)
 {*/
-extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double storage)
+extern void init_soil_reservoir(cfe_state_struct* cfe_ptr)
 {
     // calculate the activation storage for the secondary lateral flow outlet in the soil nonlinear reservoir.
     // following the method in the NWM/t-shirt parameter equivalence document, assuming field capacity soil
@@ -2732,8 +2736,8 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double storage)
     cfe_ptr->soil_reservoir.storage_threshold_secondary_m = cfe_ptr->soil_reservoir.storage_threshold_primary_m;
 
     // Negative amounts are always ignored and just considered emtpy
-    if (storage < 0.0) storage = 0.0;
-    cfe_ptr->soil_reservoir.storage_m = storage * cfe_ptr->NWM_soil_params.smcmax * cfe_ptr->NWM_soil_params.D; //edited by RLM to fix units from [m/m] to [m] in storage_m
+    if (cfe_ptr->NWM_soil_params.soil_storage < 0.0) cfe_ptr->NWM_soil_params.soil_storage = 0.0;
+    cfe_ptr->soil_reservoir.storage_m = cfe_ptr->NWM_soil_params.soil_storage * cfe_ptr->NWM_soil_params.smcmax * cfe_ptr->NWM_soil_params.D; //edited by RLM to fix units from [m/m] to [m] in storage_m
 
     //cfe_ptr->soil_reservoir.storage_m = init_reservoir_storage(is_storage_ratios, storage, max_storage);
 }

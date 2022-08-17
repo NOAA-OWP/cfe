@@ -137,13 +137,13 @@ extern void get_word_cfe(char *theString,int *start,int *end,char *theWord,int *
 /*int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* alpha_fc, double* soil_storage,
                      int* is_soil_storage_ratio);*/
 //LKC removed double alpha_fc since it has been added to the soil parameter structure                     
-int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* soil_storage);
+int read_init_config_cfe(const char* config_file, cfe_state_struct* model);
 
 
 /*extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, double max_storage, double storage,
                      int is_storage_ratios);*/
 //LKC removed double alpha_fc since it has been added to the soil parameter structure                 
-extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double storage);
+extern void init_soil_reservoir(cfe_state_struct* cfe_ptr);
 
 //extern double init_reservoir_storage(int is_ratio, double amount, double max_amount);
 
