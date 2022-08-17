@@ -20,7 +20,7 @@ else if [ $flag == "FORCING" ]; then
 	      args='./configs/cat_87_bmi_config_cfe_pass.txt ./configs/cat_87_bmi_config_aorc.txt ./configs/cat_87_bmi_config_pet_pass.txt'
 	      exe_name='cfe_forcingpet'
 	  else if [ $flag == "AETROOTZONE" ]; then
-		   args='./configs/laramie_bmi_config_cfe_pass.txt ./configs/laramie_bmi_config_aorc.txt ./configs/laramie_bmi_config_pet_pass.txt ./configs/laramie_bmi_config_smc_coupler.txt'
+		   args='./configs/laramie_bmi_config_cfe_pass_aet_rz.txt ./configs/laramie_bmi_config_aorc.txt ./configs/laramie_bmi_config_pet_pass.txt ./configs/laramie_bmi_config_smc_coupler.txt'
 		   exe_name='cfe_aet_rootzone'
 	       fi
 	  fi
