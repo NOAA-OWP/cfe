@@ -1029,6 +1029,8 @@ printf("n_soil_layers set in bmi_cfe.c: %d\n", model->soil_reservoir.n_soil_laye
       model->soil_reservoir.soil_water_content_field_capacity = model->NWM_soil_params.smcmax * pow(base, exponent);
 
     }
+    else
+      model->soil_reservoir.n_soil_layers = 0;
     /*--------------------END OF ROOT ZONE ADJUSTED AET DEVELOPMENT -rlm ------------------------------*/
      
 #if CFE_DEGUG >= 1
@@ -1888,7 +1890,13 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
       //      ptr = (double*) malloc (sizeof (double)*4);
       status = Get_value_ptr(self, name, &ptr);
       len = ((cfe_state_struct *)(self->data))->soil_reservoir.n_soil_layers + 1;
+
+      if (status == BMI_FAILURE)
+        return BMI_FAILURE;
+      
       memcpy(ptr, src, var_item_size * len);
+      
+      return BMI_SUCCESS;
     }
     else if (len > 1 || inds[0] != 0)
         return BMI_FAILURE;
