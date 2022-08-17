@@ -97,6 +97,9 @@ double mult;    // the multiplier applied to satdk to route water rapidly downsl
 double slop;   // this factor (0-1) modifies the gradient of the hydraulic head at the soil bottom.  0=no-flow.
 double D;       // soil depth [m]
 double wilting_point_m;
+// LKC: Add this two parameters since they belong to soils. Makes the parameter specification consistent
+double alpha_fc;
+double refkdt;
 };
 
 struct evapotranspiration_structure {

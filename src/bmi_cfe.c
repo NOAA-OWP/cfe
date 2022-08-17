@@ -9,21 +9,27 @@
 #define WATER_SPECIFIC_WEIGHT 9810
 #endif
 
-#define CFE_DEGUG 0
+#define CFE_DEGUG 1
 
 #define INPUT_VAR_NAME_COUNT 2
 #define OUTPUT_VAR_NAME_COUNT 10
 #define STATE_VAR_NAME_COUNT 89   // must match var_info array size
 
-#define PARAM_VAR_NAME_COUNT 10
+#define PARAM_VAR_NAME_COUNT 17
 static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
-    "maxsmc", "satdk", "slope", "b", "multiplier", "Klf", 
-    "Kn", "Cgw", "expon", "max_gw_storage"
+    "maxsmc", "satdk", "slope", "b", "Klf", 
+    "Kn", "Cgw", "expon", "max_gw_storage",
+    "satpsi","wltsmc","alpha_fc","refkdt",
+    "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
+    "N_nash"
 };
 
 static const char *param_var_types[PARAM_VAR_NAME_COUNT] = {
-    "double", "double", "double", "double", "double", "double",
-    "double", "double", "double", "double"
+    "double", "double", "double", "double", "double",
+    "double", "double", "double", "double",
+    "double", "double", "double", "double",
+    "double","double","double"
+    "int"
 };
 //----------------------------------------------
 // Put variable info into a struct to simplify
@@ -349,7 +355,7 @@ static int count_delimited_values(char* string_val, char* delimiter)
 /*int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* alpha_fc, double* soil_storage,
                      int* is_soil_storage_ratio)
 {*/
-int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* alpha_fc, double* soil_storage)
+int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* soil_storage)
 {
     int config_line_count, max_config_line_length;
     // Note that this determines max line length including the ending return character, if present
@@ -432,12 +438,12 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     int is_giuh_originates_string_val_set = FALSE;
 
     // Default value
-    double refkdt = 3.0;
+    model->NWM_soil_params.refkdt = 3.0;
 
     //int is_gw_storage_ratio = FALSE;
     //double gw_storage_literal;
     // Also keep track of Nash stuff and properly set at the end of reading the config file
-    int num_nash_lf = 2;
+    model->N_nash = 2;
     char* nash_storage_string_val;
     int is_nash_storage_string_val_set = FALSE;
     // Similarly as for Nash, track stuff for GIUH ordinates
@@ -469,8 +475,8 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             is_forcing_file_set = TRUE;
             continue;
         }
-        if (strcmp(param_key, "refkdt") == 0) {
-            refkdt = strtod(param_value, NULL);
+        if (strcmp(param_key, "soil_params.refkdt") == 0 || strcmp(param_key, "refkdt") == 0) {
+            model->NWM_soil_params.refkdt = strtod(param_value, NULL);
             continue;
         }
         if (strcmp(param_key, "soil_params.D") == 0 || strcmp(param_key, "soil_params.depth") == 0) {
@@ -608,11 +614,13 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             }*/
             continue;
         }
-        if (strcmp(param_key, "alpha_fc") == 0) {
-            *alpha_fc = strtod(param_value, NULL);
+
+        if (strcmp(param_key, "soil_params.alpha_fc") == 0 || strcmp(param_key, "alpha_fc") == 0) {
+            model->NWM_soil_params.alpha_fc = strtod(param_value, NULL);
             is_alpha_fc_set = TRUE;
             continue;
         }
+        
         if (strcmp(param_key, "soil_storage") == 0) {
 /*            char* trailing_chars;
             double parsed_value = strtod(param_value, &trailing_chars);
@@ -629,7 +637,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
             continue;
         }
         if (strcmp(param_key, "number_nash_reservoirs") == 0 || strcmp(param_key, "N_nash") == 0) {
-            num_nash_lf = strtol(param_value, NULL, 10);
+            model->N_nash = strtol(param_value, NULL, 10);
             continue;
         }
         if (strcmp(param_key, "K_nash") == 0) {
@@ -845,7 +853,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     }
 
     if(model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake){
-        model->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = refkdt * model->NWM_soil_params.satdk / 0.000002;   
+        model->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = model->NWM_soil_params.refkdt * model->NWM_soil_params.satdk / 0.000002;   
 #if CFE_DEGUG >= 1
     printf("Schaake Magic Constant calculated\n");
 #endif
@@ -891,9 +899,9 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         // TODO: consider adding a warning if value_count and N_nash (assuming it was read from the config and not default) disagree
         // Ignore the values if there are not enough, and use whatever was set, or defaults
         if (value_count < 2) {
-            model->num_lateral_flow_nash_reservoirs = num_nash_lf;
-            model->nash_storage = malloc(sizeof(double) * num_nash_lf);
-            for (j = 0; j < num_nash_lf; j++)
+            model->num_lateral_flow_nash_reservoirs = model->N_nash;
+            model->nash_storage = malloc(sizeof(double) * model->N_nash);
+            for (j = 0; j < model->N_nash; j++)
                 model->nash_storage[j] = 0.0;
         }
         else {
@@ -911,9 +919,9 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
     }
     // If Nash storage values weren't set, initialize them to 0.0
     else {
-        model->num_lateral_flow_nash_reservoirs = num_nash_lf;
-        model->nash_storage = malloc(sizeof(double) * num_nash_lf);
-        for (j = 0; j < num_nash_lf; j++)
+        model->num_lateral_flow_nash_reservoirs = model->N_nash;
+        model->nash_storage = malloc(sizeof(double) * model->N_nash);
+        for (j = 0; j < model->N_nash; j++)
             model->nash_storage[j] = 0.0;
     }
 
@@ -944,10 +952,11 @@ static int Initialize (Bmi *self, const char *file)
 
     cfe_bmi_data_ptr->current_time_step = 0;
 
-    double alpha_fc, /*max_soil_storage,*/ S_soil;
+    // LKC: removed alpha_fc
+    double S_soil;
     //int is_S_soil_ratio;
 
-    int config_read_result = read_init_config_cfe(file, cfe_bmi_data_ptr, &alpha_fc, &S_soil);
+    int config_read_result = read_init_config_cfe(file, cfe_bmi_data_ptr, &S_soil);
     if (config_read_result == BMI_FAILURE)
         return BMI_FAILURE;
 
@@ -1068,7 +1077,8 @@ static int Initialize (Bmi *self, const char *file)
     cfe_bmi_data_ptr->gw_reservoir.exponent_secondary = 1.0;             // linear
 
     // Initialize soil conceptual reservoirs
-    init_soil_reservoir(cfe_bmi_data_ptr, alpha_fc, S_soil);
+    //LKC Remove alpha_fc
+    init_soil_reservoir(cfe_bmi_data_ptr, S_soil);
 
     // Initialize the runoff queue to empty to start with
     cfe_bmi_data_ptr->runoff_queue_m_per_timestep = malloc(sizeof(double) * cfe_bmi_data_ptr->num_giuh_ordinates + 1);
@@ -1430,6 +1440,10 @@ static int Get_var_nbytes (Bmi *self, const char *name, int * nbytes)
 
 static int Get_value_ptr (Bmi *self, const char *name, void **dest)
 {
+
+     
+
+    
     /*********** Calibration Params Hacked ************/
     if (strcmp (name, "maxsmc") == 0) {
         cfe_state_struct *cfe_ptr;
@@ -1455,18 +1469,22 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         *dest = (void*)&cfe_ptr->NWM_soil_params.bb;
         return BMI_SUCCESS;
     }
-    if (strcmp (name, "multiplier") == 0) {
-        cfe_state_struct *cfe_ptr;
-        cfe_ptr = (cfe_state_struct *) self->data;
-        *dest = (void*)&cfe_ptr->NWM_soil_params.mult;
-        return BMI_SUCCESS;
-    }
+    //
+    //if (strcmp (name, "multiplier") == 0) {
+    //    cfe_state_struct *cfe_ptr;
+    //    cfe_ptr = (cfe_state_struct *) self->data;
+    //    *dest = (void*)&cfe_ptr->NWM_soil_params.mult;
+    //    return BMI_SUCCESS;
+    //}
+    
     if (strcmp (name, "Klf") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
         *dest = (void*)&cfe_ptr->soil_reservoir.coeff_secondary;
         return BMI_SUCCESS;
     }
+       
+
     if (strcmp (name, "Kn") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
@@ -1479,6 +1497,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         *dest = (void*)&cfe_ptr->gw_reservoir.coeff_primary;
         return BMI_SUCCESS;
     }
+    
     if (strcmp (name, "expon") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
@@ -1492,7 +1511,55 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
     
-    
+    if (strcmp (name, "satpsi") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->NWM_soil_params.satpsi;
+        return BMI_SUCCESS;
+    }    
+
+    if (strcmp (name, "wltsmc") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->NWM_soil_params.wltsmc;
+        return BMI_SUCCESS;
+    } 
+
+    if (strcmp (name, "alpha_fc") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->NWM_soil_params.alpha_fc;
+        return BMI_SUCCESS;
+    }  
+ 
+     if (strcmp (name, "a_Xinanjiang_inflection_point_parameter") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->direct_runoff_params_struct.a_Xinanjiang_inflection_point_parameter;
+        return BMI_SUCCESS;
+    }  
+
+     if (strcmp (name, "b_Xinanjiang_shape_parameter") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->direct_runoff_params_struct.b_Xinanjiang_shape_parameter;
+        return BMI_SUCCESS;
+    }  
+
+     if (strcmp (name, "x_Xinanjiang_shape_parameter") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->direct_runoff_params_struct.x_Xinanjiang_shape_parameter;
+        return BMI_SUCCESS;
+    } 
+             
+     if (strcmp (name, "N_nash") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->K_nash;
+        return BMI_SUCCESS;
+    }
+              
     //NOT MESSING WITH nash_n (number of nash cascades) cause it is a bit of a side
     //effecting value when it changes
 
@@ -1655,6 +1722,7 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
     if (status == BMI_FAILURE)
         return BMI_FAILURE;
     memcpy(ptr, src, var_item_size * len);
+    
     /*
     * If we want to modify the number of nash cascades, we must also side effect other
     * variables.  This "should" work, based on current program structure
@@ -2618,7 +2686,7 @@ extern void run_cfe(cfe_state_struct* cfe_ptr){
 /*extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, double max_storage, double storage,
                                 int is_storage_ratios)
 {*/
-extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, double storage)
+extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double storage)
 {
     // calculate the activation storage for the secondary lateral flow outlet in the soil nonlinear reservoir.
     // following the method in the NWM/t-shirt parameter equivalence document, assuming field capacity soil
@@ -2631,7 +2699,7 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, doub
 #define STANDARD_ATMOSPHERIC_PRESSURE_PASCALS 101325
     // This may need to be changed as follows later, but for now, use the constant value
     //double Omega = (alpha_fc * cfe->forcing_data_surface_pressure_Pa[0] / WATER_SPECIFIC_WEIGHT) - 0.5;
-    double Omega = (alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS / WATER_SPECIFIC_WEIGHT) - 0.5;
+    double Omega = ( cfe_ptr->NWM_soil_params.alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS / WATER_SPECIFIC_WEIGHT) - 0.5;
     double lower_lim = pow(Omega, (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb)) / 
                                   (1.0 - 1.0 / cfe_ptr->NWM_soil_params.bb);
     double upper_lim = pow(Omega + cfe_ptr->NWM_soil_params.D, 

@@ -81,9 +81,11 @@ struct cfe_state_struct {
     double Schaake_adjusted_magic_constant_by_soil_type;    */
 
     int num_lateral_flow_nash_reservoirs;
-
+    
+    //LKC: added N_nash the same way as the other Nash parameters - making this consistent
     double K_lf;
-    double K_nash;
+    double K_nash;   
+    int N_nash;
 
     int num_giuh_ordinates;
 
@@ -134,12 +136,14 @@ extern void get_word_cfe(char *theString,int *start,int *end,char *theWord,int *
 
 /*int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* alpha_fc, double* soil_storage,
                      int* is_soil_storage_ratio);*/
-int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* alpha_fc, double* soil_storage);
+//LKC removed double alpha_fc since it has been added to the soil parameter structure                     
+int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* soil_storage);
 
 
 /*extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, double max_storage, double storage,
                      int is_storage_ratios);*/
-extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, double storage);
+//LKC removed double alpha_fc since it has been added to the soil parameter structure                 
+extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double storage);
 
 //extern double init_reservoir_storage(int is_ratio, double amount, double max_amount);
 
