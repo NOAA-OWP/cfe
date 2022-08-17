@@ -116,7 +116,7 @@ Variable var_info[] = {
 	{ 54, "forcing_file",                                 "string", 1 },  // strlen
 	//{ 56, "Schaake_adjusted_magic_constant_by_soil_type", "double", 1 }, 
     	{ 55, "surface_partitioning_scheme", "int", 1 }, // from direct_runoff_params_struct
-	{ 56, "num_lateral_flow_nash_reservoirs",             "int",    1 },
+	{ 56, "N_nash",             "int",    1 },
 	{ 57, "K_lf",                                         "double", 1 },
 	{ 58, "K_nash",                                       "double", 1 },
 	{ 59, "num_giuh_ordinates",                           "int",    1 },
@@ -899,13 +899,13 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         // TODO: consider adding a warning if value_count and N_nash (assuming it was read from the config and not default) disagree
         // Ignore the values if there are not enough, and use whatever was set, or defaults
         if (value_count < 2) {
-            model->num_lateral_flow_nash_reservoirs = model->N_nash;
+            
             model->nash_storage = malloc(sizeof(double) * model->N_nash);
             for (j = 0; j < model->N_nash; j++)
                 model->nash_storage[j] = 0.0;
         }
         else {
-            model->num_lateral_flow_nash_reservoirs = value_count;
+            model->N_nash = value_count;
             model->nash_storage = malloc(sizeof(double) * value_count);
             // Work with copy the string pointer to make sure the original remains unchanged, so it can be freed at end
             copy = nash_storage_string_val;
@@ -919,7 +919,6 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     }
     // If Nash storage values weren't set, initialize them to 0.0
     else {
-        model->num_lateral_flow_nash_reservoirs = model->N_nash;
         model->nash_storage = malloc(sizeof(double) * model->N_nash);
         for (j = 0; j < model->N_nash; j++)
             model->nash_storage[j] = 0.0;
@@ -1727,6 +1726,20 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
         cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
         init_soil_reservoir(cfe_ptr); 
     }    
+    if (strcmp (name, "refkdt") == 0) {
+        cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
+        cfe_ptr->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = cfe_ptr->NWM_soil_params.refkdt * cfe_ptr->NWM_soil_params.satdk / 0.000002;
+    } 
+
+    if (strcmp (name, "N_nash") == 0) {
+        cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
+        if( cfe_ptr->nash_storage != NULL ) free(cfe_ptr->nash_storage);
+    	cfe_ptr->nash_storage = malloc(sizeof(double) * cfe_ptr->N_nash);
+    	if( cfe_ptr->nash_storage == NULL ) return BMI_FAILURE;
+    	for (j = 0; j < cfe_ptr->N_nash; j++)
+        	cfe_ptr->nash_storage[j] = 0.0;    
+    } 
+        
     /*
     * If we want to modify the number of nash cascades, we must also side effect other
     * variables.  This "should" work, based on current program structure
@@ -1738,9 +1751,9 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
             //and each one will have initial storage value of 0.0
             //Reallocate nash_storage
             if( model->nash_storage != NULL ) free(model->nash_storage);
-            model->nash_storage = malloc(sizeof(double) * model->num_lateral_flow_nash_reservoirs);
+            model->nash_storage = malloc(sizeof(double) * model->N_nash);
             if( model->nash_storage == NULL ) return BMI_FAILURE;
-            for (j = 0; j < model->num_lateral_flow_nash_reservoirs; j++)
+            for (j = 0; j < model->N_nash; j++)
                 model->nash_storage[j] = 0.0;
         
     }
@@ -1927,9 +1940,9 @@ static int Get_state_var_sizes (Bmi *self, unsigned int size_list[])
     //---------------------------------------------------
     unsigned int ff_len = strlen( state->forcing_file );  //##############
     unsigned int num_giuh = state->num_giuh_ordinates + 1;
-    unsigned int num_lat_flow = state->num_lateral_flow_nash_reservoirs + 1;
+    unsigned int num_lat_flow = state->N_nash + 1;
     // unsigned int num_giuh = state->num_giuh_ordinates;
-    // unsigned int num_lat_flow = state->num_lateral_flow_nash_reservoirs;
+    // unsigned int num_lat_flow = state->N_nash;
 
     //-------------------------------------------------
     // Overwrite the sizes that are not 1 (now known)
@@ -2045,7 +2058,7 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     // ####### ptr_list[55] = &(state->forcing_file ); 
     ptr_list[55] = &(state->direct_runoff_params_struct.surface_partitioning_scheme );
     // ptr_list[56] = &(state->Schaake_adjusted_magic_constant_by_soil_type );
-    ptr_list[56] = &(state->num_lateral_flow_nash_reservoirs);
+    ptr_list[56] = &(state->N_nash);
     ptr_list[57] = &(state->K_lf);
     ptr_list[58] = &(state->K_nash);
     ptr_list[59] = &(state->num_giuh_ordinates);
@@ -2291,7 +2304,7 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     else if (index == 55){ 
         state->direct_runoff_params_struct.surface_partitioning_scheme = *(int *)src; }  
     else if (index == 56){
-        state->num_lateral_flow_nash_reservoirs = *(int *)src; }          
+        state->N_nash = *(int *)src; }          
     else if (index == 57){
         state->K_lf = *(double *)src; }
     else if (index == 58){
@@ -2676,7 +2689,7 @@ extern void run_cfe(cfe_state_struct* cfe_ptr){
         cfe_ptr->giuh_ordinates,                            // Set by configuration file.
         cfe_ptr->runoff_queue_m_per_timestep,               // Set in initialize
         cfe_ptr->flux_nash_lateral_runoff_m,                    // Set in CFE from nash_cascade function
-        cfe_ptr->num_lateral_flow_nash_reservoirs,               // Set from config file
+        cfe_ptr->N_nash,               // Set from config file
         cfe_ptr->K_nash,                                         // Set from config file
         cfe_ptr->nash_storage,                              // Set from config file
         &cfe_ptr->et_struct,                                    // Set to zero with initalize. Set by BMI (set_value) during run
@@ -2825,7 +2838,7 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     // the GIUH queue might have water in it at the end of the simulation, so sum it up.
     for(i=0;i<cfe_ptr->num_giuh_ordinates;i++) vol_end_giuh+=cfe_ptr->runoff_queue_m_per_timestep[i];
     
-    for(i=0;i<cfe_ptr->num_lateral_flow_nash_reservoirs;i++)  vol_in_nash_end+=cfe_ptr->nash_storage[i];
+    for(i=0;i<cfe_ptr->N_nash;i++)  vol_in_nash_end+=cfe_ptr->nash_storage[i];
     
     vol_soil_end=cfe_ptr->soil_reservoir.storage_m;
     

@@ -80,7 +80,8 @@ struct cfe_state_struct {
     /* xinanjiang_dev
     double Schaake_adjusted_magic_constant_by_soil_type;    */
 
-    int num_lateral_flow_nash_reservoirs;
+    //LKC Changed this to N_nash for consistency
+    //int num_lateral_flow_nash_reservoirs;
     
     //LKC: added N_nash the same way as the other Nash parameters - making this consistent
     double K_lf;
