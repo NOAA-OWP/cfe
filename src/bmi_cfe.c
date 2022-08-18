@@ -796,7 +796,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     }
     if (is_K_lf_set == FALSE) {
 #if CFE_DEGUG >= 1
-        printf("Config param 'K_nash' not found in config file\n");
+        printf("Config param 'K_lf' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
@@ -1479,7 +1479,9 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
     if (strcmp (name, "Klf") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
-        *dest = (void*)&cfe_ptr->soil_reservoir.coeff_secondary;
+        // LKC: this seems to be a bug, since in init_soil_reservoir cfe_ptr->soil_reservoir.coeff_secondary = cfe_ptr->K_lf; 
+        // Therefore we need to change cfe_ptr->K_lf here
+        *dest = (void*)&cfe_ptr->K_lf;
         return BMI_SUCCESS;
     }
        
@@ -1560,7 +1562,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
      if (strcmp (name, "N_nash") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
-        *dest = (void*)&cfe_ptr->K_nash;
+        *dest = (void*)&cfe_ptr->N_nash;
         return BMI_SUCCESS;
     }
               
@@ -1702,7 +1704,7 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
 {
     if (len < 1)
         return BMI_FAILURE;
-
+    print("satpsi %d before", cfe_ptr->NWM_soil_params.satpsi);
     // Get "adjusted_index" for variable
     int adjusted_index = Get_adjusted_index_for_variable(name);
     if (adjusted_index < 0)
@@ -1726,10 +1728,12 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
     memcpy(ptr, src, var_item_size * len);
     
     if (strcmp (name, "maxsmc") == 0 || strcmp (name, "alpha_fc") == 0 || strcmp (name, "wltsmc") == 0 || strcmp (name, "maxsmc") == 0 || strcmp (name, "b") == 0 || strcmp (name, "slope") == 0 || strcmp (name, "satpsi") == 0){
+    
         cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
+        print("satpsi %d after", cfe_ptr->NWM_soil_params.satpsi);
         init_soil_reservoir(cfe_ptr); 
     }    
-    if (strcmp (name, "refkdt") == 0) {
+    if (strcmp (name, "refkdt") == 0 || strcmp (name, "satdk") == 0){
         cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
         cfe_ptr->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = cfe_ptr->NWM_soil_params.refkdt * cfe_ptr->NWM_soil_params.satdk / 0.000002;
     } 
