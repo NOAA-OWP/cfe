@@ -1045,8 +1045,10 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
       model->soil_reservoir.soil_water_content_field_capacity = model->NWM_soil_params.smcmax * pow(base, exponent);
 
     }
-    else
+    else {
+      model->soil_reservoir.aet_root_zone = FALSE;
       model->soil_reservoir.n_soil_layers = 0;
+    }
     /*--------------------END OF ROOT ZONE ADJUSTED AET DEVELOPMENT -rlm ------------------------------*/
      
 #if CFE_DEGUG >= 1
