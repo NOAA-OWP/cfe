@@ -28,7 +28,7 @@ static const char *param_var_types[PARAM_VAR_NAME_COUNT] = {
     "double", "double", "double", "double", "double",
     "double", "double", "double", "double",
     "double", "double", "double", "double",
-    "double","double","double"
+    "double","double","double",
     "int"
 };
 //----------------------------------------------
