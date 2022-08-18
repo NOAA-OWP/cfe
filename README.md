@@ -8,29 +8,29 @@ There are multiple ways to run CFE:
 1. Through the BMI commands. There are script options, detailed below, for running the model in standalone mode and BMI allows the Next Generation Water Resources Modeling Framework to run CFE and couple it to surface routines. See [Compiling and running CFE](#compiling-and-running-cfe)
 2. As written by the original author. This includes a full program to read and process atmospheric forcing data, print the model output and check for mass balance closure. This code can be run from the [original_author_code](./original_author_code) directory. This code does not have a BMI implementation.
 
-## Compiling and running CFE
+## Compiling and Running CFE
+There are four examples for running CFE as described below. They assume you have [GCC](https://gcc.gnu.org) and [CMAKE](https://cmake.org/) on your machine.
 
-There are three unique examples for running CFE as described below. They assume you have [GCC](https://gcc.gnu.org) on your machine. 
-
-1. `./make_and_run_bmi.sh`: Have CFE read in its own forcing file
-2. `./make_and_run_bmi_pass_forcings.sh`: Use an external module to read in a forcing file and pass those data using BMI
-3. `./make_and_run_bmi_pass_forcings_pet.sh`: Use external modules to read in a forcing file and calculate potential evapotranspiration, and pass those data using BMI
-4. Rootzone-based AET
-This version of CFE is coupled to the [Soil Moisture Profiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) module which is used to estimate actual evapotranspiration (AET) from the deepest rootzone layer.  Therefore, you will need both repos to run the CFE model.  To run CFE:
+1. `Option BASE` : CFE reads its own forcing file (standalone CFE BMI run; one BMI example)
+2. `Option FORCING` : CFE uses an external module to read in a forcing file and pass those data using BMI (two BMIs example)
+3. `Option FORCINGPET` : CFE uses external modules to read in a forcing file and calculate potential evapotranspiration, and pass those data using BMIs (three BMIs example)
+4. `Option AETROOTZONE` : Option #3 running with rootzone-based actural evapotranspiration (AET). This version of CFE is coupled to the [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) module which provides soil moisture (1D array) that is used to estimate actual evapotranspiration (AET) from the deepest rootzone layer. This example requires the user to clone [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) repo. (four BMIs example)
 
 ````
 git clone https://github.com/NOAA-OWP/cfe.git
 cd cfe
 git checkout AET_rootzone
-git clone https://github.com/NOAA-OWP/SoilMoistureProfiles.git smc_coupler
+git clone https://github.com/NOAA-OWP/SoilMoistureProfiles.git smc_coupler (needed only if running cfe with rootzone-based AET)
 mkdir build && cd build
-cmake ../
+cmake ../ [-DBASE=ON,-DFORCING=ON,-DFORCINGPET=ON,-DAETROOTZONE=ON] (pick only one option, e.g. `cmake ../ -DFORCING=ON`)
 make
 cd ..
-build/cfe_smp ./configs/laramie_bmi_config_cfe_pass.txt ./configs/laramie_bmi_config_aorc.txt ./configs/laramie_bmi_config_pet_pass.txt ./configs/laramie_bmi_config_smc_coupler.txt
+run_cfe.sh [BASE=ON,-DFORCING=ON,-DFORCINGPET=ON,-DAETROOTZONE=ON] (again pick only one option)
 ````
 
-**NOTE:** the configuration files must be passed in this order: (1) the CFE configuration file, (2) the forcing configuration file, (3) the potential evapotranspiration (PET) configuration file, and (4) the soil moisture profile configuration file
+## Note for customized examples (other than the above four)
+The configuration files must be passed in this order: (1) the CFE configuration file, (2) the forcing configuration file, (3) the potential evapotranspiration (PET) configuration file, and (4) the soil moisture profile configuration file
+
 
 ## Configuration File
 A [configs/](./configs/) directory contains primiary configuration text files for three different catchments pertaining to each process identiified in   The table below details information for [catchment-87](./configs/cat_87_bmi_config_cfe.txt).
@@ -95,8 +95,10 @@ You can also follow these steps:
 1. `gcc -lm ./src/main_cfe_aorc_pet.c ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c ./src/cfe.c ./src/bmi_cfe.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c -o run_cfe_aorc_et_bmi`. This generates an executable called `run_cfe_aorc_et_bmi`.
 2. To run this executable you must pass the path to the corresponding configuration files for CFE, PET and AORC (in that order):  `./run_cfe_aorc_et_bmi ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt ./configs/cat_89_bmi_config_pet_pass.txt`
 
-## Direct Runoff 
-In CFE the user has the option to pick a particular direct runoff (aka surface partitioning) method:
+
+# Options in CFE
+## Direct runoff 
+The user has the option to pick a particular direct runoff (aka surface partitioning) method:
 
 1. Schaake function (configuration: `surface_partitioning_scheme=Schaake`)
 2. Xinanjiang function (configuration: `surface_partitioning_scheme=Xinanjiang`). When using this runoff method the user must also include three parameters.
