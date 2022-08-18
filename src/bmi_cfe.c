@@ -1530,7 +1530,12 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         *dest = (void*)&cfe_ptr->NWM_soil_params.alpha_fc;
         return BMI_SUCCESS;
     }  
- 
+    if (strcmp (name, "refkdt") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->NWM_soil_params.refkdt;
+        return BMI_SUCCESS;
+    }    
      if (strcmp (name, "a_Xinanjiang_inflection_point_parameter") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
@@ -1559,9 +1564,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
               
-    //NOT MESSING WITH nash_n (number of nash cascades) cause it is a bit of a side
-    //effecting value when it changes
-
+    
     /***********************************************************/
     /***********    OUTPUT   ***********************************/
     /***********************************************************/
