@@ -1704,7 +1704,7 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
 {
     if (len < 1)
         return BMI_FAILURE;
-    print("satpsi %d before", cfe_ptr->NWM_soil_params.satpsi);
+    
     // Get "adjusted_index" for variable
     int adjusted_index = Get_adjusted_index_for_variable(name);
     if (adjusted_index < 0)
@@ -1727,10 +1727,9 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
         return BMI_FAILURE;
     memcpy(ptr, src, var_item_size * len);
     
-    if (strcmp (name, "maxsmc") == 0 || strcmp (name, "alpha_fc") == 0 || strcmp (name, "wltsmc") == 0 || strcmp (name, "maxsmc") == 0 || strcmp (name, "b") == 0 || strcmp (name, "slope") == 0 || strcmp (name, "satpsi") == 0){
+    if (strcmp (name, "maxsmc") == 0 || strcmp (name, "alpha_fc") == 0 || strcmp (name, "wltsmc") == 0 || strcmp (name, "maxsmc") == 0 || strcmp (name, "b") == 0 || strcmp (name, "slope") == 0 || strcmp (name, "satpsi") == 0 || strcmp (name, "Klf") == 0  || strcmp (name, "satdk") == 0){
     
         cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
-        print("satpsi %d after", cfe_ptr->NWM_soil_params.satpsi);
         init_soil_reservoir(cfe_ptr); 
     }    
     if (strcmp (name, "refkdt") == 0 || strcmp (name, "satdk") == 0){
