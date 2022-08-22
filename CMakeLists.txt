@@ -28,7 +28,7 @@ message("${Red}CFE RUNNING WITH BASE CASE!${ColourReset}")
 set(exe_name "cfe_base")
 endif()
 
-message("HERE = ${exe_name}")
+message("generated exe = ${exe_name}")
 # set the project name
 project(cfe_smp)
 
