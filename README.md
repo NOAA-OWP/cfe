@@ -9,7 +9,7 @@ There are multiple ways to run CFE:
 2. As written by the original author. This includes a full program to read and process atmospheric forcing data, print the model output and check for mass balance closure. This code can be run from the [original_author_code](./original_author_code) directory. This code does not have a BMI implementation.
 
 ## Compiling and Running CFE
-There are four examples for running CFE as described below. They assume you have [GCC](https://gcc.gnu.org) and [CMAKE](https://cmake.org/) on your machine.
+There are four examples for running CFE as described below. They assume you have [GCC](https://gcc.gnu.org) and [CMAKE](https://cmake.org/) on your machine. To build without cmake see section `Alternative: Compiling and Running CFE` below.
 
 1. `Option BASE` : CFE reads its own forcing file (standalone CFE BMI run; one BMI example)
 2. `Option FORCING` : CFE uses an external module to read in a forcing file and pass those data using BMI (two BMIs example)
@@ -19,16 +19,16 @@ There are four examples for running CFE as described below. They assume you have
 ````
 git clone https://github.com/NOAA-OWP/cfe.git
 cd cfe
-git checkout AET_rootzone
-git clone https://github.com/NOAA-OWP/SoilMoistureProfiles.git smc_coupler (needed only if running cfe with rootzone-based AET)
+git checkout ajk/sft_aet_giuh (this won't be needed after the PR merge)
+git clone https://github.com/NOAA-OWP/SoilMoistureProfiles.git smc_coupler (needed only for rootzone-based AET example)
 mkdir build && cd build
 cmake ../ [-DBASE=ON,-DFORCING=ON,-DFORCINGPET=ON,-DAETROOTZONE=ON] (pick only one option, e.g. `cmake ../ -DFORCING=ON`)
 make
 cd ..
-run_cfe.sh [BASE=ON,-DFORCING=ON,-DFORCINGPET=ON,-DAETROOTZONE=ON] (again pick only one option)
+run_cfe.sh [BASE=ON,-DFORCING=ON,-DFORCINGPET=ON,-DAETROOTZONE=ON] (pick only one option) 
 ````
 
-## Note for customized examples (other than the above four)
+## Note for customized examples (examples different than the above four)
 The configuration files must be passed in this order: (1) the CFE configuration file, (2) the forcing configuration file, (3) the potential evapotranspiration (PET) configuration file, and (4) the soil moisture profile configuration file
 
 
@@ -62,9 +62,9 @@ A [configs/](./configs/) directory contains primiary configuration text files fo
 | a_Xinanjiang_inflection_point_parameter | *double* |   |  | parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
 | b_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable  | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
 | x_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
-| aet_rootzone                    | *bolean* |.  |.  | optional | `rootzone-base AET` | when `CFE coupled to SoilMoistureProfile` |
-| sft_coupled                     | *bolean* |.  |.  | optional | `ice-fraction based runoff` | when `CFE coupled to SoilFreezeThaw`|
-## CFE can be build and run using the following
+| aet_rootzone                    | *bolean* | True/true or 1  |  | optional | `rootzone-based AET` | when `CFE coupled to SoilMoistureProfile` |
+| sft_coupled                     | *bolean* | True/true or 1  |  | optional | `ice-fraction based runoff` | when `CFE coupled to SoilFreezeThaw`|
+## Alternative: Compiling and Running CFE
 ### 1. Read local forcing file
 To compile and run CFE with locally read forcing data, run the following from the command line:
 
@@ -85,6 +85,7 @@ CFE can remove mass from the modeled system through evapotranspiration (directly
 1. `gcc -lm ./src/main_cfe_aorc_pet.c ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c -o run_cfe_aorc_et_bmi`. This generates an executable called `run_cfe_aorc_et_bmi`.
 2. To run this executable you must pass the path to the corresponding configuration files for CFE, PET and AORC (in that order):  `./run_cfe_aorc_et_bmi ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt ./configs/cat_89_bmi_config_pet_pass.txt`
 
+### 4. CFE rootzone-based example couples C and C++ modules and can't be build without cmake
 
 ## Direct runoff options in CFE
 
