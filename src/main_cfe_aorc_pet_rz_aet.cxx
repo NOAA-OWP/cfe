@@ -68,7 +68,7 @@ void pass_smc_from_coupler_to_cfe(Bmi *cfe_bmi_model,BmiSoilMoistureProfile coup
 
   coupler_bmi.SetValue("soil_storage",storage_ptr);
   coupler_bmi.SetValue("soil_storage_change",storage_change_ptr);
-  coupler_bmi.GetValue("soil_moisture_profile_option_bmi",smc_option_bmi_ptr);
+  coupler_bmi.GetValue("soil_storage_model",smc_option_bmi_ptr);
 
   if (smc_option_bmi == Constant)
     coupler_bmi.Update();
@@ -246,7 +246,7 @@ int
     pass_forcing_from_aorc_to_cfe(cfe_bmi_model, aorc_bmi_model);   // Get and Set values
 
     pass_pet_to_cfe(cfe_bmi_model, pet_bmi_model);   // Get and Set values
-
+    
     pass_smc_from_coupler_to_cfe(cfe_bmi_model,coupler_bmi,n_soil_layers);
 
     if (pet->aorc.air_temperature_2m_K != aorc->aorc.air_temperature_2m_K){
