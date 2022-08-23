@@ -62,8 +62,8 @@ A [configs/](./configs/) directory contains primiary configuration text files fo
 | a_Xinanjiang_inflection_point_parameter | *double* |   |  | parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
 | b_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable  | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
 | x_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
-| aet_rootzone                    | *bolean* | True/true or 1  |  | optional | `rootzone-based AET` | when `CFE coupled to SoilMoistureProfile` |
-| sft_coupled                     | *bolean* | True/true or 1  |  | optional | `ice-fraction based runoff` | when `CFE coupled to SoilFreezeThaw`|
+| aet_rootzone                    | *bolean* | True, true or 1  |  | coupling parameter | `rootzone-based AET` | when `CFE coupled to SoilMoistureProfile` |
+| sft_coupled                     | *bolean* | True, true or 1  |  | coupling parameter | `ice-fraction based runoff` | when `CFE coupled to SoilFreezeThaw`|
 ## Alternative: Compiling and Running CFE
 ### 1. Read local forcing file
 To compile and run CFE with locally read forcing data, run the following from the command line:
