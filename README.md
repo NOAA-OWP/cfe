@@ -19,13 +19,13 @@ There are four examples for running CFE as described below. They assume you have
 ````
 git clone https://github.com/NOAA-OWP/cfe.git
 cd cfe
-git checkout ajk/sft_aet_giuh (this won't be needed after the PR merge)
-git clone https://github.com/NOAA-OWP/SoilMoistureProfiles.git smc_coupler (needed only for rootzone-based AET example)
+git checkout ajk/sft_aet_giuh_merge (update after PR merge)
+git clone https://github.com/NOAA-OWP/SoilMoistureProfiles.git smc_coupler (needed if AETROOTZONE=ON)
 mkdir build && cd build
-cmake ../ [-DBASE=ON,-DFORCING=ON,-DFORCINGPET=ON,-DAETROOTZONE=ON] (pick only one option, e.g. `cmake ../ -DFORCING=ON`)
+cmake ../ [-DBASE=ON,-DFORCING=ON,-DFORCINGPET=ON,-DAETROOTZONE=ON] (pick one option, e.g. `cmake ../ -DFORCING=ON`)
 make
 cd ..
-run_cfe.sh [BASE=ON,-DFORCING=ON,-DFORCINGPET=ON,-DAETROOTZONE=ON] (pick only one option) 
+run_cfe.sh [BASE, FORCING, FORCINGPET, AETROOTZONE] (pick one option) 
 ````
 
 ## Note for customized examples (examples different than the above four)
@@ -87,30 +87,10 @@ CFE can remove mass from the modeled system through evapotranspiration (directly
 
 ### 4. CFE rootzone-based example couples C and C++ modules and can't be build without cmake
 
-## Direct runoff options in CFE
-
-The user has the option to pick a particular direct runoff (aka surface partitioning) method:
-
-
-# Running CFE (this part needs to be udpated after mering - AJ)
-This version of CFE is coupled to the [Soil Moisture Profiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) module which is used to estimate actual evapotranspiration (AET) from the deepest rootzone layer.  Therefore, you will need both repos to run the CFE model.  To run CFE:
-
-````
-git clone https://github.com/NOAA-OWP/cfe.git
-cd cfe
-git checkout AET_rootzone
-git clone https://github.com/NOAA-OWP/SoilMoistureProfiles.git smc_coupler
-mkdir build && cd build
-cmake ../
-make
-cd ..
-build/cfe_smp ./configs/laramie_bmi_config_cfe_pass.txt ./configs/laramie_bmi_config_aorc.txt ./configs/laramie_bmi_config_pet_pass.txt ./configs/laramie_bmi_config_smc_coupler.txt
-````
-
 **NOTE:** the configuration files must be passed in this order: (1) the CFE configuration file, (2) the forcing configuration file, (3) the potential evapotranspiration (PET) configuration file, and (4) the soil moisture profile configuration file
 
-# Options in CFE
-## Direct runoff 
+## Direct runoff options in CFE
+
 The user has the option to pick a particular direct runoff (aka surface partitioning) method:
 
 1. Schaake function (configuration: `surface_partitioning_scheme=Schaake`)
