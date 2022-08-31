@@ -1,13 +1,21 @@
 #!/bin/bash
 flag=$1
 
-echo "$#"
 if [ ! $# == 1 ]; then
     echo "Usage: $0 OPTION={BASE,FORCING,FORCINGPET,AETROOTZONE}"
     echo "One of these options must be specified to run CFE"
   exit
 fi
-echo "$flag"
+
+if [ $flag == "BASE" ] || [ "$flag" == "FORCING" ] || [ "$flag" == "FORCINGPET" ] || [ "$flag" == "AETROOTZONE" ]; then
+    #or ($flag != "FORCING") or ($flag != "FORCINGPET") or ($flag != "AETROOTZONE") ]; then
+echo "CFE running with option $flag"
+else
+echo "Invalid option! $flag"
+exit
+fi
+
+
 args=" "
 exe_name=" "
 if [ $flag == "BASE" ]; then
