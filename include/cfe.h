@@ -75,6 +75,7 @@ struct conceptual_reservoir
 // as the primary discharge with a zero threshold, and does not calculate a secondary discharge.
 //--------------------------------------------------------------------------------------------------
 int    is_exponential;  // set this true TRUE to use the exponential form of the discharge equation
+double gw_storage;   // Initial Storage - LKC: added since I need to keep track of it when changing parameters
 double storage_max_m;   // maximum storage in this reservoir
 double storage_m;       // state variable.
 double coeff_primary;    // the primary outlet

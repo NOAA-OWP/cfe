@@ -20,7 +20,7 @@ static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
     "maxsmc", "satdk", "slope", "b", "Klf", 
     "Kn", "Cgw", "expon", "max_gw_storage",
     "satpsi","wltsmc","alpha_fc","refkdt",
-    "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
+  "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
     "N_nash"
 };
 
@@ -592,7 +592,8 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             continue;
         }
         if (strcmp(param_key, "gw_storage") == 0) {
-            model->gw_reservoir.storage_m = strtod(param_value, NULL) * model->gw_reservoir.storage_max_m; //edited by RLM to fix units from [m/m] to [m]
+            model->gw_reservoir.gw_storage = strtod(param_value, NULL);
+            model->gw_reservoir.storage_m = model->gw_reservoir.gw_storage * model->gw_reservoir.storage_max_m; //edited by RLM to fix units from [m/m] to [m]
             is_gw_storage_set = TRUE;
             // Check if units are present and print warning if missing from config file
             if ((param_units == NULL) || (strlen(param_units) < 1)) {
@@ -1745,6 +1746,11 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
     	for (j = 0; j < cfe_ptr->N_nash; j++)
         	cfe_ptr->nash_storage[j] = 0.0;    
     } 
+
+    if (strcmp (name, "storage_max_m") == 0) {
+         cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
+         cfe_ptr->gw_reservoir.storage_m = cfe_ptr->gw_reservoir.gw_storage * cfe_ptr->gw_reservoir.storage_max_m;
+     }   
         
     /*
     * If we want to modify the number of nash cascades, we must also side effect other
