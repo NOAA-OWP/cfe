@@ -134,11 +134,16 @@ class BMI_CFE():
         self.primary_flux                   = 0 # temporary vars.
         self.secondary_flux                 = 0 # temporary vars.
         self.total_discharge                = 0
+        self.diff_infilt                    = 0
+        self.diff_perc                      = 0
         
         # ________________________________________________
         # Evapotranspiration
         self.potential_et_m_per_timestep = 0
         self.actual_et_m_per_timestep    = 0
+        self.reduced_potential_et_m_per_timestep = 0
+        self.actual_et_from_rain_m_per_timestep = 0
+        self.actual_et_from_soil_m_per_timestep = 0
          
         # ________________________________________________________
         # Set these values now that we have the information from the configuration file.
@@ -283,9 +288,13 @@ class BMI_CFE():
         self.vol_soil_to_lat_flow = 0
         self.vol_soil_to_gw       = 0
         self.vol_soil_end         = 0
+        self.vol_et_to_atm        = 0
+        self.vol_et_from_soil     = 0
+        self.vol_et_from_rain     = 0
         self.volin                = 0
         self.volout               = 0
         self.volend               = 0
+        self.vol_PET              = 0
         return
     
     #________________________________________________________
@@ -351,13 +360,14 @@ class BMI_CFE():
         self.vol_soil_end = self.soil_reservoir['storage_m']
         
         self.global_residual  = self.volstart + self.volin - self.volout - self.volend -self.vol_end_giuh
-        self.schaake_residual = self.volin - self.vol_sch_runoff - self.vol_sch_infilt
+        self.schaake_residual = self.volin - self.vol_et_from_rain - self.vol_sch_runoff - self.vol_sch_infilt
         self.giuh_residual    = self.vol_sch_runoff - self.vol_out_giuh - self.vol_end_giuh
-        self.soil_residual    = self.vol_soil_start + self.vol_sch_infilt - \
-                                self.vol_soil_to_lat_flow - self.vol_soil_end - self.vol_to_gw
+        self.soil_residual    = self.vol_soil_start - self.vol_soil_end + self.vol_sch_infilt - \
+                                self.vol_soil_to_lat_flow  - self.vol_soil_to_gw - self.vol_et_from_soil
         self.nash_residual    = self.vol_in_nash - self.vol_out_nash - self.vol_in_nash_end
         self.gw_residual      = self.vol_in_gw_start + self.vol_to_gw - self.vol_from_gw - self.vol_in_gw_end
-        if verbose:            
+
+        if verbose:
             print("\nGLOBAL MASS BALANCE")
             print("  initial volume: {:8.4f}".format(self.volstart))
             print("    volume input: {:8.4f}".format(self.volin))
@@ -365,24 +375,30 @@ class BMI_CFE():
             print("    final volume: {:8.4f}".format(self.volend))
             print("        residual: {:6.4e}".format(self.global_residual))
 
+            print("\n AET & PET")
+            print("    volume PET: {:8.4f}".format(self.vol_PET))
+            print("    volume AET: {:8.4f}".format(self.vol_et_to_atm))
 
             print("\nSCHAAKE MASS BALANCE")
+            print("    volume input: {:8.4f}".format(self.volin))
+            print("ET from rainfall: {:8.4f}".format(self.vol_et_from_rain))
             print("  surface runoff: {:8.4f}".format(self.vol_sch_runoff))
             print("    infiltration: {:8.4f}".format(self.vol_sch_infilt))
-            print("schaake residual: {:6.4e}".format(self.schaake_residual))  
+            print("schaake residual: {:6.4e}".format(self.schaake_residual))
 
-            print("\nGIUH MASS BALANCE");
+            print("\nGIUH MASS BALANCE")
             print("  vol. into giuh: {:8.4f}".format(self.vol_sch_runoff))
             print("   vol. out giuh: {:8.4f}".format(self.vol_out_giuh))
             print(" vol. end giuh q: {:8.4f}".format(self.vol_end_giuh))
             print("   giuh residual: {:6.4e}".format(self.giuh_residual))
 
             print("\nSOIL WATER CONCEPTUAL RESERVOIR MASS BALANCE")
-            print("   init soil vol: {:8.4f}".format(self.vol_soil_start))     
+            print("   init soil vol: {:8.4f}".format(self.vol_soil_start))
             print("  vol. into soil: {:8.4f}".format(self.vol_sch_infilt))
             print("vol.soil2latflow: {:8.4f}".format(self.vol_soil_to_lat_flow))
             print(" vol. soil to gw: {:8.4f}".format(self.vol_soil_to_gw))
-            print(" final vol. soil: {:8.4f}".format(self.vol_soil_end))   
+            print(" vol. soil to ET: {:8.4f}".format(self.vol_et_from_soil))
+            print(" final vol. soil: {:8.4f}".format(self.vol_soil_end))
             print("vol. soil resid.: {:6.4e}".format(self.soil_residual))
 
 
@@ -399,7 +415,6 @@ class BMI_CFE():
             print("     vol from gw: {:8.4f}".format(self.vol_from_gw))
             print("final gw.storage: {:8.4f}".format(self.vol_in_gw_end))
             print("    gw. residual: {:6.4e}".format(self.gw_residual))
-
             
         return
     
