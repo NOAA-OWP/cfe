@@ -6,6 +6,28 @@ import math
 
 def conceptual_reservoir_flux_calc(t, S, storage_threshold_primary_m, storage_max_m, coeff_primary, coeff_secondary, PET, infilt, wltsmc):
     # ODE of soil moisture reservoir mass balance
+    """
+    Case 1: S (Soil moisture storage ) > storage_threshold_primary_m
+        Interpretation: When the soil moisture is plenty, AET(=PET), percolation, and lateral flow are all active. Thus,
+        Equation: dS/dt = Infiltration - PET - (Klf+Kperc) * (S - storage_threshold_primary_m)/(storage_max_m - storage_threshold_primary_m)
+    Case 2: storage_threshold_primary_m > S (Soil moisture storage) > storage_threshold_primary_m - wltsmc
+        Interpretation: When the soil moisture is in the middle range, AET is active and proportional to the soil moisture storage ratio
+        Equation: dS/dt = Infiltration - PET * (S - wltsmc)/(storage_threshold_primary_m - wltsmc)
+    Case 3: wltsmc > S (Soil moisture storage)
+        Interpretation: When the soil moisture is depleted, no outflux is active
+        Equation: dS/dt = Infitlation
+    :param t:
+    :param S:
+    :param storage_threshold_primary_m:
+    :param storage_max_m: maximum soil moisture storage, i.e., porosity
+    :param coeff_primary: K_perc, percolation coefficient
+    :param coeff_secondary: K_lf, lateral flow coefficient
+    :param PET: potential evapotranspiration
+    :param infilt: infiltration
+    :param wltsmc: wilting point (in meter)
+    :return: dS
+    """
+
     storage_above_threshold_m = S - storage_threshold_primary_m
     storage_diff = storage_max_m - storage_threshold_primary_m
     storage_ratio = np.minimum(storage_above_threshold_m / storage_diff, 1)
@@ -65,54 +87,32 @@ class CFE():
         
         # ________________________________________________
         # SUBROUTINE
-        # Calculates the value for surface_runoff_depth_m
+        # Calculates the value for surface_runoff_depth_m (infiltration excess overland flow)
         self.Schaake_partitioning_scheme(cfe_state)
-
-        # ________________________________________________
-        # SUBROUTINE
-        self.et_from_soil(cfe_state)
+        cfe_state.vol_sch_runoff += cfe_state.surface_runoff_depth_m
         
         # ________________________________________________
         if cfe_state.soil_reservoir_storage_deficit_m < cfe_state.infiltration_depth_m:
-            # put won't fit back into runoff
-            cfe_state.surface_runoff_depth_m += (cfe_state.infiltration_depth_m - soil_reservoir_storage_deficit_m)
+            # Calculates saturation excess overland flow
+            cfe_state.surface_runoff_depth_m += (cfe_state.infiltration_depth_m - cfe_state.soil_reservoir_storage_deficit_m)
             cfe_state.infiltration_depth_m = cfe_state.soil_reservoir_storage_deficit_m
-            cfe_state.soil_reservoir['storage_m'] = cfe_state.soil_reservoir['storage_max_m']
-
         # ________________________________________________
-        cfe_state.vol_sch_runoff += cfe_state.surface_runoff_depth_m
         cfe_state.vol_sch_infilt += cfe_state.infiltration_depth_m
 
         # ________________________________________________
-        if cfe_state.current_time_step == 0:
-            cfe_state.previous_flux_perc_m = cfe_state.flux_perc_m
-            
-        # ________________________________________________
-        if cfe_state.previous_flux_perc_m > cfe_state.soil_reservoir_storage_deficit_m:
-            self.diff_infilt = cfe_state.previous_flux_perc_m - cfe_state.soil_reservoir_storage_deficit_m
-            cfe_state.infiltration_depth_m = cfe_state.soil_reservoir_storage_deficit_m
-            cfe_state.vol_sch_runoff += self.diff_infilt
-            cfe_state.vol_sch_infilt -= self.diff_infilt
-            cfe_state.surface_runoff_depth_m += self.diff_infilt
-            
-        # ________________________________________________
-        # SUBROUTINE
         # Solve ODE for the soil reservoir
         # Calculates primary_flux, secondary_flux, AET, and infiltration simultaneously
         cfe_state.actual_et_from_soil_m_per_timestep = 0
         self.soil_reservoir_flux_calc(cfe_state, cfe_state.soil_reservoir)
 
-        # ________________________________________________
         cfe_state.flux_perc_m = cfe_state.primary_flux_m
         cfe_state.flux_lat_m = cfe_state.secondary_flux_m
-        cfe_state.vol_to_soil += cfe_state.infiltration_depth_m
         cfe_state.vol_et_from_soil += cfe_state.actual_et_from_soil_m_per_timestep
         cfe_state.vol_et_to_atm += cfe_state.actual_et_from_soil_m_per_timestep
         cfe_state.volout += cfe_state.actual_et_from_soil_m_per_timestep
 
         # ________________________________________________
-        cfe_state.gw_reservoir_storage_deficit_m = cfe_state.gw_reservoir['storage_max_m'] - cfe_state.gw_reservoir[
-            'storage_m']
+        cfe_state.gw_reservoir_storage_deficit_m = cfe_state.gw_reservoir['storage_max_m'] - cfe_state.gw_reservoir['storage_m']
 
         # ________________________________________________
         if cfe_state.flux_perc_m > cfe_state.gw_reservoir_storage_deficit_m:
@@ -123,16 +123,12 @@ class CFE():
             cfe_state.vol_sch_infilt -= self.diff_perc
             
         # ________________________________________________
-        cfe_state.vol_to_gw                += cfe_state.flux_perc_m
-        cfe_state.vol_soil_to_gw           += cfe_state.flux_perc_m
+        cfe_state.gw_reservoir['storage_m']     += cfe_state.flux_perc_m
+        cfe_state.vol_to_gw                     += cfe_state.flux_perc_m
+        cfe_state.vol_soil_to_gw                += cfe_state.flux_perc_m
+        cfe_state.vol_soil_to_lat_flow          += cfe_state.flux_lat_m  #TODO add this to nash cascade as input
+        cfe_state.volout                        += cfe_state.flux_lat_m
 
-        cfe_state.gw_reservoir['storage_m']   += cfe_state.flux_perc_m
-        cfe_state.soil_reservoir['storage_m'] -= cfe_state.flux_perc_m
-        cfe_state.soil_reservoir['storage_m'] -= cfe_state.flux_lat_m
-        cfe_state.vol_soil_to_lat_flow        += cfe_state.flux_lat_m  #TODO add this to nash cascade as input
-        cfe_state.volout                      += cfe_state.flux_lat_m
-
-            
         # ________________________________________________
         # SUBROUTINE
         # primary_flux, secondary_flux = f(reservoir)
@@ -284,7 +280,7 @@ class CFE():
                 reservoir['coeff_secondary'],
                 cfe_state.reduced_potential_et_m_per_timestep,
                 cfe_state.infiltration_depth_m,
-                cfe_state.soil_params['wltsmc']
+                cfe_state.soil_params['wltsmc'] * cfe_state.soil_params['D']
             ),
             tfirst=True,
             Dfun=jac
@@ -312,9 +308,9 @@ class CFE():
         perc_flux_frac = perc_flux * t_proportion
 
         et_from_soil = np.zeros(ys_avg.shape)
-        ET_switch = ys_avg - cfe_state.soil_params['wltsmc'] > 0
+        ET_switch = ys_avg - cfe_state.soil_params['wltsmc'] * cfe_state.soil_params['D']> 0
         et_from_soil[ET_switch] = cfe_state.reduced_potential_et_m_per_timestep * np.minimum(
-            (ys_avg[ET_switch] - cfe_state.soil_params['wltsmc']) / (reservoir['storage_threshold_primary_m'] - cfe_state.soil_params['wltsmc']), 1)
+            (ys_avg[ET_switch] - cfe_state.soil_params['wltsmc']* cfe_state.soil_params['D']) / (reservoir['storage_threshold_primary_m'] - cfe_state.soil_params['wltsmc']* cfe_state.soil_params['D']), 1)
         et_from_soil_frac = et_from_soil * t_proportion
 
         infilt_to_soil = np.repeat(cfe_state.infiltration_depth_m, ys_avg.shape)
@@ -451,40 +447,7 @@ class CFE():
             cfe_state.infiltration_depth_m = 0.0
             
         return
-            
-                               
-    # __________________________________________________________________________________________________________
-    def et_from_soil(self, cfe_state):
-        """
-            take AET from soil moisture storage, 
-            using Budyko type curve to limit PET if wilting<soilmoist<field_capacity
-        """
 
-        if cfe_state.reduced_potential_et_m_per_timestep > 0:
-            if cfe_state.soil_reservoir['storage_m'] >= cfe_state.soil_reservoir['storage_threshold_primary_m']:
-
-                cfe_state.actual_et_from_soil_m_per_timestep = np.minimum(cfe_state.reduced_potential_et_m_per_timestep,
-                                                                          cfe_state.soil_reservoir['storage_m'])
-
-            elif (cfe_state.soil_reservoir['storage_m'] > cfe_state.soil_params['wltsmc'] * cfe_state.soil_params[
-                'D'] and
-                  cfe_state.soil_reservoir['storage_m'] < cfe_state.soil_reservoir['storage_threshold_primary_m']):
-
-                Budyko_numerator = cfe_state.soil_reservoir['storage_m'] - cfe_state.soil_params['wltsmc'] * \
-                                   cfe_state.soil_params['D']
-                Budyko_denominator = cfe_state.soil_reservoir['storage_threshold_primary_m'] - \
-                                     cfe_state.soil_params['wltsmc'] * cfe_state.soil_params['D']
-                Budyko = Budyko_numerator / Budyko_denominator
-
-                cfe_state.actual_et_from_soil_m_per_timestep = np.minimum(
-                    Budyko * cfe_state.reduced_potential_et_m_per_timestep,
-                    cfe_state.soil_reservoir['storage_m'])
-
-            cfe_state.soil_reservoir['storage_m'] -= cfe_state.actual_et_from_soil_m_per_timestep
-            cfe_state.reduced_potential_et_m_per_timestep -= cfe_state.actual_et_from_soil_m_per_timestep
-
-        return
-            
             
     # __________________________________________________________________________________________________________
     def is_fabs_less_than_epsilon(self,a,epsilon):
