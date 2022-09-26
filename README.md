@@ -14,7 +14,7 @@ There are four examples for running CFE as described below. They assume you have
 1. `Option BASE` : CFE reads its own forcing file (standalone CFE BMI run; one BMI example)
 2. `Option FORCING` : CFE uses an external module to read in a forcing file and pass those data using BMI (two BMIs example)
 3. `Option FORCINGPET` : CFE uses external modules to read in a forcing file and calculate potential evapotranspiration, and pass those data using BMIs (three BMIs example)
-4. `Option AETROOTZONE` : Option #3 running with rootzone-based actural evapotranspiration (AET). This version of CFE is coupled to the [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) module which provides soil moisture (1D array) that is used to estimate actual evapotranspiration (AET) from the deepest rootzone layer. This example requires the user to clone [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) repo. (four BMIs example)
+4. `Option AETROOTZONE` : Option #3 running with rootzone-based actual evapotranspiration (AET). This version of CFE is coupled to the [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) module which provides soil moisture (1D array) that is used to estimate actual evapotranspiration (AET) from the deepest rootzone layer. This example requires the user to clone [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) repo. (four BMIs example)
 
 ````
 git clone https://github.com/NOAA-OWP/cfe.git
