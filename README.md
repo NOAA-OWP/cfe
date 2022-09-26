@@ -62,8 +62,8 @@ A [configs/](./configs/) directory contains primiary configuration text files fo
 | a_Xinanjiang_inflection_point_parameter | *double* |   |  | parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
 | b_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable  | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
 | x_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
-| aet_rootzone                    | *bolean* | True, true or 1  |  | coupling parameter | `rootzone-based AET` | when `CFE coupled to SoilMoistureProfile` |
-| sft_coupled                     | *bolean* | True, true or 1  |  | coupling parameter | `ice-fraction based runoff` | when `CFE coupled to SoilFreezeThaw`|
+| aet_rootzone                    | *boolean* | True, true or 1  |  | coupling parameter | `rootzone-based AET` | when `CFE coupled to SoilMoistureProfile` |
+| sft_coupled                     | *boolean* | True, true or 1  |  | coupling parameter | `ice-fraction based runoff` | when `CFE coupled to SoilFreezeThaw`|
 ## Alternative: Compiling and Running CFE
 ### 1. Read local forcing file
 To compile and run CFE with locally read forcing data, run the following from the command line:
@@ -85,7 +85,7 @@ CFE can remove mass from the modeled system through evapotranspiration (directly
 1. `gcc -lm ./src/main_cfe_aorc_pet.c ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c -o run_cfe_aorc_et_bmi`. This generates an executable called `run_cfe_aorc_et_bmi`.
 2. To run this executable you must pass the path to the corresponding configuration files for CFE, PET and AORC (in that order):  `./run_cfe_aorc_et_bmi ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt ./configs/cat_89_bmi_config_pet_pass.txt`
 
-### 4. CFE rootzone-based example couples C and C++ modules and can't be build without cmake
+### 4. CFE rootzone-based example couples C and C++ modules and can't be built without cmake
 
 **NOTE:** the configuration files must be passed in this order: (1) the CFE configuration file, (2) the forcing configuration file, (3) the potential evapotranspiration (PET) configuration file, and (4) the soil moisture profile configuration file
 
