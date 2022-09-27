@@ -777,6 +777,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         if (strcmp(param_key, "sft_coupled") == 0) {
 	  if ( strcmp(param_value, "true")==0 || strcmp(param_value, "True")==0 || strcmp(param_value,"1")==0)
 	    is_sft_coupled_set = TRUE;
+	  
 	  continue;
         }
 
@@ -971,6 +972,9 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
       }
 
     }
+
+    // set sft_coupled flag to false if the parameter is not provided in the config file.
+    model->soil_reservoir.is_sft_coupled = (is_sft_coupled_set == TRUE) ? TRUE : FALSE;
 
 // Used for parsing strings representing arrays of values below
     char *copy, *value;

@@ -88,6 +88,7 @@ double storage_threshold_secondary_m;
 double coeff_secondary;
 double exponent_secondary;
 double ice_fraction_schaake, ice_fraction_xinan;
+int   is_sft_coupled; // boolean - true if SFT is ON otherwise OFF (default is OFF)
 
 //---Root zone adjusted AET development -rlm -ahmad -------------
 double *smc_profile; //soil moisture content profile

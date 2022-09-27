@@ -106,17 +106,27 @@ extern void cfe(
     {
     if (direct_runoff_params_struct.surface_partitioning_scheme == Schaake)
       {
+	// to ensure that ice_fraction_schaake is set to 0.0 for uncoupled SFT
+	if(!soil_reservoir_struct->is_sft_coupled)
+	  soil_reservoir_struct->ice_fraction_schaake = 0.0;
+	
 	Schaake_partitioning_scheme(timestep_h, soil_reservoir_struct->storage_threshold_primary_m,
-				    direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type,soil_reservoir_storage_deficit_m,
-				    timestep_rainfall_input_m,NWM_soil_params_struct.smcmax,NWM_soil_params_struct.D,&direct_output_runoff_m,&infiltration_depth_m,
-				    soil_reservoir_struct->ice_fraction_schaake,direct_runoff_params_struct.ice_content_threshold);
+				    direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type,
+				    soil_reservoir_storage_deficit_m, timestep_rainfall_input_m, NWM_soil_params_struct.smcmax,
+				    NWM_soil_params_struct.D, &direct_output_runoff_m, &infiltration_depth_m,
+				    soil_reservoir_struct->ice_fraction_schaake, direct_runoff_params_struct.ice_content_threshold);
       }
     else if (direct_runoff_params_struct.surface_partitioning_scheme == Xinanjiang)
       {
-      Xinanjiang_partitioning_scheme(timestep_rainfall_input_m, soil_reservoir_struct->storage_threshold_primary_m,
-                                     soil_reservoir_struct->storage_max_m, soil_reservoir_struct->storage_m,
-                                     &direct_runoff_params_struct, &direct_output_runoff_m, &infiltration_depth_m,
-				     soil_reservoir_struct->ice_fraction_xinan);
+
+	// to ensure that ice_fraction_xinan is set to 0.0 for uncoupled SFT
+	if(!soil_reservoir_struct->is_sft_coupled)
+	  soil_reservoir_struct->ice_fraction_xinan = 0.0;
+	
+	Xinanjiang_partitioning_scheme(timestep_rainfall_input_m, soil_reservoir_struct->storage_threshold_primary_m,
+				       soil_reservoir_struct->storage_max_m, soil_reservoir_struct->storage_m,
+				       &direct_runoff_params_struct, &direct_output_runoff_m, &infiltration_depth_m,
+				       soil_reservoir_struct->ice_fraction_xinan);
       }
     else
       {
