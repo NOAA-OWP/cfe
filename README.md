@@ -11,7 +11,7 @@ There are multiple ways to run CFE:
 ## Compiling and Running CFE
 There are four examples for running CFE as described below. They assume you have [GCC](https://gcc.gnu.org) and [CMAKE](https://cmake.org/) on your machine. To build without cmake see section `Alternative: Compiling and Running CFE` below.
 
-1. `Option BASE` : CFE reads its own forcing file (standalone CFE BMI run; one BMI example)
+1. `Option BASE` : CFE reads local forcing data (standalone CFE BMI run; one BMI example)
 2. `Option FORCING` : CFE uses an external module to read in a forcing file and pass those data using BMI (two BMIs example)
 3. `Option FORCINGPET` : CFE uses external modules to read in a forcing file and calculate potential evapotranspiration, and pass those data using BMIs (three BMIs example)
 4. `Option AETROOTZONE` : Option #3 running with rootzone-based actual evapotranspiration (AET). This version of CFE is coupled to the [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) module which provides soil moisture (1D array) that is used to estimate actual evapotranspiration (AET) from the deepest rootzone layer. This example requires the user to clone [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) repo. (four BMIs example)
@@ -27,6 +27,16 @@ make
 cd ..
 run_cfe.sh [BASE, FORCING, FORCINGPET, AETROOTZONE] (pick one option) 
 ````
+
+## Note for running cfe in the ngen framework
+Follow general build instructions [here](https://github.com/NOAA-OWP/ngen/wiki/NGen-Tutorial) and then build [SLoTH](https://github.com/NOAA-OWP/SLoTH) using the following instructions
+```
+cd extern/sloth/ && git checkout latest 
+git submodule update --init --recursive
+cd ../..
+cmake -B extern/sloth/cmake_build -S extern/sloth/
+make -C extern/sloth/cmake_build
+```
 
 ## Note for customized examples (examples different than the above four)
 The configuration files must be passed in this order: (1) the CFE configuration file, (2) the forcing configuration file, (3) the potential evapotranspiration (PET) configuration file, and (4) the soil moisture profile configuration file
@@ -68,22 +78,22 @@ A [configs/](./configs/) directory contains primiary configuration text files fo
 ### 1. Read local forcing file
 To compile and run CFE with locally read forcing data, run the following from the command line:
 
-1. `gcc -lm ./src/main.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c -o run_bmi_cfe`. This will generate an executable called `run_cfe_bmi`.
-2.  Then run the model with example forcing data: `./run_bmi_cfe ./configs/cat_58_bmi_config_cfe.txt`  
+1. `gcc -lm ./src/main.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c -o cfe_base`. This will generate an executable called `cfe_base`.
+2.  Then run the model with example forcing data: `./cfe_base ./configs/cat_58_bmi_config_cfe.txt`  
 
 
 ### 2. CFE Model gets forcings passed from BMI
 
 CFE was designed to read its own forcing file, but we have added an option to get forcings passed in through BMI using its `set_value` functionality. To demonstrate this functionality we have included the BMI-enabled AORC forcing read module. Follow the steps below:  
 
-1. `gcc -lm ./src/main_pass_forcings.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c  -o run_cfe_bmi_pass_forcings`. This generates an executable called `run_cfe_bmi_pass_forcings`. 
-2. To run this executable you must pass the path to the corresponding configuration files for **BOTH** CFE and AORC (in that order): `./run_cfe_bmi_pass_forcings ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt`
+1. `gcc -lm ./src/main_pass_forcings.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c  -o cfe_forcing`. This generates an executable called `cfe_forcing`. 
+2. To run this executable you must pass the path to the corresponding configuration files for **BOTH** CFE and AORC (in that order): `./cfe_forcing ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt`
 
 ### 3. CFE Model gets forcings AND potential evapotranspiration passed from BMI
 CFE can remove mass from the modeled system through evapotranspiration (directly from precipitation and from the soil using the Budyko function). Follow the steps below:  
 
-1. `gcc -lm ./src/main_cfe_aorc_pet.c ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c -o run_cfe_aorc_et_bmi`. This generates an executable called `run_cfe_aorc_et_bmi`.
-2. To run this executable you must pass the path to the corresponding configuration files for CFE, PET and AORC (in that order):  `./run_cfe_aorc_et_bmi ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt ./configs/cat_89_bmi_config_pet_pass.txt`
+1. `gcc -lm ./src/main_cfe_aorc_pet.c ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c -o cfe_forcingpet`. This generates an executable called `cfe_forcingpet`.
+2. To run this executable you must pass the path to the corresponding configuration files for CFE, PET and AORC (in that order):  `./cfe_forcingpet ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt ./configs/cat_89_bmi_config_pet_pass.txt`
 
 ### 4. CFE rootzone-based example couples C and C++ modules and can't be built without cmake
 
