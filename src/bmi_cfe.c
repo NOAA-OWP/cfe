@@ -1041,7 +1041,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
       }
       // Solve for the soil water content at field capacity via Clapp-Hornberger. See "Parameter Estimation for a Conceptual
       // Functional Equivalent (CFE) Formulation of the National Water Model" equations 1-3 for detailed description. 
-													   double base = (*alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS)/(WATER_SPECIFIC_WEIGHT * model->NWM_soil_params.satpsi);
+      double base = (*alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS)/(WATER_SPECIFIC_WEIGHT * model->NWM_soil_params.satpsi);
       double exponent = -1/model->NWM_soil_params.bb; 
       model->soil_reservoir.soil_water_content_field_capacity = model->NWM_soil_params.smcmax * pow(base, exponent);
     }

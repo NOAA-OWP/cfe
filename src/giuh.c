@@ -28,7 +28,7 @@ extern double giuh_convolution_integral(double runoff_m,int num_giuh_ordinates,
   
   runoff_m_now=runoff_queue_m_per_timestep[0];
   
-  for(i=1;i<N;i++)  // shift all the entries in preperation ffor the next timestep
+  for(i=1;i<N;i++)  // shift all the entries in preperation for the next timestep
     {
       runoff_queue_m_per_timestep[i-1]=runoff_queue_m_per_timestep[i];
     }

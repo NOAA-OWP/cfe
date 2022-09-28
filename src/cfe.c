@@ -705,7 +705,7 @@ void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspirati
         Budyko_denominator = soil_res->soil_water_content_field_capacity - soil_parms->wltsmc;
         Budyko = Budyko_numerator / Budyko_denominator;
 	
-        et_struct->actual_et_from_soil_m_per_timestep = min(Budyko * (et_struct->reduced_potential_et_m_per_timestep), layer_storage_m);
+        et_struct->actual_et_from_soil_m_per_timestep = min(Budyko * et_struct->reduced_potential_et_m_per_timestep, layer_storage_m);
       }
       
       // Reduce remaining PET and remove moisture from soil profile equal to the calculated AET (actual_et_from_soil_m_per_timestep
@@ -726,7 +726,7 @@ void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspirati
             Budyko_denominator = soil_res->storage_threshold_primary_m - soil_parms->wilting_point_m;
             Budyko = Budyko_numerator / Budyko_denominator;
             // LKC: Include check to guarantee EAT is not larger than soil storage               
-            et_struct->actual_et_from_soil_m_per_timestep = min(Budyko * (et_struct->reduced_potential_et_m_per_timestep), soil_res->storage_m);
+            et_struct->actual_et_from_soil_m_per_timestep = min(Budyko * et_struct->reduced_potential_et_m_per_timestep, soil_res->storage_m);
                                                    
         }
         
