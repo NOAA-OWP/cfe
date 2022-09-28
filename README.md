@@ -11,10 +11,10 @@ There are multiple ways to run CFE:
 ## Compiling and Running CFE
 There are four examples for running CFE as described below. They assume you have [GCC](https://gcc.gnu.org) and [CMAKE](https://cmake.org/) on your machine. To build without cmake see section `Alternative: Compiling and Running CFE` below.
 
-1. `Option BASE` : CFE reads local forcing data (standalone CFE BMI run; one BMI example)
-2. `Option FORCING` : CFE uses an external module to read in a forcing file and pass those data using BMI (two BMIs example)
-3. `Option FORCINGPET` : CFE uses external modules to read in a forcing file and calculate potential evapotranspiration, and pass those data using BMIs (three BMIs example)
-4. `Option AETROOTZONE` : Option #3 running with rootzone-based actual evapotranspiration (AET). This version of CFE is coupled to the [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) module which provides soil moisture (1D array) that is used to estimate actual evapotranspiration (AET) from the deepest rootzone layer. This example requires the user to clone [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) repo. (four BMIs example)
+1. `Option BASE` : CFE reads local forcing data (standalone CFE BMI run; example using one BMI)
+2. `Option FORCING` : CFE uses an external module to read in a forcing file and pass those data using BMI (example using two BMIs)
+3. `Option FORCINGPET` : CFE uses external modules to read in a forcing file and calculate potential evapotranspiration, and pass those data using BMIs (example using three BMIs)
+4. `Option AETROOTZONE` : Option #3 running with rootzone-based actual evapotranspiration (AET). This version of CFE is coupled to the [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) module which provides soil moisture (1D array) that is used to estimate actual evapotranspiration (AET) from the deepest rootzone layer. This example requires the user to clone [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) repo. (example using four BMIs)
 
 ````
 git clone https://github.com/NOAA-OWP/cfe.git
@@ -73,6 +73,8 @@ A [configs/](./configs/) directory contains primiary configuration text files fo
 | b_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable  | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
 | x_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
 | aet_rootzone                    | *boolean* | True, true or 1  |  | coupling parameter | `rootzone-based AET` | when `CFE coupled to SoilMoistureProfile` |
+| max_root_zone_layer | *double* |  |  | parameter_adjustable | AET | layer of the soil that is the maximum root zone depth. That is, the depth of the layer where the AET is drawn from |
+| soil_layer_depths | 1D array |  |  | parameter_adjustable | AET | an array of depths from the surface. Example, soil_layer_depths=0.1,0.4,1.0,2.0[m]
 | sft_coupled                     | *boolean* | True, true or 1  |  | coupling parameter | `ice-fraction based runoff` | when `CFE coupled to SoilFreezeThaw`|
 ## Alternative: Compiling and Running CFE
 ### 1. Read local forcing file
@@ -113,9 +115,9 @@ If the **Xinanjiang** scheme is choosen, three parameters need to be included in
 
 ## Rootzone-based Actual Evapotranspiration (AET)
 The user has the option to turn ON and OFF rootzone-based AET, default option is OFF. To turn it ON, the following parameters need to be included in the configuration file.
-1. aet_rootzone=true
-2. soil_layer_depths=0.1,0.4,1.0,2.0 (this is just an example)
-3. max_root_zone_layer=2
+1. `aet_rootzone=true`
+2. `soil_layer_depths` 
+3. `max_root_zone_layer`
 
 ## Soil freeze-thaw model (SFT)
 The Soil Freeze-Thaw (SFT) model is a standalone model.  For detailed information please refer to the [SFT repo](https://github.com/NOAA-OWP/SoilFreezeThaw). A few things to note when coupling SFT to CFE:
