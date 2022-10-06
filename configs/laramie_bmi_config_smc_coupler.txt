@@ -1,0 +1,6 @@
+soil_params.smcmax=0.439
+soil_params.b=5.25
+soil_params.satpsi=0.355
+soil_z=0.1,0.4,1.0,2.0
+soil_storage_model=conceptual
+soil_storage_depth=2.0
