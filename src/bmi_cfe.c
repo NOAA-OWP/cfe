@@ -1114,7 +1114,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model, doubl
         for (j = 0; j < num_nash_lf; j++)
             model->nash_storage[j] = 0.0;
     }
-
+    fclose(fp);
 #if CFE_DEGUG >= 1
     printf("Finished function parsing CFE config\n");
 #endif
