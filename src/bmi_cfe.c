@@ -7,13 +7,16 @@
 #include <float.h>
 #ifndef WATER_SPECIFIC_WEIGHT
 #define WATER_SPECIFIC_WEIGHT 9810
+#define STANDARD_ATMOSPHERIC_PRESSURE_PASCALS 101325
 #endif
 
 #define CFE_DEGUG 1
 
-#define INPUT_VAR_NAME_COUNT 2
-#define OUTPUT_VAR_NAME_COUNT 10
-#define STATE_VAR_NAME_COUNT 89   // must match var_info array size
+#define INPUT_VAR_NAME_COUNT 5
+#define OUTPUT_VAR_NAME_COUNT 12
+
+#define STATE_VAR_NAME_COUNT 92   // must match var_info array size
+
 
 #define PARAM_VAR_NAME_COUNT 17
 static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
@@ -57,109 +60,116 @@ Variable var_info[] = {
 	{ 11, "storage_threshold_secondary_m",    "double", 1 },
 	{ 12, "coeff_secondary",                  "double", 1 },
 	{ 13, "exponent_secondary",               "double", 1 },
+	{ 14, "ice_fraction_schaake",	          "double", 1}, /* input from Soil Freeze-thaw model */
+	{ 15, "ice_fraction_xinan",	          "double", 1}, /* input from Soil Freeze-thaw model */
 	//------------------------------
 	// Vars in gw reservoir struct
 	// type: conceptual_reservoir
 	//------------------------------
-	{ 14, "is_exponential",                   "int",    1 },
-	{ 15, "storage_max_m",                    "double", 1 },
-	{ 16, "storage_m",                        "double", 1 },
-	{ 17, "coeff_primary",                    "double", 1 },
-	{ 18, "exponent_primary",                 "double", 1 },
-	{ 19, "storage_threshold_primary_m",      "double", 1 },
-	{ 20, "storage_threshold_secondary_m",    "double", 1 },
-	{ 21, "coeff_secondary",                  "double", 1 },
-	{ 22, "exponent_secondary",               "double", 1 },
+	{ 16, "is_exponential",                   "int",    1 },
+	{ 17, "storage_max_m",                    "double", 1 },
+	{ 18, "storage_m",                        "double", 1 },
+	{ 19, "coeff_primary",                    "double", 1 },
+	{ 20, "exponent_primary",                 "double", 1 },
+	{ 21, "storage_threshold_primary_m",      "double", 1 },
+	{ 22, "storage_threshold_secondary_m",    "double", 1 },
+	{ 23, "coeff_secondary",                  "double", 1 },
+	{ 24, "exponent_secondary",               "double", 1 },
 	//---------------------------------
 	// Vars in NWM_soil_params struct
 	//---------------------------------
-	{ 23, "smcmax",          "double", 1 },
-	{ 24, "wltsmc",          "double", 1 },
-	{ 25, "satdk",           "double", 1 },
-	{ 26, "satpsi",          "double", 1 },
-	{ 27, "bb",              "double", 1 },
-	{ 28, "slop",            "double", 1 },
-	{ 29, "D",               "double", 1 },
-	{ 30, "wilting_point_m", "double", 1 },
+	{ 25, "smcmax",          "double", 1 },
+	{ 26, "wltsmc",          "double", 1 },
+	{ 27, "satdk",           "double", 1 },
+	{ 28, "satpsi",          "double", 1 },
+	{ 29, "bb",              "double", 1 },
+	{ 30, "slop",            "double", 1 },
+	{ 31, "D",               "double", 1 },
+	{ 32, "wilting_point_m", "double", 1 },
 	//--------------------
 	// Vars in et_struct
 	//--------------------
-	{ 31, "potential_et_m_per_s",        "double", 1 },
-	{ 32, "potential_et_m_per_timestep", "double", 1 }, //TODO Doesn't appear to be used, but this is uninitialized
-	{ 33, "actual_et_m_per_timestep",    "double", 1 },
+	{ 33, "potential_et_m_per_s",        "double", 1 },
+	{ 34, "potential_et_m_per_timestep", "double", 1 }, //TODO Doesn't appear to be used, but this is uninitialized
+	{ 35, "actual_et_m_per_timestep",    "double", 1 },
 	//------------------------------
 	// Vars in vol_tracking_struct
 	//------------------------------
-	{ 34, "vol_sch_runoff",        "double", 1 },
-	{ 35, "vol_sch_infilt",        "double", 1 },
-	{ 36, "vol_to_soil",           "double", 1 },
-	{ 37, "vol_to_gw",             "double", 1 },
-	{ 38, "vol_soil_to_gw",        "double", 1 },
-	{ 39, "vol_soil_to_lat_flow",  "double", 1 },
-	{ 40, "volstart",              "double", 1 },
-	{ 41, "volout",                "double", 1 },
-	{ 42, "volin",                 "double", 1 },
-	{ 43, "vol_from_gw",           "double", 1 },
-	{ 44, "vol_out_giuh",          "double", 1 },
-	{ 45, "vol_in_nash",           "double", 1 },
-	{ 46, "vol_out_nash",          "double", 1 },
-	{ 47, "vol_in_gw_start",       "double", 1 },
-	{ 48, "vol_soil_start",        "double", 1 },
+	{ 36, "vol_sch_runoff",        "double", 1 },
+	{ 37, "vol_sch_infilt",        "double", 1 },
+	{ 38, "vol_to_soil",           "double", 1 },
+	{ 39, "vol_to_gw",             "double", 1 },
+	{ 40, "vol_soil_to_gw",        "double", 1 },
+	{ 41, "vol_soil_to_lat_flow",  "double", 1 },
+	{ 42, "volstart",              "double", 1 },
+	{ 43, "volout",                "double", 1 },
+	{ 44, "volin",                 "double", 1 },
+	{ 45, "vol_from_gw",           "double", 1 },
+	{ 46, "vol_out_giuh",          "double", 1 },
+	{ 47, "vol_in_nash",           "double", 1 },
+	{ 48, "vol_out_nash",          "double", 1 },
+	{ 49, "vol_in_gw_start",       "double", 1 },
+	{ 50, "vol_soil_start",        "double", 1 },
 	//-----------------------------------------         
 	// More top-level, static allocation vars
 	//-----------------------------------------
-	{ 49, "epoch_start_time",      "long", 1 },
-	{ 50, "num_timesteps",         "int",  1 },
-	{ 51, "current_time_step",     "int",  1 },
-	{ 52, "time_step_size",        "int",  1 },
-	{ 53, "is_forcing_from_bmi",   "int",  1 },
-	{ 54, "forcing_file",                                 "string", 1 },  // strlen
-	//{ 56, "Schaake_adjusted_magic_constant_by_soil_type", "double", 1 }, 
-    	{ 55, "surface_partitioning_scheme", "int", 1 }, // from direct_runoff_params_struct
-	{ 56, "N_nash",             "int",    1 },
-	{ 57, "K_lf",                                         "double", 1 },
-	{ 58, "K_nash",                                       "double", 1 },
-	{ 59, "num_giuh_ordinates",                           "int",    1 },
+	{ 51, "epoch_start_time",      "long", 1 },
+	{ 52, "num_timesteps",         "int",  1 },
+	{ 53, "current_time_step",     "int",  1 },
+	{ 54, "time_step_size",        "int",  1 },
+	{ 55, "is_forcing_from_bmi",   "int",  1 },
+	{ 56, "forcing_file",                                 "string", 1 },  // strlen
+  { 57, "surface_partitioning_scheme", "int", 1 }, // from direct_runoff_params_struct
+	{ 58, "N_nash",                                       "int",    1 },
+	{ 59, "K_lf",                                         "double", 1 },
+	{ 60, "K_nash",                                       "double", 1 },
+	{ 61, "num_giuh_ordinates",                           "int",    1 },
 	//---------------------------------------
 	// Vars in aorc_forcing_data_cfe struct
 	//---------------------------------------
-	{ 60, "precip_kg_per_m2",               "double", 1 },
-	{ 61, "incoming_longwave_W_per_m2",     "double", 1 },
-	{ 62, "incoming_shortwave_W_per_m2",    "double", 1 },
-	{ 63, "surface_pressure_Pa",            "double", 1 },
-	{ 64, "specific_humidity_2m_kg_per_kg", "double", 1 },
-	{ 65, "air_temperature_2m_K",           "double", 1 },
-	{ 66, "u_wind_speed_10m_m_per_s",       "double", 1 },
-	{ 67, "v_wind_speed_10m_m_per_s",       "double", 1 },
-	{ 68, "latitude",                       "double", 1 },
-	{ 69, "longitude",                      "double", 1 },
-	{ 70, "time",                           "long",   1 },
+	{ 62, "precip_kg_per_m2",               "double", 1 },
+	{ 63, "incoming_longwave_W_per_m2",     "double", 1 },
+	{ 64, "incoming_shortwave_W_per_m2",    "double", 1 },
+	{ 65, "surface_pressure_Pa",            "double", 1 },
+	{ 66, "specific_humidity_2m_kg_per_kg", "double", 1 },
+	{ 67, "air_temperature_2m_K",           "double", 1 },
+	{ 68, "u_wind_speed_10m_m_per_s",       "double", 1 },
+	{ 69, "v_wind_speed_10m_m_per_s",       "double", 1 },
+	{ 70, "latitude",                       "double", 1 },
+	{ 71, "longitude",                      "double", 1 },
+	{ 72, "time",                           "long",   1 },
 	//------------------------------------------         
 	// More top-level, dynamic allocation vars
 	// (all pointers except verbosity)
 	//------------------------------------------
-	{ 71, "forcing_data_precip_kg_per_m2",  "double*", 1 },
-	{ 72, "forcing_data_time",              "long*",   1 },
-	{ 73, "giuh_ordinates",                 "double*", 1 },  // num_giuh
-	{ 74, "nash_storage",                   "double*", 1 },  // num_lat_flow
-	{ 75, "runoff_queue_m_per_timestep",    "double*", 1 },  // num_giuh
-	{ 76, "flux_Schaake_output_runoff_m",   "double*", 1 },
-	{ 77, "flux_giuh_runoff_m",             "double*", 1 },
-	{ 78, "flux_nash_lateral_runoff_m",     "double*", 1 },
-	{ 79, "flux_from_deep_gw_to_chan_m",    "double*", 1 },
-	{ 80, "flux_perc_m",                    "double*", 1 },
-	{ 81, "flux_lat_m",                     "double*", 1 },
-	{ 82, "flux_Qout_m",                    "double*", 1 },
-	{ 83, "verbosity",                      "int",     1 },
-    //---------------------------------------
-    // direct_runoff_params_struct vars
-    // xinanjiang or schaake flag [56]
-    //---------------------------------------
-    { 84, "Schaake_adjusted_magic_constant_by_soil_type",   "double", 1},
-    { 85, "a_Xinanjiang_inflection_point_parameter",        "double", 1},
-    { 86, "b_Xinanjiang_shape_parameter",                   "double", 1},
-    { 87, "x_Xinanjiang_shape_parameter",                   "double", 1}
-    //---------------------------------------
+	{ 73, "forcing_data_precip_kg_per_m2",  "double*", 1 },
+	{ 74, "forcing_data_time",              "long*",   1 },
+	{ 75, "giuh_ordinates",                 "double*", 1 },  // num_giuh
+	{ 76, "nash_storage",                   "double*", 1 },  // num_lat_flow
+	{ 77, "runoff_queue_m_per_timestep",    "double*", 1 },  // num_giuh
+	{ 78, "flux_Schaake_output_runoff_m",   "double*", 1 },
+	{ 79, "flux_giuh_runoff_m",             "double*", 1 },
+	{ 80, "flux_nash_lateral_runoff_m",     "double*", 1 },
+	{ 81, "flux_from_deep_gw_to_chan_m",    "double*", 1 },
+	{ 82, "flux_perc_m",                    "double*", 1 },
+	{ 83, "flux_lat_m",                     "double*", 1 },
+	{ 84, "flux_Qout_m",                    "double*", 1 },
+	{ 85, "verbosity",                      "int",     1 },
+	//---------------------------------------
+	// direct_runoff_params_struct vars
+	// xinanjiang or schaake flag [56]
+	//---------------------------------------
+	{ 86, "Schaake_adjusted_magic_constant_by_soil_type",   "double", 1},
+	{ 87, "a_Xinanjiang_inflection_point_parameter",        "double", 1},
+	{ 88, "b_Xinanjiang_shape_parameter",                   "double", 1},
+	{ 89, "x_Xinanjiang_shape_parameter",                   "double", 1},
+	//-------------------------------------------
+	// Root zone adjusted AET development -rlm -AJ
+	// -------------------------------------------
+	{ 90, "soil_moisture_profile",                   "double", 1},
+        { 91, "soil_layer_depths_m",			 "double", 1},
+        { 92, "max_root_zone_layer",                     "int", 1},
+	//--------------------------------------------
 };
 
 int i = 0;
@@ -176,7 +186,10 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "POTENTIAL_ET",
         "ACTUAL_ET",
         "GW_STORAGE",
-        "SOIL_STORAGE"
+        "SOIL_STORAGE",
+	"SOIL_STORAGE_CHANGE",
+	"SURF_RUNOFF_SCHEME"
+
 };
 
 static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
@@ -189,7 +202,9 @@ static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
         "double",
         "double",
         "double",
-        "double"
+        "double",
+      	"double",
+	"int"
 };
 
 static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
@@ -199,7 +214,9 @@ static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
         1,
         1,
         1,
-        1,
+      	1,
+	1,
+	1,
         1,
         1,
         1
@@ -215,7 +232,9 @@ static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
         "m",
         "m",
         "m",
-        "m"
+        "m",
+      	"m",
+	"none"
 };
 
 static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
@@ -225,20 +244,24 @@ static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
         0,
         0,
         0,
-        0,
+      	0,
+	0,
+	0,
         0,
         0,
         0
 };
 
 static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
+  "node",
+  "node",
         "node",
         "node",
         "node",
         "node",
-        "node",
-        "node",
-        "node",
+      	"node",
+	"node",
+	"node",
         "node",
         "node",
         "node"
@@ -247,32 +270,51 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
 static const char *input_var_names[INPUT_VAR_NAME_COUNT] = {
         "atmosphere_water__liquid_equivalent_precipitation_rate",
-        "water_potential_evaporation_flux"
+        "water_potential_evaporation_flux",
+	"ice_fraction_schaake",
+	"ice_fraction_xinan",
+	"soil_moisture_profile"
 };
 
 static const char *input_var_types[INPUT_VAR_NAME_COUNT] = {
         "double",
-        "double"
+        "double",
+	"double",
+	"double",
+	"double"
+        
 };
 
 static const char *input_var_units[INPUT_VAR_NAME_COUNT] = {
         "mm h-1", //"atmosphere_water__liquid_equivalent_precipitation_rate"
-        "m s-1"   //"water_potential_evaporation_flux"
+        "m s-1",   //"water_potential_evaporation_flux"
+	"m",    // ice fraction in meters
+	"none",     // ice fraction [-]
+	"none" // soil moisture profile is in decimal fraction -rlm
 };
 
 static const int input_var_item_count[INPUT_VAR_NAME_COUNT] = {
         1,
-        1
+        1,
+	1,
+	1,
+	1
 };
 
 static const char input_var_grids[INPUT_VAR_NAME_COUNT] = {
         0,
-        0
+        0,
+	0,
+	0,
+	0
 };
 
 static const char *input_var_locations[INPUT_VAR_NAME_COUNT] = {
         "node",
-        "node"
+        "node",
+	"node",
+	"node",
+	"node"      
 };
 
 static int Get_start_time (Bmi *self, double * time)
@@ -430,6 +472,11 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     int is_a_Xinanjiang_inflection_point_parameter_set = FALSE;
     int is_b_Xinanjiang_shape_parameter_set = FALSE;
     int is_x_Xinanjiang_shape_parameter_set = FALSE;
+    int is_urban_decimal_fraction_set = FALSE;
+    
+    /* Ice fraction */
+    int is_sft_coupled_set = FALSE;
+    int is_ice_content_threshold_set = FALSE;
 
     // Keep track these in particular, because the "true" storage value may be a ratio and need both storage and max
     int is_gw_max_set = FALSE;
@@ -437,6 +484,11 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
     int is_giuh_originates_string_val_set = FALSE;
 
+    /* ------ Root zone adjusted AET development -rlm ------- */
+    int is_aet_rootzone_set = FALSE;
+    int is_soil_layer_depths_string_val_set = FALSE;
+    int is_max_root_zone_layer_set = FALSE;
+    /*--------------------------------------------------------*/
     // Default value
     model->NWM_soil_params.refkdt = 3.0;
 
@@ -448,7 +500,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     int is_nash_storage_string_val_set = FALSE;
     // Similarly as for Nash, track stuff for GIUH ordinates
     char* giuh_originates_string_val;
-
+    char* soil_layer_depths_string_val;
 
     // Additionally,
 
@@ -674,6 +726,32 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             is_verbosity_set = TRUE;
             continue;
         }
+
+        /*-------------------- Root zone AET development -rlm -----------------------*/
+	if (strcmp(param_key, "aet_rootzone") == 0) {
+	  model->soil_reservoir.aet_root_zone = strtod(param_value, NULL);
+	  if ( strcmp(param_value, "true")==0 || strcmp(param_value, "True")==0 || strcmp(param_value,"1")==0)
+	    is_aet_rootzone_set = TRUE;
+	  continue;
+        }
+
+	if (is_aet_rootzone_set == TRUE ) {
+	  if (strcmp(param_key, "soil_layer_depths") == 0) {
+#if CFE_DEGUG >= 1   
+            printf("Found configured soil depth values ('%s')\n", param_value);
+#endif
+            soil_layer_depths_string_val = strdup(param_value);
+            is_soil_layer_depths_string_val_set = TRUE;
+            continue;
+	  }
+	  if (strcmp(param_key, "max_root_zone_layer") == 0) {
+            model->soil_reservoir.max_root_zone_layer = strtod(param_value, NULL);
+            is_max_root_zone_layer_set = TRUE;
+	  }
+	}
+
+        /*--------------------------------------------------------------------------*/
+
         /* xinanjiang_dev: Need the option to run either runoff method in the config file, 
         *//////////////////////////////////////////////////////////////////////////////
         if (strcmp(param_key, "surface_partitioning_scheme") == 0) {
@@ -682,6 +760,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             if (strcmp(param_value, "Xinanjiang")==0 || strcmp(param_value, "xinanjiang")==0 || strcmp(param_value,"2")==0)
                 model->direct_runoff_params_struct.surface_partitioning_scheme = Xinanjiang;
             is_direct_runoff_method_set = TRUE;
+	    continue;
         }
         if (model->direct_runoff_params_struct.surface_partitioning_scheme == Xinanjiang) {  //Check that logical statement is correct
             if (strcmp(param_key, "a_Xinanjiang_inflection_point_parameter") == 0){
@@ -696,7 +775,33 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
                 model->direct_runoff_params_struct.x_Xinanjiang_shape_parameter = strtod(param_value, NULL);
                 is_x_Xinanjiang_shape_parameter_set = TRUE;
             }
+	    if (strcmp(param_key, "urban_decimal_fraction") == 0) {
+	      model->direct_runoff_params_struct.urban_decimal_fraction = strtod(param_value, NULL);
+		is_urban_decimal_fraction_set = TRUE;
+	    }
         }
+
+	/* Ice fraction: if set to true and runoff scheme is Schaake, additional parameters are needed in the config file, 
+        *//////////////////////////////////////////////////////////////////////////////
+        if (strcmp(param_key, "sft_coupled") == 0) {
+	  if ( strcmp(param_value, "true")==0 || strcmp(param_value, "True")==0 || strcmp(param_value,"1")==0)
+	    is_sft_coupled_set = TRUE;
+	  
+	  continue;
+        }
+
+	if (is_sft_coupled_set == TRUE && model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake) {
+	  if (strcmp(param_key, "ice_content_threshold") == 0) {
+	    model->direct_runoff_params_struct.ice_content_threshold = strtod(param_value, NULL);
+	    is_ice_content_threshold_set = TRUE;
+	     // Check if units are present and print warning if missing from config file
+            if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEGUG >= 1            
+	      printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
+#endif
+            }
+	  }
+	}
     }
 
     if (is_forcing_file_set == FALSE) {
@@ -850,7 +955,13 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             printf("Config param 'x_Xinanjiang_shape_parameter' not found in config file\n");
 #endif
             return BMI_FAILURE;
-        }   
+        }
+	if (is_urban_decimal_fraction_set == FALSE) {
+#if CFE_DEGUG >= 1
+	  printf("Config param 'urban_decimal_fraction' not found in config file\n");
+#endif
+	  return BMI_FAILURE;
+	}  
     }
 
     if(model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake){
@@ -859,12 +970,99 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     printf("Schaake Magic Constant calculated\n");
 #endif
     }
+    
+    if (is_sft_coupled_set == TRUE && model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake) {
 
+      if(!is_ice_content_threshold_set) {
+#if CFE_DEGUG >= 1
+	printf("sft_coupled and Schaake scheme are set to TRUE but param 'ice_fraction_threshold' not found in config file\n");
+	exit(-9);
+#endif
+      }
+
+    }
+
+    // set sft_coupled flag to false if the parameter is not provided in the config file.
+    model->soil_reservoir.is_sft_coupled = (is_sft_coupled_set == TRUE) ? TRUE : FALSE;
+
+// Used for parsing strings representing arrays of values below
+    char *copy, *value;
+    
+    /*------------------- Root zone AET development -rlm----------------------------- */
+    if (is_aet_rootzone_set == TRUE ) {
+      if (is_max_root_zone_layer_set == FALSE) {
+#if CFE_DEGUG >= 1
+        printf("Config param 'max_root_zone_layer' not found in config file\n");
+#endif
+        return BMI_FAILURE;
+      }
+      if (is_soil_layer_depths_string_val_set == FALSE) {
+#if CFE_DEGUG >= 1
+        printf("Soil layer depths string/values not set!\n");
+#endif
+        return BMI_FAILURE;
+      }
+
+#if CFE_DEGUG >=1
+      printf("Soil layer depths string values found in config ('%d')\n", is_soil_layer_depths_string_val_set);
+#endif
+
+      model->soil_reservoir.n_soil_layers = lround(count_delimited_values(soil_layer_depths_string_val, ","));
+      printf("n_soil_layers set in bmi_cfe.c: %d\n", model->soil_reservoir.n_soil_layers);
+
+#if CFE_DEGUG >= 1
+      printf("Counted number of soil depths (%d)\n", model->soil_reservoir.n_soil_layers);
+#endif
+
+      if (model->soil_reservoir.n_soil_layers < 1)
+	return BMI_FAILURE;
+
+      model->soil_reservoir.soil_layer_depths_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers + 1));
+      copy = soil_layer_depths_string_val;
+
+      i = 1;
+      while((value = strsep(&copy, ",")) != NULL) {
+        model->soil_reservoir.soil_layer_depths_m[i++] = strtod(value, NULL);
+      }
+
+      free(soil_layer_depths_string_val);
+
+      //Check that the last depth read in from the cfe config file (soil_layer_depths) matches the total depth (soil_params.depth)
+      //from the cfe config file.
+      if(model->NWM_soil_params.D != model->soil_reservoir.soil_layer_depths_m[model->soil_reservoir.n_soil_layers]){
+        printf("WARNING: soil_params.depth is not equal to the last soil layer depth in the CFE config file!\n");
+        return BMI_FAILURE;
+      }
+
+    }
+
+// Calculate the thickness (delta) of each soil layer
+    if (is_aet_rootzone_set == TRUE ) {
+      model->soil_reservoir.delta_soil_layer_depth_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers + 1));
+      double previous_depth = 0;
+      double current_depth = 0;
+      for (int i=1; i <= model->soil_reservoir.n_soil_layers; i++){
+        current_depth = model->soil_reservoir.soil_layer_depths_m[i];
+        if (current_depth <= previous_depth)
+	  printf("WARNING: soil depths may be out of order.  One or more soil layer depths is less than or equal to the previous layer. Check CFE config file.\n");
+        model->soil_reservoir.delta_soil_layer_depth_m[i] = current_depth - previous_depth;
+        previous_depth = current_depth;
+      }
+      // Solve for the soil water content at field capacity via Clapp-Hornberger. See "Parameter Estimation for a Conceptual
+      // Functional Equivalent (CFE) Formulation of the National Water Model" equations 1-3 for detailed description. 
+      double base = (*alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS)/(WATER_SPECIFIC_WEIGHT * model->NWM_soil_params.satpsi);
+      double exponent = -1/model->NWM_soil_params.bb; 
+      model->soil_reservoir.soil_water_content_field_capacity = model->NWM_soil_params.smcmax * pow(base, exponent);
+    }
+    else {
+      model->soil_reservoir.aet_root_zone = FALSE;
+      model->soil_reservoir.n_soil_layers = 0;
+    }
+    /*--------------------END OF ROOT ZONE ADJUSTED AET DEVELOPMENT -rlm ------------------------------*/
+     
 #if CFE_DEGUG >= 1
     printf("All CFE config params present\n");
 #endif    
-    // Used for parsing strings representing arrays of values below
-    char *copy, *value;
 
     // Handle GIUH ordinates, bailing if they were not provided
     if (is_giuh_originates_string_val_set == FALSE) {
@@ -924,7 +1122,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         for (j = 0; j < model->N_nash; j++)
             model->nash_storage[j] = 0.0;
     }
-
+    fclose(fp);
 #if CFE_DEGUG >= 1
     printf("Finished function parsing CFE config\n");
 #endif
@@ -954,6 +1152,7 @@ static int Initialize (Bmi *self, const char *file)
 
     // LKC: removed alpha_fc and S_soil - both added to the soil structure in the model
     //double S_soil;
+   
     //int is_S_soil_ratio;
 
     int config_read_result = read_init_config_cfe(file, cfe_bmi_data_ptr);
@@ -992,6 +1191,7 @@ static int Initialize (Bmi *self, const char *file)
     //See issue #31
     *cfe_bmi_data_ptr->flux_perc_m = 0.0;
 
+
     /*******************************************************
        JMFRAME: Check to see where forcings come from
                 The options as of May 2021 are:
@@ -1007,6 +1207,7 @@ static int Initialize (Bmi *self, const char *file)
     }
     else
     {
+
         cfe_bmi_data_ptr->is_forcing_from_bmi = FALSE;
     
         // Figure out the number of lines first (also char count)
@@ -1048,6 +1249,7 @@ static int Initialize (Bmi *self, const char *file)
         fgets(line_str, max_forcing_line_length + 1, ffp);
         
         aorc_forcing_data_cfe forcings;
+
         for (i = 0; i < cfe_bmi_data_ptr->num_timesteps; i++) {
             fgets(line_str, max_forcing_line_length + 1, ffp);  // read in a line of AORC data.
             parse_aorc_line_cfe(line_str, &year, &month, &day, &hour, &minute, &dsec, &forcings);
@@ -1097,6 +1299,18 @@ static int Initialize (Bmi *self, const char *file)
     // Set all the mass balance trackers to zero.
     initialize_volume_trackers(cfe_bmi_data_ptr);
 
+    cfe_bmi_data_ptr->soil_reservoir.ice_fraction_schaake = 0.0;
+    cfe_bmi_data_ptr->soil_reservoir.ice_fraction_xinan = 0.0;
+
+    if (cfe_bmi_data_ptr->soil_reservoir.aet_root_zone == TRUE)
+      cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*cfe_bmi_data_ptr->soil_reservoir.n_soil_layers);
+    else
+      cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*1);
+    
+#if CFE_DEGUG > 0
+    printf("At declaration of smc_profile size, soil_reservoir.n_soil_layers = %i\n", cfe_bmi_data_ptr->soil_reservoir.n_soil_layers);
+#endif
+
     return BMI_SUCCESS;
 }
 
@@ -1126,7 +1340,7 @@ static int Update (Bmi *self)
       // Set the current rainfall input to the right place in the forcing array.
       // divide by 1000 to convert from mm/h to m w/ 1h timestep as per t-shirt_0.99f
       cfe_ptr->timestep_rainfall_input_m = cfe_ptr->forcing_data_precip_kg_per_m2[cfe_ptr->current_time_step] /1000;
-    
+
     //Adjust the rainfall input by a potential fraction of the time step
     cfe_ptr->timestep_rainfall_input_m *= cfe_ptr->time_step_fraction;
     //Accumulate volume for mass balance
@@ -1512,6 +1726,15 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         *dest = (void*)&cfe_ptr->gw_reservoir.storage_max_m;
         return BMI_SUCCESS;
     }
+/**********Parameter Derived from config file - root zone adjusted AET development - rlm ***********/
+    if (strcmp (name, "soil__num_cells") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->soil_reservoir.n_soil_layers;
+        return BMI_SUCCESS;
+    }
+
+/**************************************************************************************************/
     
     if (strcmp (name, "satpsi") == 0) {
         cfe_state_struct *cfe_ptr;
@@ -1578,12 +1801,6 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
-    /* xinanjiang_dev
-        changing the name to the more general "direct runoff"
-    if (strcmp (name, "SCHAAKE_OUTPUT_RUNOFF") == 0) {
-        *dest = (void*) ((cfe_state_struct *)(self->data))->flux_Schaake_output_runoff_m;
-        return BMI_SUCCESS;
-    }*/
     if (strcmp (name, "DIRECT_RUNOFF") == 0) {
         *dest = (void*) ((cfe_state_struct *)(self->data))->flux_output_direct_runoff_m;
         return BMI_SUCCESS;
@@ -1608,7 +1825,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         *dest = ((cfe_state_struct *)(self->data))->flux_Qout_m;
         return BMI_SUCCESS;
     }
-
+    
     if (strcmp (name, "POTENTIAL_ET") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
@@ -1636,6 +1853,22 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         *dest = (void*)&cfe_ptr-> soil_reservoir.storage_m;
         return BMI_SUCCESS;
     }
+  
+    if (strcmp (name, "SOIL_STORAGE_CHANGE") == 0) {
+      cfe_state_struct *cfe_ptr;
+      cfe_ptr = (cfe_state_struct *) self->data;
+      *dest = (void*)&cfe_ptr->soil_reservoir.storage_change_m;
+      return BMI_SUCCESS;
+    }
+    
+    if (strcmp (name, "SURF_RUNOFF_SCHEME") == 0) {
+      cfe_state_struct *cfe_ptr;
+      cfe_ptr = (cfe_state_struct *) self->data;
+      *dest = (void*)&cfe_ptr->direct_runoff_params_struct.surface_partitioning_scheme;
+      return BMI_SUCCESS;
+    }
+    
+
     /***********************************************************/
     /***********    INPUT    ***********************************/
     /***********************************************************/
@@ -1651,6 +1884,26 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         *dest = (void*)&cfe_ptr->aorc.precip_kg_per_m2;
         return BMI_SUCCESS;
     }
+
+    if (strcmp (name, "ice_fraction_schaake") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->soil_reservoir.ice_fraction_schaake;
+        return BMI_SUCCESS;
+    }
+    if (strcmp (name, "ice_fraction_xinan") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->soil_reservoir.ice_fraction_xinan;
+        return BMI_SUCCESS;
+    }
+
+//--------------Root zone adjusted AET development -rlm -ahmad -------
+    if (strcmp (name, "soil_moisture_profile") == 0){
+      *dest = (void *) ((cfe_state_struct *)(self->data))->soil_reservoir.smc_profile;
+      return BMI_SUCCESS;
+    }
+//-------------------------------------------------------------------
 
     return BMI_FAILURE;
 }
@@ -1719,7 +1972,22 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
     // For now, all variables are non-array scalar values, with only 1 item of type double
 
     // Thus, there is only ever one value to return (len must be 1) and it must always be from index 0
-    if (len > 1 || inds[0] != 0)
+    //AJ: modifying it to work with soil moisture column for root zone depth based AET
+    if (strcmp(name, "soil_moisture_profile") == 0 || strcmp(name, "soil_layer_depths_m") == 0){ //Adding soil layer depths since they will be needed for root zone adjusted AET estimations -rlm
+      void *ptr = NULL;
+      //      ptr = (double*) malloc (sizeof (double)*4);
+      status = Get_value_ptr(self, name, &ptr);
+      len = ((cfe_state_struct *)(self->data))->soil_reservoir.n_soil_layers + 1;
+
+      if (status == BMI_FAILURE)
+        return BMI_FAILURE;
+      
+      memcpy(ptr, src, var_item_size * len);
+      
+      return BMI_SUCCESS;
+
+    }
+    else if (len > 1 || inds[0] != 0)
         return BMI_FAILURE;
 
     void* ptr;
@@ -1784,7 +2052,8 @@ static int Set_value (Bmi *self, const char *name, void *array)
 
     // Then we can just ...
     return Set_value_at_indices(self, name, inds, 1, array);
-
+    
+    
 /*  This is the sample code from read the docs
     void * dest = NULL;
     int nbytes = 0;
@@ -2011,83 +2280,85 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[11] = &(state->soil_reservoir.storage_threshold_secondary_m );  
     ptr_list[12] = &(state->soil_reservoir.coeff_secondary );      
     ptr_list[13] = &(state->soil_reservoir.exponent_secondary );
+    ptr_list[14] = &(state->soil_reservoir.ice_fraction_schaake);
+    ptr_list[15] = &(state->soil_reservoir.ice_fraction_xinan);
     //------------------------------
     // Vars in gw reservoir struct
     //------------------------------ 
-    ptr_list[14] = &(state->gw_reservoir.is_exponential );
-    ptr_list[15] = &(state->gw_reservoir.storage_max_m );
-    ptr_list[16] = &(state->gw_reservoir.storage_m );
-    ptr_list[17] = &(state->gw_reservoir.coeff_primary );
-    ptr_list[18] = &(state->gw_reservoir.exponent_primary );
-    ptr_list[19] = &(state->gw_reservoir.storage_threshold_primary_m );    
-    ptr_list[20] = &(state->gw_reservoir.storage_threshold_secondary_m );
-    ptr_list[21] = &(state->gw_reservoir.coeff_secondary );
-    ptr_list[22] = &(state->gw_reservoir.exponent_secondary );
+    ptr_list[16] = &(state->gw_reservoir.is_exponential );
+    ptr_list[17] = &(state->gw_reservoir.storage_max_m );
+    ptr_list[18] = &(state->gw_reservoir.storage_m );
+    ptr_list[19] = &(state->gw_reservoir.coeff_primary );
+    ptr_list[20] = &(state->gw_reservoir.exponent_primary );
+    ptr_list[21] = &(state->gw_reservoir.storage_threshold_primary_m );    
+    ptr_list[22] = &(state->gw_reservoir.storage_threshold_secondary_m );
+    ptr_list[23] = &(state->gw_reservoir.coeff_secondary );
+    ptr_list[24] = &(state->gw_reservoir.exponent_secondary );
     //---------------------------------
     // Vars in NWM_soil_params struct
     //---------------------------------
-    ptr_list[23] = &(state->NWM_soil_params.smcmax );
-    ptr_list[24] = &(state->NWM_soil_params.wltsmc);
-    ptr_list[25] = &(state->NWM_soil_params.satdk);
-    ptr_list[26] = &(state->NWM_soil_params.satpsi); 
-    ptr_list[27] = &(state->NWM_soil_params.bb);
-    ptr_list[28] = &(state->NWM_soil_params.slop);
-    ptr_list[29] = &(state->NWM_soil_params.D);
-    ptr_list[30] = &(state->NWM_soil_params.wilting_point_m);
+    ptr_list[25] = &(state->NWM_soil_params.smcmax );
+    ptr_list[26] = &(state->NWM_soil_params.wltsmc);
+    ptr_list[27] = &(state->NWM_soil_params.satdk);
+    ptr_list[28] = &(state->NWM_soil_params.satpsi); 
+    ptr_list[29] = &(state->NWM_soil_params.bb);
+    ptr_list[30] = &(state->NWM_soil_params.slop);
+    ptr_list[31] = &(state->NWM_soil_params.D);
+    ptr_list[32] = &(state->NWM_soil_params.wilting_point_m);
     //--------------------
     // Vars in et_struct
     //--------------------       
-    ptr_list[31] = &(state->et_struct.potential_et_m_per_s );
-    ptr_list[32] = &(state->et_struct.potential_et_m_per_timestep );
-    ptr_list[33] = &(state->et_struct.actual_et_m_per_timestep );
+    ptr_list[33] = &(state->et_struct.potential_et_m_per_s );
+    ptr_list[34] = &(state->et_struct.potential_et_m_per_timestep );
+    ptr_list[35] = &(state->et_struct.actual_et_m_per_timestep );
     //------------------------------
     // Vars in vol_tracking_struct
     //------------------------------
-    ptr_list[34] = &(state->vol_struct.vol_runoff );
-    ptr_list[35] = &(state->vol_struct.vol_infilt );
-    ptr_list[36] = &(state->vol_struct.vol_to_soil );
-    ptr_list[37] = &(state->vol_struct.vol_to_gw );
-    ptr_list[38] = &(state->vol_struct.vol_soil_to_gw );
-    ptr_list[39] = &(state->vol_struct.vol_soil_to_lat_flow );
-    ptr_list[40] = &(state->vol_struct.volstart );
-    ptr_list[41] = &(state->vol_struct.volout );
-    ptr_list[42] = &(state->vol_struct.volin );
-    ptr_list[43] = &(state->vol_struct.vol_from_gw ); 
-    ptr_list[44] = &(state->vol_struct.vol_out_giuh );
-    ptr_list[45] = &(state->vol_struct.vol_in_nash );
-    ptr_list[46] = &(state->vol_struct.vol_out_nash );
-    ptr_list[47] = &(state->vol_struct.vol_in_gw_start );
-    ptr_list[48] = &(state->vol_struct.vol_soil_start );
+    ptr_list[36] = &(state->vol_struct.vol_runoff );
+    ptr_list[37] = &(state->vol_struct.vol_infilt );
+    ptr_list[38] = &(state->vol_struct.vol_to_soil );
+    ptr_list[39] = &(state->vol_struct.vol_to_gw );
+    ptr_list[40] = &(state->vol_struct.vol_soil_to_gw );
+    ptr_list[41] = &(state->vol_struct.vol_soil_to_lat_flow );
+    ptr_list[42] = &(state->vol_struct.volstart );
+    ptr_list[43] = &(state->vol_struct.volout );
+    ptr_list[44] = &(state->vol_struct.volin );
+    ptr_list[45] = &(state->vol_struct.vol_from_gw ); 
+    ptr_list[46] = &(state->vol_struct.vol_out_giuh );
+    ptr_list[47] = &(state->vol_struct.vol_in_nash );
+    ptr_list[48] = &(state->vol_struct.vol_out_nash );
+    ptr_list[49] = &(state->vol_struct.vol_in_gw_start );
+    ptr_list[50] = &(state->vol_struct.vol_soil_start );
     //-----------------------------------------         
     // More top-level, static allocation vars
     //-----------------------------------------
-    ptr_list[49] = &(state->epoch_start_time ); 
-    ptr_list[50] = &(state->num_timesteps );
-    ptr_list[51] = &(state->current_time_step );
-    ptr_list[52] = &(state->time_step_size );
-    ptr_list[53] = &(state->is_forcing_from_bmi );
-    ptr_list[54] = state->forcing_file;
+    ptr_list[51] = &(state->epoch_start_time ); 
+    ptr_list[52] = &(state->num_timesteps );
+    ptr_list[53] = &(state->current_time_step );
+    ptr_list[54] = &(state->time_step_size );
+    ptr_list[55] = &(state->is_forcing_from_bmi );
+    ptr_list[56] = state->forcing_file;
     // ####### ptr_list[55] = &(state->forcing_file ); 
-    ptr_list[55] = &(state->direct_runoff_params_struct.surface_partitioning_scheme );
+    ptr_list[57] = &(state->direct_runoff_params_struct.surface_partitioning_scheme );
     // ptr_list[56] = &(state->Schaake_adjusted_magic_constant_by_soil_type );
-    ptr_list[56] = &(state->N_nash);
-    ptr_list[57] = &(state->K_lf);
-    ptr_list[58] = &(state->K_nash);
-    ptr_list[59] = &(state->num_giuh_ordinates);
+    ptr_list[58] = &(state->N_nash);
+    ptr_list[59] = &(state->K_lf);
+    ptr_list[60] = &(state->K_nash);
+    ptr_list[61] = &(state->num_giuh_ordinates);
     //---------------------------------------
     // Vars in aorc_forcing_data_cfe struct
     //---------------------------------------
-    ptr_list[60] = &(state->aorc.precip_kg_per_m2 );
-    ptr_list[61] = &(state->aorc.incoming_longwave_W_per_m2 );
-    ptr_list[62] = &(state->aorc.incoming_shortwave_W_per_m2 );
-    ptr_list[63] = &(state->aorc.surface_pressure_Pa );
-    ptr_list[64] = &(state->aorc.specific_humidity_2m_kg_per_kg );
-    ptr_list[65] = &(state->aorc.air_temperature_2m_K );
-    ptr_list[66] = &(state->aorc.u_wind_speed_10m_m_per_s );
-    ptr_list[67] = &(state->aorc.v_wind_speed_10m_m_per_s );
-    ptr_list[68] = &(state->aorc.latitude );
-    ptr_list[69] = &(state->aorc.longitude );
-    ptr_list[70] = &(state->aorc.time );
+    ptr_list[62] = &(state->aorc.precip_kg_per_m2 );
+    ptr_list[63] = &(state->aorc.incoming_longwave_W_per_m2 );
+    ptr_list[64] = &(state->aorc.incoming_shortwave_W_per_m2 );
+    ptr_list[65] = &(state->aorc.surface_pressure_Pa );
+    ptr_list[66] = &(state->aorc.specific_humidity_2m_kg_per_kg );
+    ptr_list[67] = &(state->aorc.air_temperature_2m_K );
+    ptr_list[68] = &(state->aorc.u_wind_speed_10m_m_per_s );
+    ptr_list[69] = &(state->aorc.v_wind_speed_10m_m_per_s );
+    ptr_list[70] = &(state->aorc.latitude );
+    ptr_list[71] = &(state->aorc.longitude );
+    ptr_list[72] = &(state->aorc.time );
     //------------------------------------------         
     // More top-level, dynamic allocation vars
     //----------------------------------------------------
@@ -2095,28 +2366,35 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     // Do not append "&".
     // Last one, verbosity, is not a pointer.
     //------------------------------------------
-    ptr_list[71] = state->forcing_data_precip_kg_per_m2;
-    ptr_list[72] = state->forcing_data_time;
-    ptr_list[73] = state->giuh_ordinates;
-    ptr_list[74] = state->nash_storage;
-    ptr_list[75] = state->runoff_queue_m_per_timestep;
-    ptr_list[76] = state->flux_output_direct_runoff_m;
-    ptr_list[77] = state->flux_giuh_runoff_m;
-    ptr_list[78] = state->flux_nash_lateral_runoff_m;
-    ptr_list[79] = state->flux_from_deep_gw_to_chan_m;
-    ptr_list[80] = state->flux_perc_m;
-    ptr_list[81] = state->flux_lat_m;
-    ptr_list[82] = state->flux_Qout_m;
-    ptr_list[83] = &(state->verbosity); 
+    ptr_list[73] = state->forcing_data_precip_kg_per_m2;
+    ptr_list[74] = state->forcing_data_time;
+    ptr_list[75] = state->giuh_ordinates;
+    ptr_list[76] = state->nash_storage;
+    ptr_list[77] = state->runoff_queue_m_per_timestep;
+    ptr_list[78] = state->flux_output_direct_runoff_m;
+    ptr_list[79] = state->flux_giuh_runoff_m;
+    ptr_list[80] = state->flux_nash_lateral_runoff_m;
+    ptr_list[81] = state->flux_from_deep_gw_to_chan_m;
+    ptr_list[82] = state->flux_perc_m;
+    ptr_list[83] = state->flux_lat_m;
+    ptr_list[84] = state->flux_Qout_m;
+    ptr_list[85] = &(state->verbosity); 
     //---------------------------------------
     // direct_runoff_params_struct vars
     // xinanjiang or schaake flag [56]
     //---------------------------------------
-    ptr_list[84] = &(state->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type );
-    ptr_list[85] = &(state->direct_runoff_params_struct.a_Xinanjiang_inflection_point_parameter );
-    ptr_list[86] = &(state->direct_runoff_params_struct.b_Xinanjiang_shape_parameter );
-    ptr_list[87] = &(state->direct_runoff_params_struct.x_Xinanjiang_shape_parameter );
-    //-------------------------------------------------------------                
+    ptr_list[86] = &(state->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type );
+    ptr_list[87] = &(state->direct_runoff_params_struct.a_Xinanjiang_inflection_point_parameter );
+    ptr_list[88] = &(state->direct_runoff_params_struct.b_Xinanjiang_shape_parameter );
+    ptr_list[89] = &(state->direct_runoff_params_struct.x_Xinanjiang_shape_parameter );
+    //-------------------------------------------------------------
+    // Root zone AET development -rlm
+    // ------------------------------------------------------------
+    ptr_list[90] = &(state->soil_reservoir.soil_layer_depths_m);
+    ptr_list[91] = &(state->soil_reservoir.max_root_zone_layer);
+    //-------------------------------------------------------------
+ 
+
     return BMI_SUCCESS;
 }
 
@@ -2725,7 +3003,7 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr)
     // this equation calculates the amount of water stored in the 2 m thick soil column when the water content
     // at the center of the bottom discretization (trigger_z_m, below 0.5) is at field capacity
     // Initial parentheses calc equation 3 from param equiv. doc
-#define STANDARD_ATMOSPHERIC_PRESSURE_PASCALS 101325
+//#define STANDARD_ATMOSPHERIC_PRESSURE_PASCALS 101325
     // This may need to be changed as follows later, but for now, use the constant value
     //double Omega = (alpha_fc * cfe->forcing_data_surface_pressure_Pa[0] / WATER_SPECIFIC_WEIGHT) - 0.5;
     double Omega = ( cfe_ptr->NWM_soil_params.alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS / WATER_SPECIFIC_WEIGHT) - 0.5;
@@ -2817,23 +3095,21 @@ extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr){
 /**************************************************************************/
 /**************************************************************************/
 extern void print_cfe_flux_header(){
-    printf("#    ,            hourly ,  direct,   giuh ,lateral,  base,   total\n");
-    printf("#Time,           rainfall,  runoff,  runoff, flow  ,  flow,  discharge\n");
-    printf("# (h),             (mm)   ,  (mm) ,   (mm) , (mm)  ,  (mm),    (mm)\n");
+    printf("#    ,            hourly ,  direct,   giuh ,lateral,  base,   total, storage, ice fraction, ice fraction \n");
+    printf("Time [h],rainfall [mm],runoff [mm],runoff [mm],flow [mm],flow [mm],discharge [mm],storage [mm],schaake [mm],xinan [-]\n");
 }
 extern void print_cfe_flux_at_timestep(cfe_state_struct* cfe_ptr){
-    printf("%d %lf %lf %lf %lf %lf %lf\n",
+  printf("%d, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf\n",
                            cfe_ptr->current_time_step,
                            cfe_ptr->timestep_rainfall_input_m*1000.0,
-                           
-                           /* xinanjiang_dev
-                           *cfe_ptr->flux_Schaake_output_runoff_m*1000.0,*/
                            *cfe_ptr->flux_output_direct_runoff_m*1000.0,
-
                            *cfe_ptr->flux_giuh_runoff_m*1000.0,
                            *cfe_ptr->flux_nash_lateral_runoff_m*1000.0, 
                            *cfe_ptr->flux_from_deep_gw_to_chan_m*1000.0,
-                           *cfe_ptr->flux_Qout_m*1000.0 );
+	                   *cfe_ptr->flux_Qout_m*1000.0,
+	                   cfe_ptr->soil_reservoir.storage_m*1000.0,
+	                   cfe_ptr->soil_reservoir.ice_fraction_schaake*1000.0,
+	                   cfe_ptr->soil_reservoir.ice_fraction_xinan);
 }
 
 extern void mass_balance_check(cfe_state_struct* cfe_ptr){
