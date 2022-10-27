@@ -19,6 +19,7 @@
 
 
 #define PARAM_VAR_NAME_COUNT 17
+// NOTE: If you update the params, also update the unit test in ../test/main_unit_test_bmi.c
 static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
     "maxsmc", "satdk", "slope", "b", "Klf", 
     "Kn", "Cgw", "expon", "max_gw_storage",
@@ -1050,7 +1051,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
       }
       // Solve for the soil water content at field capacity via Clapp-Hornberger. See "Parameter Estimation for a Conceptual
       // Functional Equivalent (CFE) Formulation of the National Water Model" equations 1-3 for detailed description. 
-      double base = (*alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS)/(WATER_SPECIFIC_WEIGHT * model->NWM_soil_params.satpsi);
+      double base = (model->NWM_soil_params.alpha_fc * STANDARD_ATMOSPHERIC_PRESSURE_PASCALS)/(WATER_SPECIFIC_WEIGHT * model->NWM_soil_params.satpsi);
       double exponent = -1/model->NWM_soil_params.bb; 
       model->soil_reservoir.soil_water_content_field_capacity = model->NWM_soil_params.smcmax * pow(base, exponent);
     }
@@ -2020,24 +2021,6 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
          cfe_ptr->gw_reservoir.storage_m = cfe_ptr->gw_reservoir.gw_storage * cfe_ptr->gw_reservoir.storage_max_m;
      }   
         
-    /*
-    * If we want to modify the number of nash cascades, we must also side effect other
-    * variables.  This "should" work, based on current program structure
-    */
-    /*
-    if (strcmp (name, "number_nash_reservoirs") ) {
-    
-            //Note that this only allows adjustment to the number of cascades,
-            //and each one will have initial storage value of 0.0
-            //Reallocate nash_storage
-            if( model->nash_storage != NULL ) free(model->nash_storage);
-            model->nash_storage = malloc(sizeof(double) * model->N_nash);
-            if( model->nash_storage == NULL ) return BMI_FAILURE;
-            for (j = 0; j < model->N_nash; j++)
-                model->nash_storage[j] = 0.0;
-        
-    }
-    */
     return BMI_SUCCESS;
 }
 
