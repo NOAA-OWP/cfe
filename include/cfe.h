@@ -78,6 +78,7 @@ struct conceptual_reservoir
 // as the primary discharge with a zero threshold, and does not calculate a secondary discharge.
 //--------------------------------------------------------------------------------------------------
 int    is_exponential;  // set this true TRUE to use the exponential form of the discharge equation
+double gw_storage;   // Initial Storage - LKC: added since I need to keep track of it when changing parameters
 double storage_max_m;   // maximum storage in this reservoir
 double storage_m;       // state variable.
 double storage_change_m; // storage change in the current step
@@ -114,6 +115,10 @@ double mult;    // the multiplier applied to satdk to route water rapidly downsl
 double slop;   // this factor (0-1) modifies the gradient of the hydraulic head at the soil bottom.  0=no-flow.
 double D;       // soil depth [m]
 double wilting_point_m;
+// LKC: Add this two parameters since they belong to soils. Makes the parameter specification consistent
+double alpha_fc;
+double refkdt;
+double soil_storage;
 };
 
 struct evapotranspiration_structure {
