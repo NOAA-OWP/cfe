@@ -7,8 +7,8 @@
 #include <float.h>
 #include <string.h>
 #include <assert.h>
-#include "../include/conceptual_reservoir.h"
-#include "../include/giuh.h"
+#include "conceptual_reservoir.h"
+#include "giuh.h"
 
 #define TRUE 1
 #define FALSE 0
