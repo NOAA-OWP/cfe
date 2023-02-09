@@ -63,6 +63,7 @@ target_link_libraries(${exe_name} LINK_PUBLIC cfelib)
 endif()
 target_link_libraries(${exe_name} PRIVATE m)
 
+target_include_directories(${exe_name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 unset(BASE CACHE)
 unset(FORCING CACHE)

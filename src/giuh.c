@@ -2,7 +2,7 @@
 
 #define _GIUH_C
 
-#include "../include/giuh.h"
+#include "include/giuh.h"
 
 
 //##############################################################
