@@ -1,0 +1,3 @@
+[submodule "extern/forcing_code"]
+	path = extern/forcing_code
+	url = https://github.com/NOAA-OWP/aorc_bmi.git
