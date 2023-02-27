@@ -58,6 +58,7 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
 
 ## cfe + aorc + pet + smp
 if(AETROOTZONE)
+
 add_executable(${exe_name} ./src/main_cfe_aorc_pet_rz_aet.cxx ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./src/conceptual_reservoir.c ./extern/aorc_bmi/src/aorc.c ./extern/aorc_bmi/src/bmi_aorc.c ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c)
 
 add_library(cfelib ./smc_profiles/src/bmi_soil_moisture_profile.cxx ./smc_profiles/src/soil_moisture_profile.cxx

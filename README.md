@@ -93,13 +93,15 @@ To compile and run CFE with locally read forcing data, run the following from th
 
 CFE was designed to read its own forcing file, but we have added an option to get forcings passed in through BMI using its `set_value` functionality. To demonstrate this functionality we have included the BMI-enabled AORC forcing read module. Follow the steps below:  
 
-1. `gcc -lm -Iinclude ./src/main_pass_forcings.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./src/conceptual_reservoir.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c  -o cfe_forcing`. This generates an executable called `cfe_forcing`. 
+1. `gcc -lm -Iinclude ./src/main_pass_forcings.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./src/conceptual_reservoir.c . ./extern/forcing_code/src/aorc.c ./extern/forcing_code/src/bmi_aorc.c  -o cfe_forcing`. This generates an executable called `cfe_forcing`. 
+
 2. To run this executable you must pass the path to the corresponding configuration files for **BOTH** CFE and AORC (in that order): `./cfe_forcing ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt`
 
 ### 3. CFE Model gets forcings AND potential evapotranspiration passed from BMI
 CFE can remove mass from the modeled system through evapotranspiration (directly from precipitation and from the soil using the Budyko function). Follow the steps below:  
 
 1. `gcc -lm -Iinclude ./src/main_cfe_aorc_pet.c ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./src/conceptual_reservoir.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c -o cfe_forcingpet`. This generates an executable called `cfe_forcingpet`.
+
 2. To run this executable you must pass the path to the corresponding configuration files for CFE, PET and AORC (in that order):  `./cfe_forcingpet ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt ./configs/cat_89_bmi_config_pet_pass.txt`
 
 ### 4. CFE rootzone-based example couples C and C++ modules and can't be built without cmake
