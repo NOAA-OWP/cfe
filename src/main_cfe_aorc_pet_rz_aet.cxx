@@ -10,7 +10,7 @@
 #include "../forcing_code/include/pet.h"
 #include "../forcing_code/include/bmi_pet.h"
 #include "../extern/forcing_code/include/aorc.h"
-#include "../externforcing_code/include/bmi_aorc.h"
+#include "../extern/forcing_code/include/bmi_aorc.h"
 
 #include "../bmi/bmi.hxx"
 #include "../smc_coupler/include/bmi_soil_moisture_profile.hxx"
