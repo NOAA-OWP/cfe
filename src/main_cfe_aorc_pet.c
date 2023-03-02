@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+
 #include "bmi.h"
 #include "cfe.h"
 #include "bmi_cfe.h"
-#include "../forcing_code/include/pet.h"
-#include "../forcing_code/include/bmi_pet.h"
 #include "../extern/aorc_bmi/include/aorc.h"
 #include "../extern/aorc_bmi/include/bmi_aorc.h"
+#include "../extern/evapotranspiration/include/pet.h"
+#include "../extern/evapotranspiration/include/bmi_pet.h"
 
 /***************************************************************
     Function to pass PET to CFE using BMI.

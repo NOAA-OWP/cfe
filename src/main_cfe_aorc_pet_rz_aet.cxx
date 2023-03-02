@@ -7,10 +7,10 @@
 #include "bmi.h"
 #include "bmi_cfe.h"
 
-#include "../forcing_code/include/pet.h"
-#include "../forcing_code/include/bmi_pet.h"
 #include "../extern/aorc_bmi/include/aorc.h"
 #include "../extern/aorc_bmi/include/bmi_aorc.h"
+#include "../extern/evapotranspiration/include/pet.h"
+#include "../extern/evapotranspiration/include/bmi_pet.h"
 
 #include "../bmi/bmi.hxx"
 #include "../smc_coupler/include/bmi_soil_moisture_profile.hxx"
