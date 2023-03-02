@@ -4,8 +4,8 @@
 #include "../include/bmi.h"
 #include "../include/cfe.h"
 #include "../include/bmi_cfe.h"
-#include "../forcing_code/include/pet.h"
-#include "../forcing_code/include/bmi_pet.h"
+#include "../extern/evapotranspiration/include/pet.h"
+#include "../extern/evapotranspiration/include/bmi_pet.h"
 #include "../extern/forcing_code/include/aorc.h"
 #include "../extern/forcing_code/include/bmi_aorc.h"
 

@@ -1,3 +1,6 @@
 [submodule "extern/forcing_code"]
 	path = extern/forcing_code
 	url = https://github.com/NOAA-OWP/aorc_bmi.git
+[submodule "extern/evapotranspiration"]
+	path = extern/evapotranspiration
+	url = https://github.com/NOAA-OWP/evapotranspiration.git
