@@ -1,7 +1,7 @@
 #ifndef _CONCEPTUAL_RESERVOIR_C
 #define _CONCEPTUAL_RESERVOIR_C
 
-#include "../include/conceptual_reservoir.h"
+#include "conceptual_reservoir.h"
 
 
 //##############################################################
