@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "../include/cfe.h"
-#include "../include/bmi.h"
-#include "../include/bmi_cfe.h"
+#include "cfe.h"
+#include "bmi.h"
+#include "bmi_cfe.h"
 
 #include "../forcing_code/include/aorc.h"
 #include "../forcing_code/include/bmi_aorc.h"

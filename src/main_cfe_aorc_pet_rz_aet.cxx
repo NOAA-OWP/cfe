@@ -3,9 +3,9 @@
 #include <stdbool.h>
 
 
-#include "../include/cfe.h"
-#include "../include/bmi.h"
-#include "../include/bmi_cfe.h"
+#include "cfe.h"
+#include "bmi.h"
+#include "bmi_cfe.h"
 
 #include "../forcing_code/include/pet.h"
 #include "../forcing_code/include/bmi_pet.h"
