@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "../include/bmi.h"
-#include "../include/bmi_cfe.h"
-#include "../include/cfe.h"
+#include "bmi.h"
+#include "bmi_cfe.h"
+#include "cfe.h"
 
 /*
 This main program is a mock framwork.
