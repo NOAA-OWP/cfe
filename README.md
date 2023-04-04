@@ -9,7 +9,7 @@ There are multiple ways to run CFE:
 2. As written by the original author. This includes a full program to read and process atmospheric forcing data, print the model output and check for mass balance closure. This code can be run from the [original_author_code](./original_author_code) directory. This code does not have a BMI implementation.
 
 ## Compiling and Running CFE
-There are four examples for running CFE as described below. They assume you have [GCC](https://gcc.gnu.org) and [CMAKE](https://cmake.org/) on your machine. To build without cmake see section `Alternative: Compiling and Running CFE` below.
+There are four examples for running CFE (out of the nextgen framework) as described below. They assume you have [GCC](https://gcc.gnu.org) and [CMAKE](https://cmake.org/) on your machine. To build without cmake see section `Alternative: Compiling and Running CFE` below.
 
 1. `Option BASE` : CFE reads local forcing data (standalone CFE BMI run; example using one BMI)
 2. `Option FORCING` : CFE uses an external module to read in a forcing file and pass those data using BMI (example using two BMIs)
@@ -28,14 +28,18 @@ run_cfe.sh [BASE, FORCING, FORCINGPET, AETROOTZONE] (pick one option)
 ````
 
 ## Note for running cfe in the ngen framework
-Follow general build instructions [here](https://github.com/NOAA-OWP/ngen/wiki/NGen-Tutorial) and then build [SLoTH](https://github.com/NOAA-OWP/SLoTH) using the following instructions
+Follow general build instructions [here](https://github.com/NOAA-OWP/ngen/wiki/NGen-Tutorial).Use the following instructions to build CFE and SLoTH[SLoTH](https://github.com/NOAA-OWP/SLoTH).
 ```
-cd extern/sloth/ && git checkout latest 
-git submodule update --init --recursive
-cd ../..
-cmake -B extern/sloth/cmake_build -S extern/sloth/
-make -C extern/sloth/cmake_build
-```
+ #### CFE
+ - cmake -B extern/cfe/cmake_build -S extern/cfe/cfe/ -DNGEN=ON
+ - make -C extern/cfe/cmake_build
+ #### SLoTH
+ - cd extern/sloth/ && git checkout latest 
+ - git submodule update --init --recursive
+ - cd ../..
+ - cmake -B extern/sloth/cmake_build -S extern/sloth/
+ - make -C extern/sloth/cmake_build
+ ```
 
 ## Note for customized examples (examples different than the above four)
 The configuration files must be passed in this order: (1) the CFE configuration file, (2) the forcing configuration file, (3) the potential evapotranspiration (PET) configuration file, and (4) the soil moisture profile configuration file
