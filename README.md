@@ -28,12 +28,13 @@ run_cfe.sh [BASE, FORCING, FORCINGPET, AETROOTZONE] (pick one option)
 ````
 
 ## Note for running cfe in the ngen framework
-Follow general build instructions [here](https://github.com/NOAA-OWP/ngen/wiki/NGen-Tutorial).Use the following instructions to build CFE and SLoTH[SLoTH](https://github.com/NOAA-OWP/SLoTH).
+Follow general build instructions [here](https://github.com/NOAA-OWP/ngen/wiki/NGen-Tutorial). Use the following instructions to build CFE and [SLoTH](https://github.com/NOAA-OWP/SLoTH).
 ```
- #### CFE
+ CFE
  - cmake -B extern/cfe/cmake_build -S extern/cfe/cfe/ -DNGEN=ON
  - make -C extern/cfe/cmake_build
- #### SLoTH
+ 
+ SLoTH
  - cd extern/sloth/ && git checkout latest 
  - git submodule update --init --recursive
  - cd ../..
