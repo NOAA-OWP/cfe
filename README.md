@@ -19,7 +19,7 @@ There are four examples for running CFE as described below. They assume you have
 ````
 git clone https://github.com/NOAA-OWP/cfe.git
 cd cfe
-git clone https://github.com/NOAA-OWP/SoilMoistureProfiles.git smc_coupler (needed if AETROOTZONE=ON)
+git clone https://github.com/NOAA-OWP/SoilMoistureProfiles.git smc_profiles (needed if AETROOTZONE=ON)
 mkdir build && cd build
 cmake ../ [-DBASE=ON,-DFORCING=ON,-DFORCINGPET=ON,-DAETROOTZONE=ON] (pick one option, e.g. `cmake ../ -DFORCING=ON`)
 make

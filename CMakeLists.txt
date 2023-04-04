@@ -1,41 +1,52 @@
 cmake_minimum_required(VERSION 3.10)
 
+string(ASCII 27 Esc)
+set(ColourReset "${Esc}[m")
+set(Red         "${Esc}[32m")
+
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(CMAKE_C_COMPILER $ENV{CC})
 set(CMAKE_CXX_COMPILER $ENV{CXX})
 
-string(ASCII 27 Esc)
-set(ColourReset "${Esc}[m")
-set(Red         "${Esc}[31m")
 # module setup options
 
-#option(BASE "BASE" ON)
-
+option(BASE "BASE" OFF)
 option(FORCING "FORCING" OFF)
 option(FORCINGPET "FORCINGPET" OFF)
 option(AETROOTZONE "AETROOTZONE" OFF)
+option(NGEN "NGEN" OFF)
 
-if(FORCING)
-message("${Red} CFE RUNNING WITH FORCING!${ColourReset}")
-set(exe_name "cfe_forcing")
-elseif(FORCINGPET)
-message("${Red} CFE RUNNING WITH FORCING AND PET!${ColourReset}")
-set(exe_name "cfe_forcingpet")
-elseif(AETROOTZONE)
-message("${Red} CFE RUNNING WITH FORCING AND PET AND ROOTZONE BASED AET TURNED ON!${ColourReset}")
-set(exe_name "cfe_aet_rootzone")
-else()
-message("${Red}CFE RUNNING WITH BASE CASE!${ColourReset}")
-set(exe_name "cfe_base")
+if(NOT BASE AND NOT FORCING AND NOT FORCINGPET AND NOT AETROOTZONE AND NOT NGEN)
+  message("${Red}Options: BASE, FORCING, FORCINGPET, AETROOTZONE, NGEN" ${ColourReset})
+  message(FATAL_ERROR "Invalid option is provided, CMake will exit." )
 endif()
 
-message("generated exe = ${exe_name}")
+if(BASE)
+message("${Red} CFE BUILD 'BASE' CASE!${ColourReset}")
+set(exe_name "cfe_base")
+elseif(FORCING)
+message("${Red} CFE BUILD 'FORCING' CASE!${ColourReset}")
+set(exe_name "cfe_forcing")
+elseif(FORCINGPET)
+message("${Red} CFE BUILD 'FORCING AND PET' CASE!${ColourReset}")
+set(exe_name "cfe_forcingpet")
+elseif(AETROOTZONE)
+message("${Red} CFE BUILD 'FORCING AND PET AND ROOTZONE-BASED AET' CASE!${ColourReset}")
+set(exe_name "cfe_aet_rootzone")
+elseif(NGEN)
+message("${Red} CFE BUILD NGEN CASE!${ColourReset}")
+endif()
+
 # set the project name
-project(cfe)
+project(cfebmi VERSION 1.0.0 DESCRIPTION "OWP CFE BMI Module Shared Library")
 
 set(CMAKE_BUILD_TYPE Debug)
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
     message("Debug build.")
 ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
+
 message(CMAKE_CXX_COMPILER " ${CMAKE_CXX_COMPILER}")
 message(CMAKE_C_COMPILER " ${CMAKE_C_COMPILER}")
 message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
@@ -47,25 +58,65 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
 
 ## cfe + aorc + pet + smp
 if(AETROOTZONE)
-add_executable(${exe_name} ./src/main_cfe_aorc_pet_rz_aet.cxx ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./src/conceptual_reservoir.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c)
+add_executable(${exe_name} ./src/main_cfe_aorc_pet_rz_aet.cxx ./src/cfe.c ./src/bmi_cfe.c
+                           ./src/giuh.c ./src/conceptual_reservoir.c ./forcing_code/src/aorc.c
+		           ./forcing_code/src/bmi_aorc.c ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c)
 
-add_library(cfelib ./smc_coupler/src/bmi_soil_moisture_profile.cxx ./smc_coupler/src/soil_moisture_profile.cxx ./smc_coupler/include/bmi_soil_moisture_profile.hxx ./smc_coupler/include/soil_moisture_profile.hxx)
-elseif(FORCING)
-add_executable(${exe_name} ./src/main_pass_forcings.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./src/conceptual_reservoir.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c)
-elseif(FORCINGPET)
-add_executable(${exe_name} ./src/main_cfe_aorc_pet.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./src/conceptual_reservoir.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c)
-else()
-add_executable(${exe_name} ./src/main.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./src/conceptual_reservoir.c)
-
-endif()
-if(AETROOTZONE)
+add_library(cfelib ./smc_profiles/src/bmi_soil_moisture_profile.cxx ./smc_profiles/src/soil_moisture_profile.cxx
+                   ./smc_profiles/include/bmi_soil_moisture_profile.hxx ./smc_profiles/include/soil_moisture_profile.hxx)
 target_link_libraries(${exe_name} LINK_PUBLIC cfelib)
+elseif(FORCING)
+add_executable(${exe_name} ./src/main_pass_forcings.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c
+                           ./src/conceptual_reservoir.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c)
+elseif(FORCINGPET)
+add_executable(${exe_name} ./src/main_cfe_aorc_pet.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c
+                           ./src/conceptual_reservoir.c ./forcing_code/src/aorc.c ./forcing_code/src/bmi_aorc.c
+			   ./forcing_code/src/pet.c ./forcing_code/src/bmi_pet.c)
+elseif(BASE)
+add_executable(${exe_name} ./src/main.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./src/conceptual_reservoir.c)
 endif()
-target_link_libraries(${exe_name} PRIVATE m)
 
-target_include_directories(${exe_name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+if(NOT NGEN)
+target_link_libraries(${exe_name} PRIVATE m)
+target_include_directories(${exe_name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+endif()
+
+
+# ngen CFE (add shared library)
+if(NGEN)
+set(CFE_LIB_NAME_CMAKE cfebmi)
+set(CFE_LIB_DESC_CMAKE "OWP CFE BMI Module Shared Library")
+
+# Make sure these are compiled with this directive
+add_compile_definitions(BMI_ACTIVE)
+
+if(WIN32)
+    add_library(cfebmi ./src/bmi_cfe.c ./src/cfe.c ./src/giuh.c ./src/conceptual_reservoir.c)
+else()
+    add_library(cfebmi SHARED ./src/bmi_cfe.c ./src/cfe.c ./src/giuh.c ./src/conceptual_reservoir.c)
+endif()
+
+target_include_directories(cfebmi PRIVATE include)
+
+set_target_properties(cfebmi PROPERTIES VERSION ${PROJECT_VERSION})
+
+set_target_properties(cfebmi PROPERTIES PUBLIC_HEADER ./include/bmi_cfe.hxx)
+
+include(GNUInstallDirs)
+
+install(TARGETS cfebmi
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+configure_file(cfebmi.pc.in cfebmi.pc @ONLY)
+
+install(FILES ${CMAKE_BINARY_DIR}/cfebmi.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
+
+endif()
 
 unset(BASE CACHE)
 unset(FORCING CACHE)
 unset(FORCINGPET CACHE)	
 unset(AETROOTZONE CACHE)
+unset(NGEN CACHE)
