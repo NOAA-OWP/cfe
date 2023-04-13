@@ -5,8 +5,8 @@
 #include "../include/bmi.h"
 #include "../include/bmi_cfe.h"
 
-#include "../extern/forcing_code/include/aorc.h"
-#include "../extern/forcing_code/include/bmi_aorc.h"
+#include "../extern/aorc_bmi/include/aorc.h"
+#include "../extern/aorc_bmi/include/bmi_aorc.h"
 
 /***************************************************************
     Function to pass the forcing data from AORC to CFE using BMI.
