@@ -1,8 +1,7 @@
 #ifndef _GIUH_C
-
 #define _GIUH_C
 
-#include "../include/giuh.h"
+#include "giuh.h"
 
 
 //##############################################################

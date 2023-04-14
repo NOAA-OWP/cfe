@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "../include/bmi.h"
-#include "../include/bmi_cfe.h"
+#include "bmi.h"
+#include "bmi_cfe.h"
 #include <time.h>
 #include <float.h>
 #ifndef WATER_SPECIFIC_WEIGHT

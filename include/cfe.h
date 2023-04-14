@@ -7,7 +7,7 @@
 #include <float.h>
 #include <string.h>
 #include <assert.h>
-
+#include "conceptual_reservoir.h"
 #include "giuh.h"
 
 #define TRUE 1
@@ -68,40 +68,6 @@
 
 // define data structures
 //--------------------------
-
-struct conceptual_reservoir
-{
-// this data structure describes a nonlinear reservoir having two outlets, one primary with an activation
-// threshold that may be zero, and a secondary outlet with a threshold that may be zero
-// this will also simulate a linear reservoir by setting the exponent parameter to 1.0 iff is_exponential==FALSE
-// iff is_exponential==TRUE, then it uses the exponential discharge function from the NWM V2.0 forumulation
-// as the primary discharge with a zero threshold, and does not calculate a secondary discharge.
-//--------------------------------------------------------------------------------------------------
-int    is_exponential;  // set this true TRUE to use the exponential form of the discharge equation
-double gw_storage;   // Initial Storage - LKC: added since I need to keep track of it when changing parameters
-double storage_max_m;   // maximum storage in this reservoir
-double storage_m;       // state variable.
-double storage_change_m; // storage change in the current step
-double coeff_primary;    // the primary outlet
-double exponent_primary;
-double storage_threshold_primary_m;
-double storage_threshold_secondary_m;
-double coeff_secondary;
-double exponent_secondary;
-double ice_fraction_schaake, ice_fraction_xinan;
-int   is_sft_coupled; // boolean - true if SFT is ON otherwise OFF (default is OFF)
-
-//---Root zone adjusted AET development -rlm -ahmad -------------
-double *smc_profile; //soil moisture content profile
-int n_soil_layers; // number of soil layers
-double *soil_layer_depths_m; // soil layer depths defined in the config file in units of [m]
-int aet_root_zone; // boolean - true if aet_root_zone is ON otherwise OFF (default is OFF)
-int max_root_zone_layer;  // maximum root zone layer is used to identify the maximum layer to remove water from for AET
-double *delta_soil_layer_depth_m; // used to calculate the total soil moisture in each layer
-double soil_water_content_field_capacity;  // water content [m/m] at field capacity.  Used in AET routine 
-
-//---------------------------------------------------------------
-};
 
 struct NWM_soil_parameters
 {
@@ -186,9 +152,6 @@ extern void Xinanjiang_partitioning_scheme(double water_input_depth_m, double fi
 					   double max_soil_moisture_storage_m, double column_total_soil_water_m,
 					   struct direct_runoff_parameters_structure *parms, double *surface_runoff_depth_m,
 					   double *infiltration_depth_m, double ice_fraction_xinan);
-
-extern void conceptual_reservoir_flux_calc(struct conceptual_reservoir *da_reservoir,
-                                           double *primary_flux_m, double *secondary_flux_m);
 
 extern double convolution_integral(double runoff_m, int num_giuh_ordinates, 
                                    double *giuh_ordinates, double *runoff_queue_m_per_timestep);
