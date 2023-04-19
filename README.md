@@ -19,7 +19,6 @@ There are four examples for running CFE (out of the nextgen framework) as descri
 ````
 git clone https://github.com/NOAA-OWP/cfe.git
 cd cfe
-git checkout ajk/sft_aet_giuh_merge (update after PR merge)
 git clone https://github.com/NOAA-OWP/SoilMoistureProfiles.git smc_profiles (needed if AETROOTZONE=ON)
 git submodule update --init
 mkdir build && cd build
