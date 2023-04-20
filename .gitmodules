@@ -1,0 +1,6 @@
+[submodule "extern/aorc_bmi"]
+	path = extern/aorc_bmi
+	url = https://github.com/NOAA-OWP/aorc_bmi.git
+[submodule "extern/evapotranspiration"]
+	path = extern/evapotranspiration
+	url = https://github.com/NOAA-OWP/evapotranspiration.git
