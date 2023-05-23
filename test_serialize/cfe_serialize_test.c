@@ -42,30 +42,9 @@ int print_some(void *ptr_list[]){
   //------------------------------------------------
   puts("Printing some selected variables ...");
 
-  printf("ptr_list[42] = volout = %f\n", *(double *)ptr_list[42]);
-  printf("ptr_list[43] = volin  = %f\n", *(double *)ptr_list[43]);
-  printf("ptr_list[46] = vol_in_nash    = %f\n", *(double *)ptr_list[46]);
-  printf("ptr_list[47] = vol_out_nash   = %f\n", *(double *)ptr_list[47]);
-  printf("ptr_list[51] = num_time_steps = %d\n", *(int *)ptr_list[51]);
-  printf("ptr_list[52] = current_time_step = %d\n", *(int *)ptr_list[52]);
-  printf("ptr_list[53] = time_step_size = %d\n", *(int *)ptr_list[53]);
-  //----------------------------------------------
-  // The following 3 methods all work, but don't
-  // use "&" in get_state_var_ptrs().
-  //----------------------------------------------
-  printf("ptr_list[55] = forcing_file = %s\n", (char *)ptr_list[55]);
-  //---------------------------------------------------------------------
-  // printf("ptr_list[55] = forcing_file  = %s", ptr_list[55]);
-  //---------------------------------------------------------------------
-//   char *p;
-//     // p =(char *)ptr_list[55];
-//     p = ptr_list[55];
-//     printf("ptr_list[55] = forcing_file  = ");
-//     while (*p != '\0'){
-//         printf("%c", *p++); } 
-  //---------------------------------------------------------------
-  printf("ptr_list[71] = aorc.time    = %ld\n", *(long *)ptr_list[71]);
-  printf("ptr_list[75] = nash_storage = %f\n", *(double *)ptr_list[75]);
+  printf("ptr_list[7] = volout = %f\n", *(double *)ptr_list[7]);
+  printf("ptr_list[16] = volin  = %f\n", *(double *)ptr_list[16]);
+
   //---------------------------------------------------------------    
   puts("");    // newline is added
 
@@ -121,6 +100,8 @@ int main(int argc, const char *argv[])
 
   model1->initialize(model1, cfg_file);
   model2->initialize(model2, cfg_file);
+  
+ 
 
   //-------------------------------------------------------------- 
   if (test_getters){
@@ -274,6 +255,11 @@ int main(int argc, const char *argv[])
 
   for (int i=1; i<=n_steps1; i++){
       model1->update(model1);
+	 
+  }
+  
+    for (int i=1; i<=n_steps1; i++){
+      model2->update(model2);
   }
 
   //--------------------------------------------------------------  
@@ -336,24 +322,29 @@ int main(int argc, const char *argv[])
 
   if (verbose){ print_some( ptr_list ); }
 
-  //--------------------------------------------------------------  
-  if (verbose){ puts("Calling serialize() on CFE model 1 ..."); }
-
-  //------------------------------------------------
-  // Serialize Model1 state and save to:  ser_file
-  //------------------------------------------------
-  serialize( model1, ser_file );
-
-  //--------------------------------------------------------------
-  if (verbose){
-      puts("Calling deserialize_to_state() on CFE model 2 ...");
+  FILE *fp;
+  FILE *fp2;
+  char *filename1 = "/mh1/kjafarzadegan/cfe-owp-bmi-enhance/test_serialize3/states.txt";
+  char *filename2 = "/mh1/kjafarzadegan/cfe-owp-bmi-enhance/test_serialize3/outputs.txt";
+  fp = fopen(filename1, "w"); // Open file for writing
+  fp2 = fopen(filename2, "w"); // Open file for writing
+    
+  if (fp == NULL) {
+      printf("Error opening file!\n");
+      return 1;
   }
 
-  //-----------------------------------------------
-  // Deserialize Model1 state saved in "ser_file"
-  // and set it as the new state of Model2
-  //-----------------------------------------------
-  deserialize_to_state( ser_file, model2, print_obj );
+  printf("%f\n", *(double *)ptr_list[7]);
+  fprintf(fp, "%f\n", ptr_list[7]);
+  printf("%f\n", *(double *)ptr_list[16]);
+  fprintf(fp, "%f\n", ptr_list[16]);
+  
+    
+  fclose(fp); // Close the file
+  printf("Initial state file was written successfully.\n");
+    
+  
+  
   
   //--------------------------------------------------------------
   if (verbose){
@@ -361,11 +352,76 @@ int main(int argc, const char *argv[])
       printf("n_steps2 = %i \n", n_steps2);
       puts("");
   }
-
+//serialize part
+//***********************************************************************************
   for (int i=1; i<=n_steps2; i++){
-      model2->update(model2);
+	float state_array[2];
+    FILE *file_ptr;
+    int i;
+	// *****************start reading states and set as input to model****************
+    // open file for reading
+    file_ptr = fopen(filename1, "r");
+
+    // read array from file
+
+    fscanf(file_ptr, "%f", &state_array[0]);
+    fscanf(file_ptr, "%f", &state_array[1]);
+
+
+    // close file
+    fclose(file_ptr);
+
+    // print array
+
+    printf("%f ", state_array[0]);
+    double new_soil_m=state_array[0];
+    model2->set_value(model2, names[7], &new_soil_m);
+    printf("%f ", state_array[1]);
+    double new_gw_m=state_array[1];
+    model2->set_value(model2, names[16], &new_gw_m);
+	///**************************run the model for 1 time step************************
+	
+    model2->update(model2);
+	result = get_state_var_ptrs(model2, names, ptr_list);
+	
+	printf("%d,", *(int *)ptr_list[52]);
+    fprintf(fp2, "%d,", *(int *)ptr_list[52]);
+    printf("%f\n", *(double *)ptr_list[83]);
+    fprintf(fp2, "%f\n", ptr_list[83]);
+	
+	
+	//*************************write states in a file************************
+	void *ptr_list[ n_state_vars ];
+    result = get_state_var_ptrs(model2, names, ptr_list);
+    if (result == BMI_FAILURE){
+      puts("ERROR in get_state_var_ptrs(); returning.");
+      return BMI_FAILURE;
+    }
+    //model1->get_state_var_ptrs(model1, ptr_list);
+
+    if (verbose){ print_some( ptr_list ); }
+
+    FILE *fp;
+    //char *filename1 = "/mh1/kjafarzadegan/cfe-owp-bmi-enhance/test_serialize2/states.txt";
+    //char *filename2 = "/mh1/kjafarzadegan/cfe-owp-bmi-enhance/test_serialize2/states2.txt";
+    fp = fopen(filename1, "w"); // Open file for writing
+    
+    if (fp == NULL) {
+      printf("Error opening file!\n");
+      return 1;
+    }
+
+    printf("%f\n", *(double *)ptr_list[7]);
+    fprintf(fp, "%f\n", ptr_list[7]);
+    printf("%f\n", *(double *)ptr_list[16]);
+    fprintf(fp, "%f\n", ptr_list[16]);
+  
+    
+    fclose(fp); // Close the file
+    printf("File written successfully.\n");
+	
   }
- 
+ //*************************finish serializiation************************
   //--------------------------------------------------------------
   if (verbose){
       puts("Updating BMI CFE model 1 ...");
