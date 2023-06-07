@@ -33,7 +33,7 @@ jobs:
       uses: actions/checkout@v2
     
     - name: Build and Run Unit Test BETA
-      run: ./test/make_and_run_bmi_unit_test.sh
+      run: cd ./test && ./make_and_run_bmi_unit_test.sh
       #uses: ./.github/actions/ngen-build
       #with:
         #targets: "test_unit"
