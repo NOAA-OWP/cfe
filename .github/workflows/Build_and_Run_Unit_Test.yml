@@ -36,5 +36,5 @@ jobs:
       run: ./test/make_and_run_bmi_unit_test.sh
       #uses: ./.github/actions/ngen-build
       #with:
-        targets: "test_unit"
-        build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
+        #targets: "test_unit"
+        #build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
