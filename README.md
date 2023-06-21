@@ -77,6 +77,7 @@ A [configs/](./configs/) directory contains primiary configuration text files fo
 | a_Xinanjiang_inflection_point_parameter | *double* |   |  | parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
 | b_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable  | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
 | x_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
+| urban_decimal_fraction  | *double*  |  0.0 - 1.0 |   |  parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang` |
 | aet_rootzone                    | *boolean* | True, true or 1  |  | coupling parameter | `rootzone-based AET` | when `CFE coupled to SoilMoistureProfile` |
 | max_root_zone_layer | *double* |  | meters [m] | parameter_adjustable | AET | layer of the soil that is the maximum root zone depth. That is, the depth of the layer where the AET is drawn from |
 | soil_layer_depths | 1D array |  | meters [m] | parameter_adjustable | AET | an array of depths from the surface. Example, soil_layer_depths=0.1,0.4,1.0,2.0
@@ -113,12 +114,13 @@ CFE can remove mass from the modeled system through evapotranspiration (directly
 The user has the option to pick a particular direct runoff (aka surface partitioning) method:
 
 1. Schaake function (configuration: `surface_partitioning_scheme=Schaake`)
-2. Xinanjiang function (configuration: `surface_partitioning_scheme=Xinanjiang`). When using this runoff method the user must also include three parameters.
+2. Xinanjiang function (configuration: `surface_partitioning_scheme=Xinanjiang`). When using this runoff method the user must also include four parameters.
 
-If the **Xinanjiang** scheme is choosen, three parameters need to be included in the configuration file:
+If the **Xinanjiang** scheme is choosen, four parameters need to be included in the configuration file:
 1. a_Xinanjiang_inflection_point_parameter
 2. b_Xinanjiang_shape_parameter
-3. x_Xinanjiang_shape_parameter 
+3. x_Xinanjiang_shape_parameter
+4. urban_decimal_fraction 
 
 ## Rootzone-based Actual Evapotranspiration (AET)
 The user has the option to turn ON and OFF rootzone-based AET, default option is OFF. To turn it ON, the following parameters need to be included in the configuration file.
