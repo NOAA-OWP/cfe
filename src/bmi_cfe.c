@@ -13,9 +13,9 @@
 #define CFE_DEGUG 1
 
 #define INPUT_VAR_NAME_COUNT 5
-#define OUTPUT_VAR_NAME_COUNT 12
+#define OUTPUT_VAR_NAME_COUNT 13
 
-#define STATE_VAR_NAME_COUNT 92   // must match var_info array size
+#define STATE_VAR_NAME_COUNT 94   // must match var_info array size
 
 
 #define PARAM_VAR_NAME_COUNT 17
@@ -24,7 +24,7 @@ static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
     "maxsmc", "satdk", "slope", "b", "Klf", 
     "Kn", "Cgw", "expon", "max_gw_storage",
     "satpsi","wltsmc","alpha_fc","refkdt",
-  "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
+    "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
     "N_nash"
 };
 
@@ -119,12 +119,12 @@ Variable var_info[] = {
 	{ 53, "current_time_step",     "int",  1 },
 	{ 54, "time_step_size",        "int",  1 },
 	{ 55, "is_forcing_from_bmi",   "int",  1 },
-	{ 56, "forcing_file",                                 "string", 1 },  // strlen
-  { 57, "surface_partitioning_scheme", "int", 1 }, // from direct_runoff_params_struct
-	{ 58, "N_nash",                                       "int",    1 },
-	{ 59, "K_lf",                                         "double", 1 },
-	{ 60, "K_nash",                                       "double", 1 },
-	{ 61, "num_giuh_ordinates",                           "int",    1 },
+	{ 56, "forcing_file",          "string", 1 },  // strlen
+	{ 57, "surface_partitioning_scheme", "int", 1 }, // from direct_runoff_params_struct
+	{ 58, "N_nash",                      "int",    1 },
+	{ 59, "K_lf",                        "double", 1 },
+	{ 60, "K_nash",                      "double", 1 },
+	{ 61, "num_giuh_ordinates",          "int",    1 },
 	//---------------------------------------
 	// Vars in aorc_forcing_data_cfe struct
 	//---------------------------------------
@@ -152,24 +152,25 @@ Variable var_info[] = {
 	{ 79, "flux_giuh_runoff_m",             "double*", 1 },
 	{ 80, "flux_nash_lateral_runoff_m",     "double*", 1 },
 	{ 81, "flux_from_deep_gw_to_chan_m",    "double*", 1 },
-	{ 82, "flux_perc_m",                    "double*", 1 },
-	{ 83, "flux_lat_m",                     "double*", 1 },
-	{ 84, "flux_Qout_m",                    "double*", 1 },
-	{ 85, "verbosity",                      "int",     1 },
+	{ 82, "flux_from_soil_to_gw_m",         "double*", 1 },
+	{ 83, "flux_perc_m",                    "double*", 1 },
+	{ 84, "flux_lat_m",                     "double*", 1 },
+	{ 85, "flux_Qout_m",                    "double*", 1 },
+	{ 86, "verbosity",                      "int",     1 },
 	//---------------------------------------
 	// direct_runoff_params_struct vars
 	// xinanjiang or schaake flag [56]
 	//---------------------------------------
-	{ 86, "Schaake_adjusted_magic_constant_by_soil_type",   "double", 1},
-	{ 87, "a_Xinanjiang_inflection_point_parameter",        "double", 1},
-	{ 88, "b_Xinanjiang_shape_parameter",                   "double", 1},
-	{ 89, "x_Xinanjiang_shape_parameter",                   "double", 1},
+	{ 87, "Schaake_adjusted_magic_constant_by_soil_type",   "double", 1},
+	{ 88, "a_Xinanjiang_inflection_point_parameter",        "double", 1},
+	{ 89, "b_Xinanjiang_shape_parameter",                   "double", 1},
+	{ 90, "x_Xinanjiang_shape_parameter",                   "double", 1},
 	//-------------------------------------------
 	// Root zone adjusted AET development -rlm -AJ
 	// -------------------------------------------
-	{ 90, "soil_moisture_profile",                   "double", 1},
-        { 91, "soil_layer_depths_m",			 "double", 1},
-        { 92, "max_root_zone_layer",                     "int", 1},
+	{ 91, "soil_moisture_profile",                   "double", 1},
+        { 92, "soil_layer_depths_m",			 "double", 1},
+        { 93, "max_root_zone_layer",                     "int", 1},
 	//--------------------------------------------
 };
 
@@ -183,6 +184,7 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "GIUH_RUNOFF",
         "NASH_LATERAL_RUNOFF",
         "DEEP_GW_TO_CHANNEL_FLUX",
+	"SOIL_TO_GW_FLUX",
         "Q_OUT",
         "POTENTIAL_ET",
         "ACTUAL_ET",
@@ -190,7 +192,6 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "SOIL_STORAGE",
 	"SOIL_STORAGE_CHANGE",
 	"SURF_RUNOFF_SCHEME"
-
 };
 
 static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
@@ -205,6 +206,7 @@ static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
         "double",
         "double",
       	"double",
+	"double",
 	"int"
 };
 
@@ -220,7 +222,8 @@ static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
 	1,
         1,
         1,
-        1
+        1,
+	1
 };
 
 static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
@@ -235,6 +238,7 @@ static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
         "m",
         "m",
       	"m",
+	"m",
 	"none"
 };
 
@@ -250,12 +254,13 @@ static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
 	0,
         0,
         0,
-        0
+        0,
+	0
 };
 
 static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
-  "node",
-  "node",
+        "node",
+        "node",
         "node",
         "node",
         "node",
@@ -265,7 +270,8 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
 	"node",
         "node",
         "node",
-        "node"
+        "node",
+	"node"
 };
 
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
@@ -283,7 +289,6 @@ static const char *input_var_types[INPUT_VAR_NAME_COUNT] = {
 	"double",
 	"double",
 	"double"
-        
 };
 
 static const char *input_var_units[INPUT_VAR_NAME_COUNT] = {
@@ -341,15 +346,15 @@ static int Get_end_time (Bmi *self, double * time)
     //         so even if it is BMI, we should still use num_timesteps
     //         BMI shouldn't always have a very large end time...
     if (cfe->is_forcing_from_bmi == TRUE){
-        // if BMI, set to FLT_MAX macro via float.h
-        // See https://bmi.readthedocs.io/en/latest/#get-end-time
-        *time += FLT_MAX;
-        return BMI_SUCCESS;
+      // if BMI, set to FLT_MAX macro via float.h
+      // See https://bmi.readthedocs.io/en/latest/#get-end-time
+      *time += FLT_MAX;
+      return BMI_SUCCESS;
     }
     else {
-        // otherwise, set via numsteps as usual
-        *time += cfe->num_timesteps * cfe->time_step_size;
-        return BMI_SUCCESS;
+      // otherwise, set via numsteps as usual
+      *time += cfe->num_timesteps * cfe->time_step_size;
+      return BMI_SUCCESS;
     }
 
     return BMI_FAILURE;
@@ -449,52 +454,50 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
     // Keep track of whether required values were set in config
     // TODO: do something more efficient, maybe using bitwise operations
-    int is_forcing_file_set = FALSE;
-    int is_soil_params__depth_set = FALSE;
-    int is_soil_params__bb_set = FALSE;
-    int is_soil_params__satdk_set = FALSE;
+    int is_forcing_file_set        = FALSE;
+    int is_soil_params__depth_set  = FALSE;
+    int is_soil_params__bb_set     = FALSE;
+    int is_soil_params__satdk_set  = FALSE;
     int is_soil_params__satpsi_set = FALSE;
-    int is_soil_params__slop_set = FALSE;
+    int is_soil_params__slop_set   = FALSE;
     int is_soil_params__smcmax_set = FALSE;
     int is_soil_params__wltsmc_set = FALSE;
-    int is_soil_params__expon_set = FALSE;
+    int is_soil_params__expon_set  = FALSE;
     int is_soil_params__expon2_set = FALSE;
-    int is_Cgw_set = FALSE;
-    int is_expon_set = FALSE;
-    int is_alpha_fc_set = FALSE;
-    int is_soil_storage_set = FALSE;
-    int is_K_nash_set = FALSE;
-    int is_K_lf_set = FALSE;
-    int is_num_timesteps_set = FALSE;
-    int is_verbosity_set = FALSE;
+    int is_Cgw_set                 = FALSE;
+    int is_expon_set               = FALSE;
+    int is_alpha_fc_set            = FALSE;
+    int is_soil_storage_set        = FALSE;
+    int is_K_nash_set              = FALSE;
+    int is_K_lf_set                = FALSE;
+    int is_num_timesteps_set       = FALSE;
+    int is_verbosity_set           = FALSE;
 
     /* xinanjiang_dev*/
-    int is_direct_runoff_method_set = FALSE;
+    int is_direct_runoff_method_set         = FALSE;
     int is_a_Xinanjiang_inflection_point_parameter_set = FALSE;
     int is_b_Xinanjiang_shape_parameter_set = FALSE;
     int is_x_Xinanjiang_shape_parameter_set = FALSE;
-    int is_urban_decimal_fraction_set = FALSE;
+    int is_urban_decimal_fraction_set       = FALSE;
     
     /* Ice fraction */
-    int is_sft_coupled_set = FALSE;
+    int is_sft_coupled_set           = FALSE;
     int is_ice_content_threshold_set = FALSE;
 
     // Keep track these in particular, because the "true" storage value may be a ratio and need both storage and max
-    int is_gw_max_set = FALSE;
+    int is_gw_max_set     = FALSE;
     int is_gw_storage_set = FALSE;
 
     int is_giuh_originates_string_val_set = FALSE;
 
     /* ------ Root zone adjusted AET development -rlm ------- */
-    int is_aet_rootzone_set = FALSE;
+    int is_aet_rootzone_set                 = FALSE;
     int is_soil_layer_depths_string_val_set = FALSE;
-    int is_max_root_zone_layer_set = FALSE;
+    int is_max_root_zone_layer_set          = FALSE;
     /*--------------------------------------------------------*/
     // Default value
     model->NWM_soil_params.refkdt = 3.0;
 
-    //int is_gw_storage_ratio = FALSE;
-    //double gw_storage_literal;
     // Also keep track of Nash stuff and properly set at the end of reading the config file
     model->N_nash = 2;
     char* nash_storage_string_val;
@@ -521,7 +524,6 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 #if CFE_DEGUG >= 1
         printf("Config Value - Param: '%s' | Value: '%s' | Units: '%s'\n", param_key, param_value, param_units);
 #endif
-        //printf(" %s | Value: %s | Units: %s\n", param_key, param_value, param_units);
 
         if (strcmp(param_key, "forcing_file") == 0) {
             model->forcing_file = strdup(param_value);
@@ -1822,6 +1824,11 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
+    if (strcmp (name, "SOIL_TO_GW_FLUX") == 0) {
+      *dest = (void *) ((cfe_state_struct *)(self->data))->flux_perc_m;
+      return BMI_SUCCESS;
+    }
+    
     if (strcmp (name, "Q_OUT") == 0) {
         *dest = ((cfe_state_struct *)(self->data))->flux_Qout_m;
         return BMI_SUCCESS;
