@@ -48,3 +48,12 @@ jobs:
         make
         cd ..
         ./run_cfe.sh FORCING
+        
+    - name: Build and Run Standalone PET option
+      run: |
+        git submodule update --init
+        cd build
+        cmake ../ -DFORCINGPET=ON
+        make
+        cd ..
+        ./run_cfe.sh FORCINGPET
