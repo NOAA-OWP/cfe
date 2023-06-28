@@ -34,7 +34,6 @@ jobs:
     
     - name: Build and Run Standalone BASE option
       run: |
-        git submodule update --init
         mkdir build && cd build
         cmake ../ -DBASE=ON
         make
@@ -43,6 +42,8 @@ jobs:
         
     - name: Build and Run Standalone FORCING option
       run: |
+        git submodule update --init
+        mkdir build && cd build
         cmake ../ -DFORCING=ON
         make
         cd ..
