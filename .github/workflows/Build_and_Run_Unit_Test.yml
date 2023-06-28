@@ -32,9 +32,11 @@ jobs:
     - name: Checkout the commit
       uses: actions/checkout@v2
     
-    - name: Build and Run Unit Test BETA
-      run: cd ./test && ./make_and_run_bmi_unit_test.sh
-      #uses: ./.github/actions/ngen-build
-      #with:
-        #targets: "test_unit"
-        #build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
+    - name: Build and Run Standalone 
+      run: |
+        git submodule update --init
+        mkdir build && cd build
+        cmake ../ -DBASE=ON
+        make
+        cd ..
+        run_cfe.sh BASE
