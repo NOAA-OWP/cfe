@@ -43,8 +43,8 @@ jobs:
     - name: Build and Run Standalone FORCING option
       run: |
         git submodule update --init
-        mkdir build && cd build
+        cd build
         cmake ../ -DFORCING=ON
         make
         cd ..
-        ./run_cfe.sh BASE
+        ./run_cfe.sh FORCING
