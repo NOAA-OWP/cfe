@@ -1,4 +1,4 @@
-# Test changes that have been pushed to the master and dev branches
+# Test changes that have been pushed to the master branch
 
 name: Testing and Validation
 
@@ -57,3 +57,6 @@ jobs:
         make
         cd ..
         ./run_cfe.sh FORCINGPET
+        
+#    - name: Build and Run BMI Unit Test
+#      run: cd test && ./make_and_run_bmi_unit_test.sh
