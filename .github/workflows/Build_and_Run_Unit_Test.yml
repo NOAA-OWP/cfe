@@ -32,11 +32,18 @@ jobs:
     - name: Checkout the commit
       uses: actions/checkout@v2
     
-    - name: Build and Run Standalone 
+    - name: Build and Run Standalone BASE option
       run: |
         git submodule update --init
         mkdir build && cd build
         cmake ../ -DBASE=ON
+        make
+        cd ..
+        ./run_cfe.sh BASE
+        
+    - name: Build and Run Standalone FORCING option
+      run: |
+        cmake ../ -DFORCING=ON
         make
         cd ..
         ./run_cfe.sh BASE
