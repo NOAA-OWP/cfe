@@ -39,4 +39,4 @@ jobs:
         cmake ../ -DBASE=ON
         make
         cd ..
-        run_cfe.sh BASE
+        ./run_cfe.sh BASE
