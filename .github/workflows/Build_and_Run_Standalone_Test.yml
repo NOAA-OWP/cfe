@@ -1,0 +1,62 @@
+# Test changes that have been pushed to the master branch
+
+name: Testing and Validation
+
+# Controls when the action will run.
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+#env:
+  # Obtained from https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
+  # TODO: add something later that can check the runners for hyperthreading
+  #LINUX_NUM_PROC_CORES: 2
+  #MACOS_NUM_PROC_CORES: 3
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # Run general unit tests in linux environment
+  test_unit:
+    # The type of runner that the job will run on
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    - name: Checkout the commit
+      uses: actions/checkout@v2
+    
+    - name: Build and Run Standalone BASE option
+      run: |
+        mkdir build && cd build
+        cmake ../ -DBASE=ON
+        make
+        cd ..
+        ./run_cfe.sh BASE
+        
+    - name: Build and Run Standalone FORCING option
+      run: |
+        git submodule update --init
+        cd build
+        cmake ../ -DFORCING=ON
+        make
+        cd ..
+        ./run_cfe.sh FORCING
+        
+    - name: Build and Run Standalone PET option
+      run: |
+        git submodule update --init
+        cd build
+        cmake ../ -DFORCINGPET=ON
+        make
+        cd ..
+        ./run_cfe.sh FORCINGPET
+        
+#    - name: Build and Run BMI Unit Test
+#      run: cd test && ./make_and_run_bmi_unit_test.sh
