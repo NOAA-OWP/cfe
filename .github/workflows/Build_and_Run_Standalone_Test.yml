@@ -60,10 +60,10 @@ jobs:
 
     - name: Build and Run BMI Unit Test
       run: |
-         cd build
-         cmake ../ -DUNITTEST=ON
-         make
-         cd ..
-	 cd test
-         ./run_unittest.sh
+        cd build
+        cmake ../ -DUNITTEST=ON
+        make
+        cd ..
+        cd test
+        ./run_unittest.sh
 
