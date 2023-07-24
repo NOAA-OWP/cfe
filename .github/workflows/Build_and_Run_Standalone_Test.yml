@@ -57,6 +57,13 @@ jobs:
         make
         cd ..
         ./run_cfe.sh FORCINGPET
-        
-#    - name: Build and Run BMI Unit Test
-#      run: cd test && ./make_and_run_bmi_unit_test.sh
+
+    - name: Build and Run BMI Unit Test
+      run: |
+        cd build
+        cmake ../ -DUNITTEST=ON
+        make
+        cd ..
+        cd test
+        ./run_unittest.sh
+
