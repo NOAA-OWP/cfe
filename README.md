@@ -128,7 +128,7 @@ The user has the option to turn ON and OFF rootzone-based AET, default option is
 
 ## Soil freeze-thaw model (SFT)
 The Soil Freeze-Thaw (SFT) model is a standalone model.  For detailed information please refer to the [SFT repo](https://github.com/NOAA-OWP/SoilFreezeThaw). A few things to note when coupling SFT to CFE:
-1. SFT model provides `ice fraction` to CFE runoff schemes (Schaake `ice_fraction_schaake` and Xinanjiang `ice_fraction_xinan`)
+1. SFT model provides `ice fraction` to CFE runoff schemes (Schaake `ice_fraction_schaake` and Xinanjiang `ice_fraction_xinanjiang`)
 2. To turn ON/OFF SFT set sft_coupled flag.
     * `sft_coupled` : (type boolean) if `true`, SFT is turned ON. (options: True, true, 1).
     * If the runoff scheme is Xinanjiang, no additional parameters are needed in the CFE config files.
