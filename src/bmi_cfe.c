@@ -62,7 +62,7 @@ Variable var_info[] = {
 	{ 12, "coeff_secondary",                  "double", 1 },
 	{ 13, "exponent_secondary",               "double", 1 },
 	{ 14, "ice_fraction_schaake",	          "double", 1}, /* input from Soil Freeze-thaw model */
-	{ 15, "ice_fraction_xinan",	          "double", 1}, /* input from Soil Freeze-thaw model */
+	{ 15, "ice_fraction_xinanjiang",	  "double", 1}, /* input from Soil Freeze-thaw model */
 	//------------------------------
 	// Vars in gw reservoir struct
 	// type: conceptual_reservoir
@@ -279,7 +279,7 @@ static const char *input_var_names[INPUT_VAR_NAME_COUNT] = {
         "atmosphere_water__liquid_equivalent_precipitation_rate",
         "water_potential_evaporation_flux",
 	"ice_fraction_schaake",
-	"ice_fraction_xinan",
+	"ice_fraction_xinanjiang",
 	"soil_moisture_profile"
 };
 
@@ -1302,8 +1302,8 @@ static int Initialize (Bmi *self, const char *file)
     // Set all the mass balance trackers to zero.
     initialize_volume_trackers(cfe_bmi_data_ptr);
 
-    cfe_bmi_data_ptr->soil_reservoir.ice_fraction_schaake = 0.0;
-    cfe_bmi_data_ptr->soil_reservoir.ice_fraction_xinan = 0.0;
+    cfe_bmi_data_ptr->soil_reservoir.ice_fraction_schaake    = 0.0;
+    cfe_bmi_data_ptr->soil_reservoir.ice_fraction_xinanjiang = 0.0;
 
     if (cfe_bmi_data_ptr->soil_reservoir.aet_root_zone == TRUE)
       cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*cfe_bmi_data_ptr->soil_reservoir.n_soil_layers);
@@ -1899,10 +1899,10 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         *dest = (void*)&cfe_ptr->soil_reservoir.ice_fraction_schaake;
         return BMI_SUCCESS;
     }
-    if (strcmp (name, "ice_fraction_xinan") == 0) {
+    if (strcmp (name, "ice_fraction_xinanjiang") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
-        *dest = (void*)&cfe_ptr->soil_reservoir.ice_fraction_xinan;
+        *dest = (void*)&cfe_ptr->soil_reservoir.ice_fraction_xinanjiang;
         return BMI_SUCCESS;
     }
 
@@ -2271,7 +2271,7 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[12] = &(state->soil_reservoir.coeff_secondary );      
     ptr_list[13] = &(state->soil_reservoir.exponent_secondary );
     ptr_list[14] = &(state->soil_reservoir.ice_fraction_schaake);
-    ptr_list[15] = &(state->soil_reservoir.ice_fraction_xinan);
+    ptr_list[15] = &(state->soil_reservoir.ice_fraction_xinanjiang);
     //------------------------------
     // Vars in gw reservoir struct
     //------------------------------ 
@@ -3103,7 +3103,7 @@ extern void print_cfe_flux_at_timestep(cfe_state_struct* cfe_ptr){
 	                   *cfe_ptr->flux_Qout_m*1000.0,
 	                   cfe_ptr->soil_reservoir.storage_m*1000.0,
 	                   cfe_ptr->soil_reservoir.ice_fraction_schaake*1000.0,
-	                   cfe_ptr->soil_reservoir.ice_fraction_xinan);
+	                   cfe_ptr->soil_reservoir.ice_fraction_xinanjiang);
 }
 
 extern void mass_balance_check(cfe_state_struct* cfe_ptr){
