@@ -151,7 +151,7 @@ extern void Schaake_partitioning_scheme(double dt, double field_capacity_m, doub
 extern void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_capacity_m,
 					   double max_soil_moisture_storage_m, double column_total_soil_water_m,
 					   struct direct_runoff_parameters_structure *parms, double *surface_runoff_depth_m,
-					   double *infiltration_depth_m, double ice_fraction_xinan);
+					   double *infiltration_depth_m, double ice_fraction_xinanjiang);
 
 extern double convolution_integral(double runoff_m, int num_giuh_ordinates, 
                                    double *giuh_ordinates, double *runoff_queue_m_per_timestep);

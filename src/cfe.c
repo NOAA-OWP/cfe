@@ -122,12 +122,12 @@ extern void cfe(
 
 	// to ensure that ice_fraction_xinan is set to 0.0 for uncoupled SFT
 	if(!soil_reservoir_struct->is_sft_coupled)
-	  soil_reservoir_struct->ice_fraction_xinan = 0.0;
+	  soil_reservoir_struct->ice_fraction_xinanjiang = 0.0;
 	
 	Xinanjiang_partitioning_scheme(timestep_rainfall_input_m, soil_reservoir_struct->storage_threshold_primary_m,
 				       soil_reservoir_struct->storage_max_m, soil_reservoir_struct->storage_m,
 				       &direct_runoff_params_struct, &direct_output_runoff_m, &infiltration_depth_m,
-				       soil_reservoir_struct->ice_fraction_xinan);
+				       soil_reservoir_struct->ice_fraction_xinanjiang);
       }
     else
       {
@@ -453,7 +453,7 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
                                     double max_soil_moisture_storage_m, double column_total_soil_water_m,
                                     struct direct_runoff_parameters_structure *parms,
 				    double *surface_runoff_depth_m, double *infiltration_depth_m,
-				    double ice_fraction_xinan)
+				    double ice_fraction_xinanjiang)
 {
   //------------------------------------------------------------------------
   //  This module takes the water_input_depth_m and separates it into surface_runoff_depth_m
@@ -483,7 +483,7 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
   //   double  b_shape_parameter             b parameter
   //   double  x_shape_parameter             x parameter
   //   double  urban_decimal_fraction        fraction of land cover in the modeled area that is classified as urban [unitless decimal]
-  //   double  ice_fraction_xinan            fraction of top soil layer that is frozen [unitless decimal]
+  //   double  ice_fraction_xinanjiang       fraction of top soil layer that is frozen [unitless decimal]
   //
   // Outputs
   //   double  surface_runoff_depth_m        amount of water partitioned to surface water this time step [m]
@@ -522,7 +522,7 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
       // estimate the fraction of the modeled area that is impervious (impervious_fraction) based on 
 	   // urban classification (hard coded 95% [0.95] impervious) and frozen soils (passed to cfe 
       // from freeze-thaw model) using a weighted average. 
-      impervious_fraction = (parms->urban_decimal_fraction * 0.95) + ((1 - parms->urban_decimal_fraction) * ice_fraction_xinan);
+      impervious_fraction = (parms->urban_decimal_fraction * 0.95) + ((1 - parms->urban_decimal_fraction) * ice_fraction_xinanjiang);
   
     // Calculate the impervious runoff (see eq. 309 from Knoben et al).
     impervious_runoff_m = impervious_fraction * water_input_depth_m;
