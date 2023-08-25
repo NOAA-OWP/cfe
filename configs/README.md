@@ -1,5 +1,5 @@
 ## Configuration File
-Example configuration files are provided in this directory. To run the given examples see the instructions [here](https://github.com/NOAA-OWP/cfe/blob/ajk/doc_update/INSTALL.md). A detailed description of the parameters for model configuration (i.e., initialize/setup) is provided below. The asterisk (*) denotes calibratable parameters.
+Example configuration files are provided in this directory. To build and run the given examples see the instructions [here](https://github.com/NOAA-OWP/cfe/blob/ajk/doc_update/INSTALL.md). A detailed description of the parameters for model configuration (i.e., initialize/setup) is provided below. The asterisk (*) denotes calibratable parameters.
 
 | Variable | Datatype |  Limits  | Units | Role | Process | Description |
 | -------- | -------- | ------ | ----- | ---- | ------- | ----------- |

@@ -9,12 +9,13 @@ git submodule update --init
 mkdir build && cd build
 ```
 
-***Notes:**
+**Notes:**
  - Before running the following examples, it is recommended to run the unittests [tests](https://github.com/NOAA-OWP/cfe/tree/ajk/doc_update/test).
  - All build commands are run within build directory, and run commands are executed from the cfe directory.
  
 ## Example 1 (standalone mode)
-CFE reads local forcing data (standalone CFE BMI run), potential ET is not included. The example uses CAMELS catchment-87 data. (Notation: BASE)
+CFE reads local forcing data (standalone CFE BMI run), potential ET is not included. The example uses CAMELS catchment-87 data.
+Notation: BASE
 ### Build
 ```
 cmake ../ -DBASE=ON
@@ -26,7 +27,8 @@ Run: <a href="https://github.com/NOAA-OWP/cfe/blob/ajk/doc_update/run_cfe.sh">./
 </pre>
 
 ## Example 2 (pseudo framework mode)
-This example couples CFE with AORC. AORC reads the forcing data and passes rain precipitation to CFE using BMI, potential ET is not included. The example uses CAMELS catchment-87 data. (Notation: FORCING)
+This example couples CFE with AORC. AORC reads the forcing data and passes rain precipitation to CFE using BMI, potential ET is not included. The example uses CAMELS catchment-87 data.
+Notation: FORCING
 ### Build
 ```
 cmake ../ -DFORCING=ON
@@ -38,7 +40,8 @@ Run: <a href="https://github.com/NOAA-OWP/cfe/blob/ajk/doc_update/run_cfe.sh">./
 </pre>
 
 ## Example 3 (pseudo framework mode)
-This example couples CFE with AORC and PET. AORC reads the forcing data and passes data to CFE and PET using BMIs. The example uses CAMELS catchment-87 data. (Notation: FORCINGPET)
+This example couples CFE with AORC and PET. AORC reads the forcing data and passes data to CFE and PET using BMIs. The actual ET is extracted directly from precipitation and from the soil using the Budyko function. The example uses CAMELS catchment-87 data.
+Notation: FORCINGPET
 ### Build
 ```
 cmake ../ -DFORCINGPET=ON
@@ -50,7 +53,8 @@ Run: <a href="https://github.com/NOAA-OWP/cfe/blob/ajk/doc_update/run_cfe.sh">./
 </pre>
 
 ## Example 4 (pseudo framework mode)
-This example is identical to example #3 in setup, however, actual ET is computed using a rootzone-based scheme. The example requires CFE coupling with [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) module which provides one-dimensional soil moisture profile that is used to estimate actual evapotranspiration (AET) from the deepest rootzone layer. (Notation: AETROOTZONE)
+The setup of this example is identical to example #3, however, actual ET is computed using a rootzone-based scheme. The example requires CFE coupling with [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) module which provides one-dimensional soil moisture profile that is used to estimate actual evapotranspiration (AET) from the deepest rootzone layer.
+Notation: AETROOTZONE
 ### Build
 ```
 git clone https://github.com/NOAA-OWP/SoilMoistureProfiles.git smc_profiles
@@ -65,7 +69,7 @@ Run: <a href="https://github.com/NOAA-OWP/cfe/blob/ajk/doc_update/run_cfe.sh">./
 ## Example 5 (nextgen framework mode)
 This example couples CFE with PET. Nextgen framework reads the forcing data and passes data to CFE and PET using BMIs. The example uses CAMELS catchment-87 data. (Notation: NGEN)
 ### Build
-See general instructions [here](https://github.com/NOAA-OWP/ngen/wiki/NGen-Tutorial) or [here](https://github.com/NOAA-OWP/SoilFreezeThaw/blob/master/INSTALL.md#build-2) to build and run models in the ngen framework. Use the following instructions to build CFE and [SLoTH](https://github.com/NOAA-OWP/SLoTH).
+See general instructions [here](https://github.com/NOAA-OWP/ngen/wiki/NGen-Tutorial) or [here](https://github.com/NOAA-OWP/SoilFreezeThaw/blob/master/INSTALL.md#build-2) to build and run models in the ngen framework.
 - ### Specific instructions for building nextgen and models needed for the example here
  - git clone https://github.com/noaa-owp/ngen && cd ngen
   - git submodule update --init --recursive
@@ -99,13 +103,6 @@ The following pre-process step needs to be completed before running the example.
   Run: ../cmake_build/ngen data/catchment_data.geojson cat-27 data/nexus_data.geojson nex-26 realizations/realization_cfe_pet.json
   ```
 
-There are multiple ways to run CFE:
-
-1. Through the BMI commands. There are script options, detailed below, for running the model in standalone mode and BMI allows the Next Generation Water Resources Modeling Framework to run CFE and couple it to surface routines. See [Compiling and running CFE](#compiling-and-running-cfe)
-2. 
-
-
-
 ## Alternative: Compiling and Running CFE
 ### Example 1. Read local forcing file
 To compile and run CFE with locally read forcing data, run the following from the command line:
@@ -129,8 +126,9 @@ CFE can remove mass from the modeled system through evapotranspiration (directly
 
 2. To run this executable you must pass the path to the corresponding configuration files for CFE, PET and AORC (in that order):  `./cfe_forcingpet ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt ./configs/cat_89_bmi_config_pet_pass.txt`
 
-### Example 4. CFE rootzone-based example couples C and C++ modules and should be built with cmake
+### Example 4.
+CFE rootzone-based example couples C and C++ modules and should be built with cmake, follow the instructions [here](https://github.com/NOAA-OWP/cfe/blob/ajk/doc_update/INSTALL.md#example-4-pseudo-framework-mode).
 
-**NOTES:**
+### NOTES:
  - The configuration files must be passed in this order: (1) the CFE configuration file, (2) the forcing configuration file, (3) the potential evapotranspiration (PET) configuration file, and (4) the soil moisture profile configuration file
  - Original author code. The code includes a full program to read and process atmospheric forcing data, print the model output and check for mass balance closure. This code can be run from the [original_author_code](./original_author_code) directory. This code does not have a BMI implementation.
