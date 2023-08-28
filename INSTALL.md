@@ -11,11 +11,10 @@ mkdir build && cd build
 
 **Notes:**
  - Before running the following examples, it is recommended to run the unittests [tests](https://github.com/NOAA-OWP/cfe/tree/ajk/doc_update/test).
- - All build commands are run within build directory, and run commands are executed from the cfe directory.
+ - All build commands are run within the `build` directory, and run commands are executed from the cfe directory.
  
 ## Example 1 (standalone mode)
-CFE reads local forcing data (standalone CFE BMI run), potential ET is not included. The example uses CAMELS catchment-87 data.
-Notation: BASE
+CFE reads local forcing data (standalone CFE BMI run), potential ET is not included. The example uses CAMELS catchment-87 data. **Notation:** BASE
 ### Build
 ```
 cmake ../ -DBASE=ON
@@ -27,8 +26,7 @@ Run: <a href="https://github.com/NOAA-OWP/cfe/blob/ajk/doc_update/run_cfe.sh">./
 </pre>
 
 ## Example 2 (pseudo framework mode)
-This example couples CFE with AORC. AORC reads the forcing data and passes rain precipitation to CFE using BMI, potential ET is not included. The example uses CAMELS catchment-87 data.
-Notation: FORCING
+This example couples CFE with AORC. AORC reads the forcing data and passes rain precipitation to CFE using BMI, potential ET is not included. The example uses CAMELS catchment-87 data. **Notation:** FORCING
 ### Build
 ```
 cmake ../ -DFORCING=ON
@@ -40,8 +38,7 @@ Run: <a href="https://github.com/NOAA-OWP/cfe/blob/ajk/doc_update/run_cfe.sh">./
 </pre>
 
 ## Example 3 (pseudo framework mode)
-This example couples CFE with AORC and PET. AORC reads the forcing data and passes data to CFE and PET using BMIs. The actual ET is extracted directly from precipitation and from the soil using the Budyko function. The example uses CAMELS catchment-87 data.
-Notation: FORCINGPET
+This example couples CFE with AORC and PET. AORC reads the forcing data and passes data to CFE and PET using BMIs. The actual ET is extracted directly from precipitation and from the soil using the Budyko function. The example uses CAMELS catchment-87 data. **Notation:** FORCINGPET
 ### Build
 ```
 cmake ../ -DFORCINGPET=ON
@@ -53,9 +50,12 @@ Run: <a href="https://github.com/NOAA-OWP/cfe/blob/ajk/doc_update/run_cfe.sh">./
 </pre>
 
 ## Example 4 (pseudo framework mode)
-The setup of this example is identical to example #3, however, actual ET is computed using a rootzone-based scheme. The example requires CFE coupling with [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) module which provides one-dimensional soil moisture profile that is used to estimate actual evapotranspiration (AET) from the deepest rootzone layer.
-Notation: AETROOTZONE
+The setup of this example is identical to example #3, however, actual ET is computed using a rootzone-based scheme. The example requires CFE coupling with [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) module which provides a one-dimensional soil moisture profile that is used to estimate actual evapotranspiration (AET) from the deepest rootzone layer. **Notation:** AETROOTZONE
+
+**Clone SoilMoistureProfiles repo:**
+```
 git clone https://github.com/NOAA-OWP/SoilMoistureProfiles extern/SoilMoistureProfiles (from cfe directory)
+```
 ### Build
 ```
 cmake ../ -DAETROOTZONE=ON
