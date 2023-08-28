@@ -55,9 +55,9 @@ Run: <a href="https://github.com/NOAA-OWP/cfe/blob/ajk/doc_update/run_cfe.sh">./
 ## Example 4 (pseudo framework mode)
 The setup of this example is identical to example #3, however, actual ET is computed using a rootzone-based scheme. The example requires CFE coupling with [SoilMoistureProfiles](https://github.com/NOAA-OWP/SoilMoistureProfiles) module which provides one-dimensional soil moisture profile that is used to estimate actual evapotranspiration (AET) from the deepest rootzone layer.
 Notation: AETROOTZONE
+git clone https://github.com/NOAA-OWP/SoilMoistureProfiles extern/SoilMoistureProfiles (from cfe directory)
 ### Build
 ```
-git clone https://github.com/NOAA-OWP/SoilMoistureProfiles.git smc_profiles
 cmake ../ -DAETROOTZONE=ON
 make && cd ..
 ```
@@ -99,6 +99,9 @@ The following pre-process step needs to be completed before running the example.
   ln -s ../data
   ln -s ./extern/cfe/cfe/realizations
   ```
+  
+  **Note:** Make sure the "library_file" and "init_config" in the BMI blocks in the realization file are pointing to the right files, these paths depend on how you build your models.
+
   ```
   Run: ../cmake_build/ngen data/catchment_data.geojson cat-27 data/nexus_data.geojson nex-26 realizations/realization_cfe_pet.json
   ```
