@@ -10,7 +10,7 @@ mkdir build && cd build
 ```
 
 **Notes:**
- - Before running the following examples, it is recommended to run the unittests [tests](https://github.com/NOAA-OWP/cfe/tree/ajk/doc_update/test).
+ - Before running the following examples, it is recommended to run the unittests [tests](https://github.com/NOAA-OWP/cfe/tree/master/test).
  - All build commands are run within the `build` directory, and run commands are executed from the cfe directory.
  
 ## Example 1 (standalone mode)
@@ -22,7 +22,7 @@ make && cd ..
 ```
 ### Run
 <pre>
-Run: <a href="https://github.com/NOAA-OWP/cfe/blob/ajk/doc_update/run_cfe.sh">./run_cfe.sh</a> BASE   
+Run: <a href="https://github.com/NOAA-OWP/cfe/blob/master/run_cfe.sh">./run_cfe.sh</a> BASE   
 </pre>
 
 ## Example 2 (pseudo framework mode)
@@ -34,7 +34,7 @@ make && cd ..
 ```
 ### Run
 <pre>
-Run: <a href="https://github.com/NOAA-OWP/cfe/blob/ajk/doc_update/run_cfe.sh">./run_cfe.sh</a> FORCING
+Run: <a href="https://github.com/NOAA-OWP/cfe/blob/master/run_cfe.sh">./run_cfe.sh</a> FORCING
 </pre>
 
 ## Example 3 (pseudo framework mode)
@@ -46,7 +46,7 @@ make && cd ..
 ```
 ### Run
 <pre>
-Run: <a href="https://github.com/NOAA-OWP/cfe/blob/ajk/doc_update/run_cfe.sh">./run_cfe.sh</a> FORCINGPET
+Run: <a href="https://github.com/NOAA-OWP/cfe/blob/master/run_cfe.sh">./run_cfe.sh</a> FORCINGPET
 </pre>
 
 ## Example 4 (pseudo framework mode)
@@ -63,7 +63,7 @@ make && cd ..
 ```
 ### Run
 <pre>
-Run: <a href="https://github.com/NOAA-OWP/cfe/blob/ajk/doc_update/run_cfe.sh">./run_cfe.sh</a> AETROOTZONE
+Run: <a href="https://github.com/NOAA-OWP/cfe/blob/master/run_cfe.sh">./run_cfe.sh</a> AETROOTZONE
 </pre>
 
 ## Example 5 (nextgen framework mode)
@@ -130,7 +130,7 @@ CFE can remove mass from the modeled system through evapotranspiration (directly
 2. To run this executable you must pass the path to the corresponding configuration files for CFE, PET and AORC (in that order):  `./cfe_forcingpet ./configs/cat_89_bmi_config_cfe_pass.txt ./configs/cat_89_bmi_config_aorc.txt ./configs/cat_89_bmi_config_pet_pass.txt`
 
 ### Example 4.
-CFE rootzone-based example couples C and C++ modules and should be built with cmake, follow the instructions [here](https://github.com/NOAA-OWP/cfe/blob/ajk/doc_update/INSTALL.md#example-4-pseudo-framework-mode).
+CFE rootzone-based example couples C and C++ modules and should be built with cmake, follow the instructions [here](https://github.com/NOAA-OWP/cfe/blob/master/INSTALL.md#example-4-pseudo-framework-mode).
 
 ### NOTES:
  - The configuration files must be passed in this order: (1) the CFE configuration file, (2) the forcing configuration file, (3) the potential evapotranspiration (PET) configuration file, and (4) the soil moisture profile configuration file
