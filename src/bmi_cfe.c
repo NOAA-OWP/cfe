@@ -10,7 +10,7 @@
 #define STANDARD_ATMOSPHERIC_PRESSURE_PASCALS 101325
 #endif
 
-#define CFE_DEGUG 1
+#define CFE_DEBUG 1
 
 #define INPUT_VAR_NAME_COUNT 5
 #define OUTPUT_VAR_NAME_COUNT 13
@@ -378,7 +378,7 @@ static int Get_time_units (Bmi *self, char * units)
 static int Get_current_time (Bmi *self, double * time)
 {
     Get_start_time(self, time);
-#if CFE_DEGUG > 1
+#if CFE_DEBUG > 1
     printf("Current model time step: '%d'\n", ((cfe_state_struct *) self->data)->current_time_step);
 #endif
     *time += (((cfe_state_struct *) self->data)->current_time_step * ((cfe_state_struct *) self->data)->time_step_size);
@@ -412,7 +412,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         printf("Invalid config file '%s'", config_file);
         return BMI_FAILURE;
     }
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
     printf("Config file details - Line Count: %d | Max Line Length %d\n", config_line_count, max_config_line_length);
 #endif
 
@@ -511,7 +511,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     for (i = 0; i < config_line_count; i++) {
         char *param_key, *param_value, *param_units;
         fgets(config_line, max_config_line_length + 1, fp);
-#if CFE_DEGUG >= 3
+#if CFE_DEBUG >= 3
         printf("Line value: ['%s']\n", config_line);
 #endif
         char* config_line_ptr = config_line;
@@ -521,7 +521,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         param_value = strsep(&config_line_ptr, "[");
         param_units = strsep(&config_line_ptr, "]");
 
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config Value - Param: '%s' | Value: '%s' | Units: '%s'\n", param_key, param_value, param_units);
 #endif
 
@@ -539,7 +539,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             is_soil_params__depth_set = TRUE;
             // Check if units are present and print warning if missing from config file
             if ((param_units == NULL) || (strlen(param_units) < 1)) {
-#if CFE_DEGUG >= 1            
+#if CFE_DEBUG >= 1            
                 printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
 #endif
             }
@@ -555,7 +555,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             is_soil_params__satdk_set = TRUE;
             // Check if units are present and print warning if missing from config file
             if ((param_units == NULL) || (strlen(param_units) < 1)) {
-#if CFE_DEGUG >= 1            
+#if CFE_DEBUG >= 1            
                 printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
 #endif
             }
@@ -566,7 +566,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             is_soil_params__satpsi_set = TRUE;
             // Check if units are present and print warning if missing from config file
             if ((param_units == NULL) || (strlen(param_units) < 1)) {
-#if CFE_DEGUG >= 1            
+#if CFE_DEBUG >= 1            
                 printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
 #endif
             }
@@ -577,7 +577,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             is_soil_params__slop_set = TRUE;
             // Check if units are present and print warning if missing from config file
             if ((param_units == NULL) || (strlen(param_units) < 1)) {
-#if CFE_DEGUG >= 1            
+#if CFE_DEBUG >= 1            
                 printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
 #endif
             }
@@ -588,7 +588,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             is_soil_params__smcmax_set = TRUE;
             // Check if units are present and print warning if missing from config file
             if ((param_units == NULL) || (strlen(param_units) < 1)) {
-#if CFE_DEGUG >= 1            
+#if CFE_DEBUG >= 1            
                 printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
 #endif
             }
@@ -599,7 +599,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             is_soil_params__wltsmc_set = TRUE;
             // Check if units are present and print warning if missing from config file
             if ((param_units == NULL) || (strlen(param_units) < 1)) {
-#if CFE_DEGUG >= 1            
+#if CFE_DEBUG >= 1            
                 printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
 #endif
             }
@@ -620,7 +620,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             is_gw_max_set = TRUE;
             // Check if units are present and print warning if missing from config file
             if ((param_units == NULL) || (strlen(param_units) < 1)) {
-#if CFE_DEGUG >= 1            
+#if CFE_DEBUG >= 1            
                 printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
 #endif
             }
@@ -635,7 +635,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             is_Cgw_set = TRUE;
             // Check if units are present and print warning if missing from config file
             if ((param_units == NULL) || (strlen(param_units) < 1)) {
-#if CFE_DEGUG >= 1            
+#if CFE_DEBUG >= 1            
                 printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
 #endif
             }
@@ -652,7 +652,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             is_gw_storage_set = TRUE;
             // Check if units are present and print warning if missing from config file
             if ((param_units == NULL) || (strlen(param_units) < 1)) {
-#if CFE_DEGUG >= 1            
+#if CFE_DEBUG >= 1            
                 printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
 #endif
             }
@@ -686,7 +686,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             is_soil_storage_set = TRUE;
             // Check if units are present and print warning if missing from config file
             if ((param_units == NULL) || (strlen(param_units) < 1)) {
-#if CFE_DEGUG >= 1            
+#if CFE_DEBUG >= 1            
                 printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
 #endif
             }
@@ -712,7 +712,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             continue;
         }
         if (strcmp(param_key, "giuh_ordinates") == 0) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
             printf("Found configured GIUH ordinate values ('%s')\n", param_value);
 #endif
             giuh_originates_string_val = strdup(param_value);
@@ -740,7 +740,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
 	if (is_aet_rootzone_set == TRUE ) {
 	  if (strcmp(param_key, "soil_layer_depths") == 0) {
-#if CFE_DEGUG >= 1   
+#if CFE_DEBUG >= 1   
             printf("Found configured soil depth values ('%s')\n", param_value);
 #endif
             soil_layer_depths_string_val = strdup(param_value);
@@ -799,7 +799,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 	    is_ice_content_threshold_set = TRUE;
 	     // Check if units are present and print warning if missing from config file
             if ((param_units == NULL) || (strlen(param_units) < 1)) {
-#if CFE_DEGUG >= 1            
+#if CFE_DEBUG >= 1            
 	      printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
 #endif
             }
@@ -808,56 +808,56 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     }
 
     if (is_forcing_file_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'forcing_file' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
     if (is_soil_params__depth_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'soil_params.depth' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
     if (is_soil_params__bb_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'soil_params.bb' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
 
     if (is_soil_params__satdk_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'soil_params.satdk' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
     if (is_soil_params__satpsi_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'soil_params.satpsi' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
     if (is_soil_params__slop_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'soil_params.slop' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
     if (is_soil_params__smcmax_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'soil_params.smcmax' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
     if (is_soil_params__wltsmc_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'soil_params.wltsmc' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
     if (is_soil_params__expon_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'soil_params.expon' not found in config file, defaulting to 1 (linear)\n");
 #endif
         model->soil_reservoir.exponent_primary = 1.0;
@@ -866,7 +866,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         //return BMI_FAILURE;
     }
     if (is_soil_params__expon2_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'soil_params.expon_secondary' not found in config file, defaulting to 1 (linear)\n");
 #endif
         model->soil_reservoir.exponent_secondary = 1.0;
@@ -874,55 +874,55 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         //return BMI_FAILURE;
     }
     if (is_Cgw_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'Cgw' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
     if (is_expon_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'expon' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
     if (is_alpha_fc_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'alpha_fc' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
     if (is_soil_storage_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'soil_storage' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
     if (is_K_nash_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'K_nash' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
     if (is_K_lf_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'K_lf' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
     if (is_gw_max_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'max_gw_storage' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
     if (is_gw_storage_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'gw_storage' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
     if (is_num_timesteps_set == FALSE && strcmp(model->forcing_file, "BMI")) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'num_timesteps' not found in config file\n");
 #endif
         return BMI_FAILURE;
@@ -934,7 +934,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         return BMI_FAILURE;
     }
     if (is_direct_runoff_method_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'direct_runoff_method' not found in config file\n");
 #endif
         return BMI_FAILURE;
@@ -942,25 +942,25 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 /* xinanjiang_dev*/
     if(model->direct_runoff_params_struct.surface_partitioning_scheme == Xinanjiang){
         if (is_a_Xinanjiang_inflection_point_parameter_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
             printf("Config param 'a_Xinanjiang_inflection_point_parameter' not found in config file\n");
 #endif
             return BMI_FAILURE;
         }
         if (is_b_Xinanjiang_shape_parameter_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
             printf("Config param 'b_Xinanjiang_shape_parameter' not found in config file\n");
 #endif
             return BMI_FAILURE;
         }
         if (is_x_Xinanjiang_shape_parameter_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
             printf("Config param 'x_Xinanjiang_shape_parameter' not found in config file\n");
 #endif
             return BMI_FAILURE;
         }
 	if (is_urban_decimal_fraction_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
 	  printf("Config param 'urban_decimal_fraction' not found in config file\n");
 #endif
 	  return BMI_FAILURE;
@@ -969,7 +969,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
     if(model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake){
         model->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = model->NWM_soil_params.refkdt * model->NWM_soil_params.satdk / 0.000002;   
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
     printf("Schaake Magic Constant calculated\n");
 #endif
     }
@@ -977,7 +977,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     if (is_sft_coupled_set == TRUE && model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake) {
 
       if(!is_ice_content_threshold_set) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
 	printf("sft_coupled and Schaake scheme are set to TRUE but param 'ice_fraction_threshold' not found in config file\n");
 	exit(-9);
 #endif
@@ -994,26 +994,26 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     /*------------------- Root zone AET development -rlm----------------------------- */
     if (is_aet_rootzone_set == TRUE ) {
       if (is_max_root_zone_layer_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Config param 'max_root_zone_layer' not found in config file\n");
 #endif
         return BMI_FAILURE;
       }
       if (is_soil_layer_depths_string_val_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("Soil layer depths string/values not set!\n");
 #endif
         return BMI_FAILURE;
       }
 
-#if CFE_DEGUG >=1
+#if CFE_DEBUG >=1
       printf("Soil layer depths string values found in config ('%d')\n", is_soil_layer_depths_string_val_set);
 #endif
 
       model->soil_reservoir.n_soil_layers = lround(count_delimited_values(soil_layer_depths_string_val, ","));
       printf("n_soil_layers set in bmi_cfe.c: %d\n", model->soil_reservoir.n_soil_layers);
 
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
       printf("Counted number of soil depths (%d)\n", model->soil_reservoir.n_soil_layers);
 #endif
 
@@ -1063,22 +1063,22 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     }
     /*--------------------END OF ROOT ZONE ADJUSTED AET DEVELOPMENT -rlm ------------------------------*/
      
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
     printf("All CFE config params present\n");
 #endif    
 
     // Handle GIUH ordinates, bailing if they were not provided
     if (is_giuh_originates_string_val_set == FALSE) {
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
         printf("GIUH ordinate string not set!\n");
 #endif
         return BMI_FAILURE;
     }
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
     printf("GIUH ordinates string value found in config ('%s')\n", giuh_originates_string_val);
 #endif
     model->num_giuh_ordinates = count_delimited_values(giuh_originates_string_val, ",");
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
     printf("Counted number of GIUH ordinates (%d)\n", model->num_giuh_ordinates);
 #endif
     if (model->num_giuh_ordinates < 1)
@@ -1126,7 +1126,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             model->nash_storage[j] = 0.0;
     }
     fclose(fp);
-#if CFE_DEGUG >= 1
+#if CFE_DEBUG >= 1
     printf("Finished function parsing CFE config\n");
 #endif
 
@@ -1227,7 +1227,7 @@ static int Initialize (Bmi *self, const char *file)
         // Infer the number of time steps: assume a header, so equal to the number of lines minus 1
         cfe_bmi_data_ptr->num_timesteps = forcing_line_count - 1;
     
-    #if CFE_DEGUG > 0
+    #if CFE_DEBUG > 0
         printf("Counts - Lines: %d | Max Line: %d | Num Time Steps: %d\n", forcing_line_count, max_forcing_line_length,
                cfe_bmi_data_ptr->num_timesteps);
     #endif
@@ -1256,7 +1256,7 @@ static int Initialize (Bmi *self, const char *file)
         for (i = 0; i < cfe_bmi_data_ptr->num_timesteps; i++) {
             fgets(line_str, max_forcing_line_length + 1, ffp);  // read in a line of AORC data.
             parse_aorc_line_cfe(line_str, &year, &month, &day, &hour, &minute, &dsec, &forcings);
-    #if CFE_DEGUG > 0
+    #if CFE_DEBUG > 0
             printf("Forcing data: [%s]\n", line_str);
             printf("Forcing details - s_time: %ld | precip: %f\n", forcings.time, forcings.precip_kg_per_m2);
     #endif
@@ -1310,7 +1310,7 @@ static int Initialize (Bmi *self, const char *file)
     else
       cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*1);
     
-#if CFE_DEGUG > 0
+#if CFE_DEBUG > 0
     printf("At declaration of smc_profile size, soil_reservoir.n_soil_layers = %i\n", cfe_bmi_data_ptr->soil_reservoir.n_soil_layers);
 #endif
 

@@ -9,8 +9,14 @@ New BMI components introduced are categorized as follows,
 
 We will fully examine functionality of all applicable definitions.
 
-Build BMI unit test: `mkdir build && cd build && cmake .. -DUNITTEST=ON && make && cd ..` (witin cfe directory)
-Run BMI unit test: `./run_unittest.sh` (within test directory) 
+### Build
+```
+mkdir build && cd build (inside cfe directory)
+cmake .. -DUNITTEST=ON
+make && cd ..
+```
+### Run
+`./run_unittest.sh` (within `test` directory) 
 
 The script uses a catchment-89 configuration found [here](../configs/cat_89_bmi_config_cfe_unit_test.txt).
 Note that the actual testing loop is much smaller than the number of time steps or end time generated via configuration file or otherwise.
