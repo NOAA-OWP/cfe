@@ -1,0 +1,71 @@
+name: Ngen Integration Tests
+
+# Controls when the action will run.
+on:
+  push:
+    branches: [ master, dev, notreal ]
+  pull_request:
+    branches: [ master, dev, notreal ]
+  workflow_dispatch:
+
+env:
+  # Obtained from https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
+  # TODO: add something later that can check the runners for hyperthreading
+  LINUX_NUM_PROC_CORES: 2
+  MACOS_NUM_PROC_CORES: 3
+  ASAN_OPTIONS: detect_leaks=false
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # Run general unit tests in linux environment
+  test_surfacebmi_plus_cfe:
+    # The type of runner that the job will run on
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - name: Build CFE
+        id: submod_build_3
+        uses: https://github.com/NOAA-OWP/ngen/tree/master//.github/actions/ngen-submod-build
+        with:
+          mod-dir: "./"
+          targets: "cfebmi"
+
+      - name: Rename directory
+        run: mv "cmake_build" "./extern/cmake_build" 
+
+      - name: Build PET
+        id: submod_build_5
+        uses: https://github.com/NOAA-OWP/ngen/tree/master/.github/actions/ngen-submod-build
+        with:
+          mod-dir: "extern/evapotranspiration/evapotranspiration"
+          targets: "petbmi"
+
+      - name: Build SLoTH
+        id: submod_build_6
+        uses: https://github.com/NOAA-OWP/ngen/tree/master/.github/actions/ngen-submod-build
+        with:
+          mod-dir: "extern/sloth/"
+          targets: "slothmodel"
+
+      - name: Build Ngen
+        uses: https://github.com/NOAA-OWP/ngen/tree/master/.github/actions/ngen-build
+        with:
+          targets: "ngen"
+          build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
+          #is this required for this test?
+          bmi_c: 'ON'
+          bmi_fortran: 'ON'
+        timeout-minutes: 15
+
+      - name: Run surfacebmi plus cfebmi
+        run: |
+          inputfile='realizations/realization_cfe_pet.json'
+          ./cmake_build/ngen ../../data/catchment_data.geojson "cat-27" ../../data/nexus_data.geojson "nex-26" $inputfile
