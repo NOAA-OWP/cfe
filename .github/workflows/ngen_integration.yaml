@@ -6,7 +6,8 @@ on:
     branches: [ master, dev, notreal ]
   pull_request:
     branches: [ master, dev, notreal ]
-  workflow_dispatch:
+  #workflow_dispatch:
+  workflow_call:
 
 env:
   # Obtained from https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
@@ -32,7 +33,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Build Ngen
-        uses: https://github.com/NOAA-OWP/ngen/tree/master/.github/actions/ngen-build
+        uses: NOAA-OWP/ngen/.github/actions/ngen-build/action.yaml@master
         with:
           targets: "ngen"
           build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
