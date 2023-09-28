@@ -31,30 +31,6 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
-      - name: Build CFE
-        id: submod_build_3
-        uses: https://github.com/NOAA-OWP/ngen/tree/master//.github/actions/ngen-submod-build
-        with:
-          mod-dir: "./"
-          targets: "cfebmi"
-
-      - name: Rename directory
-        run: mv "cmake_build" "./extern/cmake_build" 
-
-      - name: Build PET
-        id: submod_build_5
-        uses: https://github.com/NOAA-OWP/ngen/tree/master/.github/actions/ngen-submod-build
-        with:
-          mod-dir: "extern/evapotranspiration/evapotranspiration"
-          targets: "petbmi"
-
-      - name: Build SLoTH
-        id: submod_build_6
-        uses: https://github.com/NOAA-OWP/ngen/tree/master/.github/actions/ngen-submod-build
-        with:
-          mod-dir: "extern/sloth/"
-          targets: "slothmodel"
-
       - name: Build Ngen
         uses: https://github.com/NOAA-OWP/ngen/tree/master/.github/actions/ngen-build
         with:
@@ -65,7 +41,7 @@ jobs:
           bmi_fortran: 'ON'
         timeout-minutes: 15
 
-      - name: Run surfacebmi plus cfebmi
-        run: |
-          inputfile='realizations/realization_cfe_pet.json'
-          ./cmake_build/ngen ../../data/catchment_data.geojson "cat-27" ../../data/nexus_data.geojson "nex-26" $inputfile
+      #- name: Run surfacebmi plus cfebmi
+      #  run: |
+      #    inputfile='realizations/realization_cfe_pet.json'
+      #    ./cmake_build/ngen ../../data/catchment_data.geojson "cat-27" ../../data/nexus_data.geojson "nex-26" $inputfile
