@@ -34,7 +34,8 @@ jobs:
       - uses: actions/checkout@v3
 
       - name checkout shared actions
-        uses: actions/checkout@v3
+        #uses: actions/checkout@v3
+        uses: NOAA-OWP/ngen/.github/actions/ngen-build/action.yaml@master
         with:
           repository: noaa-owp/ngen
           path: .github/actions/ngen-build
