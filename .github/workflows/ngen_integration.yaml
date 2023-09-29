@@ -1,3 +1,5 @@
+# Test ngen integration
+
 name: Ngen Integration Tests
 
 # Controls when the action will run.
@@ -33,8 +35,8 @@ jobs:
         with:
           repository: noaa-owp/ngen
           path: ngen
-      -
-        uses: ./ngen/.github/actions/ngen-build
+
+      - uses: ./ngen/.github/actions/ngen-build
 
       - name: Build Ngen
         #uses: NOAA-OWP/ngen/.github/actions/ngen-build/action.yaml@master
@@ -46,7 +48,8 @@ jobs:
           bmi_fortran: 'ON'
         timeout-minutes: 15
 
-      #- name: Run surfacebmi plus cfebmi
-      #  run: |
+      - name: Run surfacebmi plus cfebmi
+        run: |
+          echo "end of ngen_integration testing"
       #    inputfile='realizations/realization_cfe_pet.json'
       #    ./cmake_build/ngen ../../data/catchment_data.geojson "cat-27" ../../data/nexus_data.geojson "nex-26" $inputfile
