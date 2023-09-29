@@ -35,6 +35,7 @@ jobs:
       - name: Build Ngen
         uses: NOAA-OWP/ngen/.github/actions/ngen-build/action.yaml@master
         with:
+          uses: NOAA-OWP/ngen/.github/actions/ngen-build/action.yaml
           repository: NOAA-OWP/ngen
           path: .github/shared-actions/ngen-build/action.yaml
           targets: "ngen"
