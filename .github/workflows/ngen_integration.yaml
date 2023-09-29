@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Build Ngen
-        uses: NOAA-OWP/ngen/.github/actions/ngen-build/action.yaml@master
+        uses: NOAA-OWP/ngen/.github/actions/ngen-build/action.yaml
         with:
           targets: "ngen"
           build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
