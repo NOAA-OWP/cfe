@@ -39,6 +39,7 @@ jobs:
           repository: noaa-owp/ngen
 
       - name: Build Ngen
+        id: ngen_id1
         #uses: NOAA-OWP/ngen/.github/actions/ngen-build/action.yaml@master
         #uses: ./ngen/.github/actions/ngen-build/action.yaml
         uses: ./.github/actions/ngen-build
@@ -47,8 +48,19 @@ jobs:
           build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
           #is this required for this test?
           bmi_c: 'ON'
-          bmi_fortran: 'ON'
+          bmi_fortran: 'OFF'
         timeout-minutes: 15
+
+      - name: Cleanup Ngen Build
+        run: |
+          # Move ngen build artifacts to temp directory
+          mv ${{ steps.ngen_id1.outputs.build-dir }} ${{runner.temp}}/ngen-build/
+    
+          # Remove ngen repo files
+          rm -rf *
+    
+          # Move build artifacts back into working directory
+          mv ${{runner.temp}}/ngen-build ./ngen-build
 
       - name: Run surfacebmi plus cfebmi
         run: |
