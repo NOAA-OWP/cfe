@@ -44,6 +44,13 @@ jobs:
         with:
           mod-dir: "extern/iso_c_fortran_bmi/"
 
+      - name: Build SLoTH
+        id: submod_build_6
+        uses: ./.github/actions/ngen-submod-build
+        with:
+          mod-dir: "extern/sloth/"
+          targets: "slothmodel"
+
       - name: Build Ngen
         id: ngen_id1
         #uses: NOAA-OWP/ngen/.github/actions/ngen-build/action.yaml@master
