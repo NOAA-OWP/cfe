@@ -39,10 +39,11 @@ jobs:
           repository: noaa-owp/ngen
           path: .github/actions/ngen-build
 
-      - uses: ./.github/actions/ngen-build/action.yaml
+        #- uses: ./.github/actions/ngen-build/action.yaml
 
       - name: Build Ngen
         #uses: NOAA-OWP/ngen/.github/actions/ngen-build/action.yaml@master
+        - uses: ./.github/actions/ngen-build/action.yaml
         with:
           targets: "ngen"
           build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
