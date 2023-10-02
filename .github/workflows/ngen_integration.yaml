@@ -62,6 +62,7 @@ jobs:
           # Move ngen build artifacts to temp directory
           mv ${{ steps.ngen_id1.outputs.build-dir }} ${{runner.temp}}/ngen-build/
           mv .github ${{runner.temp}}/.github
+          mv extern ${{runner.temp}}/extern
     
           # Remove ngen repo files
           #rm -rf *
@@ -87,6 +88,7 @@ jobs:
           cd ..
           mv ${{runner.temp}}/ngen-build ./ngen-build
           mv ${{runner.temp}}/.github .github
+          mv ${{runner.temp}}/extern extern
           ./run_cfe.sh BASE
       - name: Recheckout Ngen
         uses: actions/checkout@v3
