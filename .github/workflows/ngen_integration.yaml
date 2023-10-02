@@ -40,12 +40,13 @@ jobs:
           path: ./ngen
 
         #- uses: ./.github/actions/ngen-build/action.yaml
+      - run: |
+          cd ./ngen
 
       - name: Build Ngen
         #uses: NOAA-OWP/ngen/.github/actions/ngen-build/action.yaml@master
         #uses: ./ngen/.github/actions/ngen-build/action.yaml
         uses: ./.github/actions/ngen-build
-        working-directory: ./ngen
         with:
           targets: "ngen"
           build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
