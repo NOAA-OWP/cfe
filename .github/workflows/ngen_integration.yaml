@@ -55,12 +55,14 @@ jobs:
         run: |
           # Move ngen build artifacts to temp directory
           mv ${{ steps.ngen_id1.outputs.build-dir }} ${{runner.temp}}/ngen-build/
+          mv .github ${{runner.temp}}/.github
     
           # Remove ngen repo files
           rm -rf *
     
           # Move build artifacts back into working directory
           mv ${{runner.temp}}/ngen-build ./ngen-build
+          mv ${{runner.temp}}/.github .github
 
       - name: Run surfacebmi plus cfebmi
         run: |
