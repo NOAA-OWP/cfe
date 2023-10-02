@@ -82,5 +82,9 @@ jobs:
           mv ${{runner.temp}}/ngen-build ./ngen-build
           mv ${{runner.temp}}/.github .github
           ./run_cfe.sh BASE
+      - name: Recheckout Ngen
+        uses: actions/checkout@v3
+        with:
+          repository: noaa-owp/ngen
       #    inputfile='realizations/realization_cfe_pet.json'
       #    ./cmake_build/ngen ../../data/catchment_data.geojson "cat-27" ../../data/nexus_data.geojson "nex-26" $inputfile
