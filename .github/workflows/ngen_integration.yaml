@@ -70,6 +70,7 @@ jobs:
           mv ${{ steps.ngen_id1.outputs.build-dir }} ${{runner.temp}}/ngen-build/
           mv .github ${{runner.temp}}/.github
           mv extern ${{runner.temp}}/extern
+          mv data ${{runner.temp}}/data
     
           # Remove ngen repo files
           #rm -rf *
@@ -88,18 +89,26 @@ jobs:
 
       - name: Build and Run Standalone BASE option
         run: |
-          mkdir build && cd build
-          #cmake ../ -DNGEN=ON
-          cmake ../ -DBASE=ON
-          make
-          cd ..
+          cmake -B cmake_build -S . -DNGEN=ON
+          make -C cmake_build
+          #mkdir build && cd build
+          ##cmake ../ -DNGEN=ON
+          #cmake ../ -DBASE=ON
+          #make
+          #cd ..
           mv ${{runner.temp}}/ngen-build ./ngen-build
           mv ${{runner.temp}}/.github .github
           mv ${{runner.temp}}/extern extern
-          ./run_cfe.sh BASE
+          mv ${{runner.temp}}/data data
+          #./run_cfe.sh BASE
+          echo 'CFE directory: $pwd'
       - name: Recheckout Ngen
         uses: actions/checkout@v3
         with:
           repository: noaa-owp/ngen
+      - name: Run ngen-CFE
+        run: |
+          inputfile='realizations/realization_cfe.json'
+          ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
       #    inputfile='realizations/realization_cfe_pet.json'
       #    ./cmake_build/ngen ../../data/catchment_data.geojson "cat-27" ../../data/nexus_data.geojson "nex-26" $inputfile
