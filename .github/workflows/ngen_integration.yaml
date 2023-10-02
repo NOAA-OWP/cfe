@@ -37,13 +37,15 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: noaa-owp/ngen
-          path: .github/actions/ngen-build
+          path: ./ngen
 
         #- uses: ./.github/actions/ngen-build/action.yaml
 
       - name: Build Ngen
         #uses: NOAA-OWP/ngen/.github/actions/ngen-build/action.yaml@master
-        uses: ./.github/actions/ngen-build/action.yaml
+        #uses: ./ngen/.github/actions/ngen-build/action.yaml
+        uses: .github/actions/ngen-build
+        working-directory: ./ngen
         with:
           targets: "ngen"
           build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
