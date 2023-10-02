@@ -71,6 +71,7 @@ jobs:
           mv .github ${{runner.temp}}/.github
           mv extern ${{runner.temp}}/extern
           mv data ${{runner.temp}}/data
+          mv realizations ${{runner.temp}}/realizations
     
           # Remove ngen repo files
           #rm -rf *
@@ -100,6 +101,7 @@ jobs:
           mv ${{runner.temp}}/.github .github
           mv ${{runner.temp}}/extern extern
           mv ${{runner.temp}}/data data
+          mv ${{runner.temp}}/realizations realizations
           #./run_cfe.sh BASE
           echo 'CFE directory: $pwd'
       - name: Recheckout Ngen
