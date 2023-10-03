@@ -1,4 +1,4 @@
-# Test ngen integration
+# Test ngen-cfe integration
 
 name: Ngen Integration Tests
 
@@ -38,6 +38,7 @@ jobs:
         with:
           repository: noaa-owp/ngen
 
+      # Build some necessary submodules
       - name: Build ISO C Fortran BMI
         id: submod_build_2
         uses: ./.github/actions/ngen-submod-build
@@ -58,10 +59,9 @@ jobs:
           mod-dir: "extern/sloth/"
           targets: "slothmodel"
 
+      # Build Ngen and save some files
       - name: Build Ngen
         id: ngen_id1
-        #uses: NOAA-OWP/ngen/.github/actions/ngen-build/action.yaml@master
-        #uses: ./ngen/.github/actions/ngen-build/action.yaml
         uses: ./.github/actions/ngen-build
         with:
           targets: "ngen"
@@ -79,9 +79,6 @@ jobs:
           mv extern ${{runner.temp}}/extern
           mv data ${{runner.temp}}/data
     
-          # Remove ngen repo files
-          #rm -rf *
-    
           # Move build artifacts back into working directory
           #mv ${{runner.temp}}/ngen-build ./ngen-build
           #mv ${{runner.temp}}/.github .github
@@ -90,7 +87,7 @@ jobs:
         run: |
           echo "end of ngen_integration testing"
 
-      #Build and run cfe
+      # Checkout and build CFE
       - name: Checkout the commit
         uses: actions/checkout@v4
 
@@ -99,34 +96,21 @@ jobs:
           cmake -B cmake_build -S . -DNGEN=ON
           make -C cmake_build
 
-          #git submodule update --init
-          #cmake -B extern/evapotranspiration/cmake_build -S extern/evapotranspiration -DFORCINGPET=ON
-          #make -C extern/evapotranspiration/cmake_build
-
-          #mkdir build && cd build
-          ##cmake ../ -DNGEN=ON
-          #cmake ../ -DBASE=ON
-          #make
-          #cd ..
+          # Move ngen build and other files to appropriate directory to run ngen
           mv ${{runner.temp}}/ngen-build ./ngen-build
-          ##mv ${{runner.temp}}/.github .github
           cp -r ${{runner.temp}}/extern/sloth extern
           cp -r ${{runner.temp}}/extern/evapotranspiration extern
           mv ${{runner.temp}}/data data
-          #./run_cfe.sh BASE
-          #inputfile='realizations/realization_cfe.json'
+
+          # Run ngen with CFE with PET
           inputfile='realizations/realization_cfe_pet.json'
           ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
-          echo "Complete running Ngen-CFE"
-      - name: Recheckout Ngen
+
+      # The following remove a post processing error
+      - name: Re-checkout Ngen
         uses: actions/checkout@v3
         with:
           repository: noaa-owp/ngen
-      - name: Run ngen-CFE
+      - name: A completion message
         run: |
           echo "Run ngen-CFE to completion"
-          #mv ${{runner.temp}}/ngen-build ./ngen-build
-          ##inputfile='realizations/realization_cfe.json'
-          ##./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
-      #    inputfile='realizations/realization_cfe_pet.json'
-      #    ./cmake_build/ngen ../../data/catchment_data.geojson "cat-27" ../../data/nexus_data.geojson "nex-26" $inputfile
