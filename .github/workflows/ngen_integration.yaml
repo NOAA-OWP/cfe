@@ -31,23 +31,24 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - name: Checkout ngen actions
-      uses: actions/checkout@v3
-      with:
-        repository: noaa-owp/ngen
-        path: ngen
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout ngen actions
+        uses: actions/checkout@v3
+        with:
+          #repository: noaa-owp/ngen
+          repository: NOAA-OWP/ngen
+          path: ngen
 
-    - uses: ./.github/actions/ngen-build
-    #- name: Build Ngen
-    #  uses: ./ngen/.github/actions/ngen-build
-      with:
-        targets: "ngen"
-        build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
-        #is this required for this test?
-        bmi_c: 'ON'
-        bmi_fortran: 'ON'
-      timeout-minutes: 15
+      - uses: ./.github/actions/ngen-build
+      #- name: Build Ngen
+      #  uses: ./ngen/.github/actions/ngen-build
+        with:
+          targets: "ngen"
+          build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
+          #is this required for this test?
+          bmi_c: 'ON'
+          bmi_fortran: 'ON'
+        timeout-minutes: 15
 
       - name: Run surfacebmi plus cfebmi
         run: |
