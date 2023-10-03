@@ -87,7 +87,7 @@ jobs:
       - name: Checkout the commit
         uses: actions/checkout@v4
 
-      - name: Build and Run Standalone BASE option
+      - name: Build CFE Library for Ngen
         run: |
           cmake -B cmake_build -S . -DNGEN=ON
           make -C cmake_build
@@ -99,11 +99,11 @@ jobs:
           mv ${{runner.temp}}/ngen-build ./ngen-build
           ##mv ${{runner.temp}}/.github .github
           cp -r ${{runner.temp}}/extern/sloth extern
-          ##mv ${{runner.temp}}/data data
+          mv ${{runner.temp}}/data data
           #./run_cfe.sh BASE
           inputfile='realizations/realization_cfe.json'
           ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
-          echo 'CFE directory: $pwd'
+          echo "Complete running Ngen-CFE"
       - name: Recheckout Ngen
         uses: actions/checkout@v3
         with:
@@ -112,7 +112,7 @@ jobs:
         run: |
           echo "Run ngen-CFE to completion"
           #mv ${{runner.temp}}/ngen-build ./ngen-build
-          inputfile='realizations/realization_cfe.json'
-          ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
+          ##inputfile='realizations/realization_cfe.json'
+          ##./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
       #    inputfile='realizations/realization_cfe_pet.json'
       #    ./cmake_build/ngen ../../data/catchment_data.geojson "cat-27" ../../data/nexus_data.geojson "nex-26" $inputfile
