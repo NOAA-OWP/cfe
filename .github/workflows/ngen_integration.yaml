@@ -99,9 +99,9 @@ jobs:
           cmake -B cmake_build -S . -DNGEN=ON
           make -C cmake_build
 
-          git submodule update --init
-          cmake -B extern/evapotranspiration/cmake_build -S extern/evapotranspiration -DFORCINGPET=ON
-          make -C extern/evapotranspiration/cmake_build
+          #git submodule update --init
+          #cmake -B extern/evapotranspiration/cmake_build -S extern/evapotranspiration -DFORCINGPET=ON
+          #make -C extern/evapotranspiration/cmake_build
 
           #mkdir build && cd build
           ##cmake ../ -DNGEN=ON
@@ -111,7 +111,7 @@ jobs:
           mv ${{runner.temp}}/ngen-build ./ngen-build
           ##mv ${{runner.temp}}/.github .github
           cp -r ${{runner.temp}}/extern/sloth extern
-          #cp -r ${{runner.temp}}/extern/evapotranspiration extern
+          cp -r ${{runner.temp}}/extern/evapotranspiration extern
           mv ${{runner.temp}}/data data
           #./run_cfe.sh BASE
           #inputfile='realizations/realization_cfe.json'
