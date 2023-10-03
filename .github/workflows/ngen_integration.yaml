@@ -1,3 +1,5 @@
+# Test ngen integration
+
 name: Ngen Integration Tests
 
 # Controls when the action will run.
@@ -6,8 +8,7 @@ on:
     branches: [ master, dev, notreal ]
   pull_request:
     branches: [ master, dev, notreal ]
-  #workflow_dispatch:
-  workflow_call:
+  workflow_dispatch:
 
 env:
   # Obtained from https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
@@ -29,32 +30,89 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: actions/checkout@v2
+      #- uses: actions/checkout@v3
 
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: Checkout ngen actions
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: checkout actions in another repo
         uses: actions/checkout@v3
         with:
           repository: noaa-owp/ngen
-          path: ngen
 
-      - name: Change to ngen directory
-        run: |
-          cd ngen
+      - name: Build ISO C Fortran BMI
+        id: submod_build_2
+        uses: ./.github/actions/ngen-submod-build
+        with:
+          mod-dir: "extern/iso_c_fortran_bmi/"
 
-      #- uses: ./ngen/.github/actions/ngen-build
-      - uses: ./ngen/.github/actions/ngen-build
-      #- name: Build Ngen
-      #  uses: ./ngen/.github/actions/ngen-build
+      - name: Build SLoTH
+        id: submod_build_6
+        uses: ./.github/actions/ngen-submod-build
+        with:
+          mod-dir: "extern/sloth/"
+          targets: "slothmodel"
+
+      - name: Build Ngen
+        id: ngen_id1
+        #uses: NOAA-OWP/ngen/.github/actions/ngen-build/action.yaml@master
+        #uses: ./ngen/.github/actions/ngen-build/action.yaml
+        uses: ./.github/actions/ngen-build
         with:
           targets: "ngen"
           build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
           #is this required for this test?
           bmi_c: 'ON'
-          bmi_fortran: 'ON'
+          bmi_fortran: 'OFF'
         timeout-minutes: 15
+
+      - name: Cleanup Ngen Build
+        run: |
+          # Move ngen build artifacts to temp directory
+          mv ${{ steps.ngen_id1.outputs.build-dir }} ${{runner.temp}}/ngen-build/
+          mv .github ${{runner.temp}}/.github
+          mv extern ${{runner.temp}}/extern
+          mv data ${{runner.temp}}/data
+    
+          # Remove ngen repo files
+          #rm -rf *
+    
+          # Move build artifacts back into working directory
+          #mv ${{runner.temp}}/ngen-build ./ngen-build
+          #mv ${{runner.temp}}/.github .github
 
       - name: Run surfacebmi plus cfebmi
         run: |
+          echo "end of ngen_integration testing"
+
+      #Build and run cfe
+      - name: Checkout the commit
+        uses: actions/checkout@v4
+
+      - name: Build and Run Standalone BASE option
+        run: |
+          cmake -B cmake_build -S . -DNGEN=ON
+          make -C cmake_build
+          #mkdir build && cd build
+          ##cmake ../ -DNGEN=ON
+          #cmake ../ -DBASE=ON
+          #make
+          #cd ..
+          mv ${{runner.temp}}/ngen-build ./ngen-build
+          ##mv ${{runner.temp}}/.github .github
+          cp -r ${{runner.temp}}/extern/sloth extern
+          ##mv ${{runner.temp}}/data data
+          #./run_cfe.sh BASE
+          inputfile='realizations/realization_cfe.json'
+          ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
+          echo 'CFE directory: $pwd'
+      - name: Recheckout Ngen
+        uses: actions/checkout@v3
+        with:
+          repository: noaa-owp/ngen
+      - name: Run ngen-CFE
+        run: |
+          echo "Run ngen-CFE to completion"
+          #mv ${{runner.temp}}/ngen-build ./ngen-build
+          inputfile='realizations/realization_cfe.json'
+          ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
       #    inputfile='realizations/realization_cfe_pet.json'
       #    ./cmake_build/ngen ../../data/catchment_data.geojson "cat-27" ../../data/nexus_data.geojson "nex-26" $inputfile
