@@ -107,10 +107,10 @@ jobs:
           ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
 
       # The following remove a post processing error
-      - name: Re-checkout Ngen
-        uses: actions/checkout@v3
-        with:
-          repository: noaa-owp/ngen
-      - name: A completion message
-        run: |
-          echo "Run ngen-CFE to completion"
+      #- name: Re-checkout Ngen
+      #  uses: actions/checkout@v3
+      #  with:
+      #    repository: noaa-owp/ngen
+      #- name: A completion message
+      #  run: |
+      #    echo "Run ngen-CFE to completion"
