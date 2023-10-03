@@ -35,11 +35,10 @@ jobs:
       - name: Checkout ngen actions
         uses: actions/checkout@v3
         with:
-          #repository: noaa-owp/ngen
-          repository: NOAA-OWP/ngen
+          repository: noaa-owp/ngen
           path: ngen
 
-      - uses: ./.github/actions/ngen-build
+      - uses: ./ngen/.github/actions/ngen-build
       #- name: Build Ngen
       #  uses: ./ngen/.github/actions/ngen-build
         with:
