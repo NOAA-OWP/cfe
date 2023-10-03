@@ -96,10 +96,10 @@ jobs:
           #cmake ../ -DBASE=ON
           #make
           #cd ..
-          mv ${{runner.temp}}/ngen-build ./ngen-build
-          mv ${{runner.temp}}/.github .github
-          mv ${{runner.temp}}/extern/sloth extern
-          mv ${{runner.temp}}/data data
+          ##mv ${{runner.temp}}/ngen-build ./ngen-build
+          ##mv ${{runner.temp}}/.github .github
+          ##mv ${{runner.temp}}/extern/sloth extern
+          ##mv ${{runner.temp}}/data data
           #./run_cfe.sh BASE
           inputfile='realizations/realization_cfe.json'
           ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
@@ -111,7 +111,8 @@ jobs:
       - name: Run ngen-CFE
         run: |
           echo "Run ngen-CFE to completion"
-      #    inputfile='realizations/realization_cfe.json'
-      #    ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
+          mv ${{runner.temp}}/ngen-build ./ngen-build
+          inputfile='realizations/realization_cfe.json'
+          ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
       #    inputfile='realizations/realization_cfe_pet.json'
       #    ./cmake_build/ngen ../../data/catchment_data.geojson "cat-27" ../../data/nexus_data.geojson "nex-26" $inputfile
