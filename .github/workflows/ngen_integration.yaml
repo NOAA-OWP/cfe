@@ -40,7 +40,7 @@ jobs:
       - uses: ./.github/actions/ngen-build
 
       - name: Build Ngen
-        #uses: ./.github/actions/ngen-build
+        uses: ./ngen/.github/actions/ngen-build
         with:
           targets: "ngen"
           build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
@@ -48,8 +48,6 @@ jobs:
           bmi_c: 'ON'
           bmi_fortran: 'ON'
         timeout-minutes: 15
-        run: |
-          echo "Build Ngen complete"
 
       - name: Run surfacebmi plus cfebmi
         run: |
