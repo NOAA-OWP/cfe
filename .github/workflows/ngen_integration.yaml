@@ -38,9 +38,8 @@ jobs:
           path: ./ngen
 
       - uses: ./.github/actions/ngen-build
-
-      - name: Build Ngen
-        uses: ./ngen/.github/actions/ngen-build
+      #- name: Build Ngen
+      #  uses: ./ngen/.github/actions/ngen-build
         with:
           targets: "ngen"
           build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
