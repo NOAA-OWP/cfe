@@ -44,6 +44,13 @@ jobs:
         with:
           mod-dir: "extern/iso_c_fortran_bmi/"
 
+      - name: Build PET
+        id: submod_build_5
+        uses: ./.github/actions/ngen-submod-build
+        with:
+          mod-dir: "extern/evapotranspiration/evapotranspiration"
+          targets: "petbmi"
+
       - name: Build SLoTH
         id: submod_build_6
         uses: ./.github/actions/ngen-submod-build
@@ -91,6 +98,11 @@ jobs:
         run: |
           cmake -B cmake_build -S . -DNGEN=ON
           make -C cmake_build
+
+          git submodule update --init
+          cmake -B extern/evapotranspiration/cmake_build -S extern/evapotranspiration -DFORCINGPET=ON
+          make -C extern/evapotranspiration/cmake_build
+
           #mkdir build && cd build
           ##cmake ../ -DNGEN=ON
           #cmake ../ -DBASE=ON
@@ -99,9 +111,11 @@ jobs:
           mv ${{runner.temp}}/ngen-build ./ngen-build
           ##mv ${{runner.temp}}/.github .github
           cp -r ${{runner.temp}}/extern/sloth extern
+          #cp -r ${{runner.temp}}/extern/evapotranspiration extern
           mv ${{runner.temp}}/data data
           #./run_cfe.sh BASE
-          inputfile='realizations/realization_cfe.json'
+          #inputfile='realizations/realization_cfe.json'
+          inputfile='realizations/realization_cfe_pet.json'
           ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
           echo "Complete running Ngen-CFE"
       - name: Recheckout Ngen
