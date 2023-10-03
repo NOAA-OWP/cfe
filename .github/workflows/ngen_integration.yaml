@@ -37,10 +37,10 @@ jobs:
           repository: noaa-owp/ngen
           path: ./ngen
 
-      - uses: ./ngen/.github/actions/ngen-build
+      #- uses: ./ngen/.github/actions/ngen-build
 
       - name: Build Ngen
-        #uses: NOAA-OWP/ngen/.github/actions/ngen-build/action.yaml@master
+        uses: ./.github/actions/ngen-build
         with:
           targets: "ngen"
           build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
@@ -49,7 +49,7 @@ jobs:
           bmi_fortran: 'ON'
         timeout-minutes: 15
 
-      #- name: Run surfacebmi plus cfebmi
-      #  run: |
+      - name: Run surfacebmi plus cfebmi
+        run: |
       #    inputfile='realizations/realization_cfe_pet.json'
       #    ./cmake_build/ngen ../../data/catchment_data.geojson "cat-27" ../../data/nexus_data.geojson "nex-26" $inputfile
