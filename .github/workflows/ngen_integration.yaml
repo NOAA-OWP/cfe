@@ -38,7 +38,12 @@ jobs:
           repository: noaa-owp/ngen
           path: ngen
 
-      - uses: ./ngen/.github/actions/ngen-build
+      - name: Change to ngen directory
+        run: |
+          cd ngen
+
+      #- uses: ./ngen/.github/actions/ngen-build
+      - uses: ./.github/actions/ngen-build
       #- name: Build Ngen
       #  uses: ./ngen/.github/actions/ngen-build
         with:
