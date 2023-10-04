@@ -1,3 +1,5 @@
+# Test ngen-cfe integration
+
 name: Ngen Integration Tests
 
 # Controls when the action will run.
@@ -6,8 +8,7 @@ on:
     branches: [ master, dev, notreal ]
   pull_request:
     branches: [ master, dev, notreal ]
-  #workflow_dispatch:
-  workflow_call:
+  workflow_dispatch:
 
 env:
   # Obtained from https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
@@ -29,28 +30,78 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: actions/checkout@v2
-
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: Checkout ngen actions
+      - name: checkout actions in another repo
         uses: actions/checkout@v3
         with:
           repository: noaa-owp/ngen
-          path: ngen
 
-      - name: Change to ngen directory
+      # Build some necessary submodules
+      - name: Build ISO C Fortran BMI
+        id: submod_build_2
+        uses: ./.github/actions/ngen-submod-build
+        with:
+          mod-dir: "extern/iso_c_fortran_bmi/"
+
+      - name: Build PET
+        id: submod_build_5
+        uses: ./.github/actions/ngen-submod-build
+        with:
+          mod-dir: "extern/evapotranspiration/evapotranspiration"
+          targets: "petbmi"
+
+      - name: Build SLoTH
+        id: submod_build_6
+        uses: ./.github/actions/ngen-submod-build
+        with:
+          mod-dir: "extern/sloth/"
+          targets: "slothmodel"
+
+      # Build Ngen and save some files
+      - name: Build Ngen
+        id: ngen_id1
+        uses: ./.github/actions/ngen-build
+        with:
+          targets: "ngen"
+          build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
+          #is this required for this test?
+          bmi_c: 'ON'
+          bmi_fortran: 'OFF'
+        timeout-minutes: 15
+
+      - name: Cleanup Ngen Build
         run: |
-          working-directory: ngen
-          uses: ./.github/actions/ngen-build
-          with:
-            targets: "ngen"
-            build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
-            #is this required for this test?
-            bmi_c: 'ON'
-            bmi_fortran: 'ON'
-          timeout-minutes: 15
+          # Move ngen build artifacts to temp directory
+          mv ${{ steps.ngen_id1.outputs.build-dir }} ${{runner.temp}}/ngen-build/
+          mv .github ${{runner.temp}}/.github
+          mv extern ${{runner.temp}}/extern
+          mv data ${{runner.temp}}/data
 
-      #- name: Run surfacebmi plus cfebmi
-      #  run: |
-      #    inputfile='realizations/realization_cfe_pet.json'
-      #    ./cmake_build/ngen ../../data/catchment_data.geojson "cat-27" ../../data/nexus_data.geojson "nex-26" $inputfile
+      - name: Run surfacebmi plus cfebmi
+        run: |
+          echo "end of ngen_integration testing"
+
+      # Checkout and build CFE
+      - name: Checkout the commit
+        uses: actions/checkout@v4
+
+      - name: Build CFE Library for Ngen
+        run: |
+          cmake -B cmake_build -S . -DNGEN=ON
+          make -C cmake_build
+
+          # Move ngen build and other files to appropriate directory to run ngen
+          mv ${{runner.temp}}/ngen-build ./ngen-build
+          mv ${{runner.temp}}/extern/sloth extern
+          cp -r ${{runner.temp}}/extern/evapotranspiration extern
+          mv ${{runner.temp}}/data data
+
+          # Run ngen with CFE with PET
+          inputfile='realizations/realization_cfe_pet.json'
+          ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
+
+      # The following remove a post processing error
+      - name: Re-checkout Ngen
+        uses: actions/checkout@v3
+        with:
+          repository: noaa-owp/ngen
