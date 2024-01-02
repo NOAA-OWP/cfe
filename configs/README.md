@@ -1,15 +1,20 @@
 ## Configuration File
-Example configuration files are provided in this directory. To build and run the given examples see the instructions [here](https://github.com/NOAA-OWP/cfe/blob/master/INSTALL.md). A detailed description of the parameters for model configuration (i.e., initialize/setup) is provided below. The asterisk (*) denotes calibratable parameters.
+Example configuration files are provided in this directory.
+To build and run the given examples see the instructions [here](https://github.com/NOAA-OWP/cfe/blob/master/INSTALL.md).
+A detailed description of the parameters for model configuration (i.e., initialize/setup) is provided below.
+> [!NOTE]
+> The asterisk (*) denotes calibratable parameters.
+> Note, calibratable parameters are passed via BMI using the _name next to the asterisk_.
 
 | Variable | Datatype |  Limits  | Units | Role | Process | Description |
 | -------- | -------- | ------ | ----- | ---- | ------- | ----------- |
 | forcing_file | *char* | 256  |   | filename |   | path to forcing inputs csv; set to `BMI` if passed via `bmi.set_value*()`  |
 | soil_params.depth | *double* |   | meters [m]| state |  | soil depth  |
-| *soil_params.b | *double* |   |   | state |   | beta exponent on Clapp-Hornberger (1978) soil water relations  |
-| *soil_params.satdk | *double* |   |  meters/second [m s-1] | state |  | saturated hydraulic conductivity  |
-| *soil_params.satpsi  | *double* |   |  meters [m] | state |  | saturated capillary head  |
-| *soil_params.slop   | *double* |   |  meters/meters [m/m]| state |  | this factor (0-1) modifies the gradient of the hydraulic head at the soil bottom.  0=no-flow. |
-| *soil_params.smcmax  | *double* |   |  meters/meters [m/m] | state |  | saturated soil moisture content  |
+| soil_params.b or *b | *double* |   |   | state |   | beta exponent on Clapp-Hornberger (1978) soil water relations  |
+| soil_params.satdk or *satdk | *double* |   |  meters/second [m s-1] | state |  | saturated hydraulic conductivity  |
+| soil_params.satpsi or *satpsi | *double* |   |  meters [m] | state |  | saturated capillary head  |
+| soil_params.slop or *slope | *double* |   |  meters/meters [m/m]| state |  | this factor (0-1) modifies the gradient of the hydraulic head at the soil bottom.  0=no-flow. |
+| soil_params.smcmax or *maxsmc | *double* |   |  meters/meters [m/m] | state |  | saturated soil moisture content  |
 | soil_params.wltsmc | *double* |   |  meters/meters [m/m] | state |   | wilting point soil moisture content  |
 | soil_params.expon  | *double* |   |  | parameter_adjustable |    | optional; defaults to `1.0`  |
 | soil_params.expon_secondary  | *double* |  |   | parameter_adjustable |  | optional; defaults to `1.0` |
@@ -20,7 +25,7 @@ Example configuration files are provided in this directory. To build and run the
 | alpha_fc | *double* |   |   | parameter_adjustable |  | field capacity |
 | soil_storage| *double* |   | meters/meters [m/m] | parameter_adjustable |  | initial condition for soil reservoir - it is the water in the soil as a decimal fraction of maximum soil water storage (smcmax * depth) for the initial timestep |
 | K_nash | *int* |   |   | parameter_adjustable |   | number of Nash lf reservoirs (optional, defaults to 2, ignored if storage values present)  |
-| *K_lf | *double* |   |   | parameter_adjustable |  | Nash Config param - primary reservoir  |
+| K_lf or *Klf | *double* |   |   | parameter_adjustable |  | Nash Config param - primary reservoir  |
 | nash_storage | *double* |   |   | parameter_adjustable |  | Nash Config param - secondary reservoir   |
 | giuh_ordinates   | *double* |   |   | parameter_adjustable |  | Giuh ordinates in dt time steps   |
 | num_timesteps  | *int* |   |  | time_info |  | set to `1` if `forcing_file=BMI`   |
