@@ -1286,7 +1286,7 @@ static int Initialize (Bmi *self, const char *file)
     init_soil_reservoir(cfe_bmi_data_ptr);
 
     // Initialize the runoff queue to empty to start with
-    cfe_bmi_data_ptr->runoff_queue_m_per_timestep = malloc(sizeof(double) * cfe_bmi_data_ptr->num_giuh_ordinates + 1);
+    cfe_bmi_data_ptr->runoff_queue_m_per_timestep = malloc(sizeof(double) * (cfe_bmi_data_ptr->num_giuh_ordinates + 1));
     for (i = 0; i < cfe_bmi_data_ptr->num_giuh_ordinates + 1; i++)
         cfe_bmi_data_ptr->runoff_queue_m_per_timestep[i] = 0.0;
 
