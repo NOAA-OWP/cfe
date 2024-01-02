@@ -2004,7 +2004,7 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
         return BMI_FAILURE;
     memcpy(ptr, src, var_item_size * len);
     
-    if (strcmp (name, "maxsmc") == 0 || strcmp (name, "alpha_fc") == 0 || strcmp (name, "wltsmc") == 0 || strcmp (name, "maxsmc") == 0 || strcmp (name, "b") == 0 || strcmp (name, "slope") == 0 || strcmp (name, "satpsi") == 0 || strcmp (name, "Klf") == 0  || strcmp (name, "satdk") == 0){
+    if (strcmp (name, "maxsmc") == 0 || strcmp (name, "alpha_fc") == 0 || strcmp (name, "wltsmc") == 0 || strcmp (name, "b") == 0 || strcmp (name, "slope") == 0 || strcmp (name, "satpsi") == 0 || strcmp (name, "Klf") == 0  || strcmp (name, "satdk") == 0){
     
         cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
         init_soil_reservoir(cfe_ptr); 
