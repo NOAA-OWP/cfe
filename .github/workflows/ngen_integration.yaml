@@ -36,7 +36,7 @@ jobs:
 
       - name: Build the CFE Library
         run: |
-          cmake -B cmake_build -S .
+          cmake -B cmake_build -S . -DNGEN=ON
           make -C cmake_build
 
       - name: Save CFE to a Temp Directory
