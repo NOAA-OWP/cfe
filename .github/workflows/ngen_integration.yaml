@@ -1,4 +1,4 @@
-# Test ngen-smp integration
+# Test ngen-cfe integration
 
 name: Ngen Integration Tests
 
@@ -20,7 +20,7 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # Run general unit tests in linux environment
-  test_smp:
+  test_cfe:
     # The type of runner that the job will run on
     strategy:
       matrix:
