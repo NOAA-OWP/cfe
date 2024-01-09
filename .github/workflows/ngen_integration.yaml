@@ -81,7 +81,7 @@ jobs:
           rm -rf extern/cfe/cfe/*
           mv ${{runner.temp}}/cfe/* extern/cfe/cfe
 
-      - name: Run Ngen Test for CFE
+      - name: Run Ngen Test for CFE Couple with PET
         run: |
           mv ${{ steps.ngen_id1.outputs.build-dir }} ./ngen-build/
           inputfile='extern/cfe/cfe/realizations/realization_cfe_pet_ngenCI.json'
