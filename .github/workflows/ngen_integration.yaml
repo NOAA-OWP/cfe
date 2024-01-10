@@ -20,7 +20,7 @@ env:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # Run general unit tests in linux environment
-  test_surfacebmi_plus_cfe:
+  test_cfe:
     # The type of runner that the job will run on
     strategy:
       matrix:
@@ -30,13 +30,27 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      # Checkout and build the CFE
+      - name: Checkout the commit
+        uses: actions/checkout@v4
+
+      - name: Build the CFE Library
+        run: |
+          cmake -B cmake_build -S . -DNGEN=ON
+          make -C cmake_build
+
+      - name: Save CFE to a Temp Directory
+        run: |
+          # Move files to a temporary directory
+          mkdir ${{runner.temp}}/cfe
+          mv ./* ${{runner.temp}}/cfe
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: checkout actions in another repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: noaa-owp/ngen
 
-      # Build some necessary submodules
       - name: Build PET
         id: submod_build_5
         uses: ./.github/actions/ngen-submod-build
@@ -62,40 +76,13 @@ jobs:
           bmi_c: 'ON'
         timeout-minutes: 15
 
-      - name: Cleanup Ngen Build
+      - name: Move CFE Files Including cmake_build to Appropriate Directory
         run: |
-          # Move ngen build artifacts to temp directory
-          mv ${{ steps.ngen_id1.outputs.build-dir }} ${{runner.temp}}/ngen-build/
-          mv .github ${{runner.temp}}/.github
-          mv extern ${{runner.temp}}/extern
-          mv data ${{runner.temp}}/data
+          rm -rf extern/cfe/cfe/*
+          mv ${{runner.temp}}/cfe/* extern/cfe/cfe
 
-      - name: Run surfacebmi plus cfebmi
+      - name: Run Ngen Test for CFE Couple with PET
         run: |
-          echo "end of ngen_integration testing"
-
-      # Checkout and build CFE
-      - name: Checkout the commit
-        uses: actions/checkout@v4
-
-      - name: Build CFE Library for Ngen
-        run: |
-          cmake -B cmake_build -S . -DNGEN=ON
-          make -C cmake_build
-
-          # Move ngen build and other files to appropriate directory to run ngen
-          mv ${{runner.temp}}/ngen-build ./ngen-build
-          mv ${{runner.temp}}/extern/sloth extern
-          cp -r ${{runner.temp}}/extern/evapotranspiration extern
-          mv ${{runner.temp}}/data data
-
-          # Run ngen with CFE with PET
-          inputfile='realizations/realization_cfe_pet_ngenCI.json'
+          mv ${{ steps.ngen_id1.outputs.build-dir }} ./ngen-build/
+          inputfile='extern/cfe/cfe/realizations/realization_cfe_pet_ngenCI.json'
           ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
-
-      # The following remove a post ngen build error likely related to the temporary files left over during the
-      # build process
-      - name: Re-checkout Ngen
-        uses: actions/checkout@v3
-        with:
-          repository: noaa-owp/ngen
