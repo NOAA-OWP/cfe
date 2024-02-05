@@ -2031,6 +2031,7 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
     return BMI_SUCCESS;
 }*/
 
+// JG: 02.05.2024 - Implimenting "standard" BMI definition 
 {
     void * to = NULL;
     int itemsize = 0;
@@ -2066,7 +2067,9 @@ static int Set_value (Bmi *self, const char *name, void *array)
     return Set_value_at_indices(self, name, inds, 1, array);*/
     
     
-  // This is the sample code from read the docs
+  	// This is the sample code from read the docs
+	
+	// JG: 02.05.2024 - Implimenting "standard" BMI definition 
     void * dest = NULL;
     int nbytes = 0;
 
