@@ -610,24 +610,24 @@ void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspirati
     
     et_struct->actual_et_from_soil_m_per_timestep = 0;
 
-    // if root_zone-based AET turned ON
-    if (soil_res->aet_root_zone) {
-      // Assuming the layer with the most moisture is the bottom layer of the root zone (max_root_zone_layer)
+    // if rootzone-based AET turned ON
+    if (soil_res->is_aet_rootzone) {
+      // Assuming the layer with the most moisture is the bottom layer of the root zone (max_rootzone_layer)
       // Convert volumetric soil moisture from the max root zone layer to moisture content [m] (layer_storage_m)
-      double layer_storage_m = soil_res->smc_profile[soil_res->max_root_zone_layer] *
-                               soil_res->delta_soil_layer_depth_m[soil_res->max_root_zone_layer];
+      double layer_storage_m = soil_res->smc_profile[soil_res->max_rootzone_layer] *
+                               soil_res->delta_soil_layer_depth_m[soil_res->max_rootzone_layer];
 
       // If the moisture content from the layer with the most moisture is less than the
       // wilting point, actual et from this timestep is 0 and no water is removed.
-      if ( soil_res->smc_profile[soil_res->max_root_zone_layer] <= soil_parms->wltsmc ) {
+      if ( soil_res->smc_profile[soil_res->max_rootzone_layer] <= soil_parms->wltsmc ) {
         et_struct->actual_et_from_soil_m_per_timestep = 0;
       } 
       // calculate the amount of moisture removed by evapotranspiration for the bottom layer of the root zone
-      else if (soil_res->smc_profile[soil_res->max_root_zone_layer] >= soil_res->soil_water_content_field_capacity) {
+      else if (soil_res->smc_profile[soil_res->max_rootzone_layer] >= soil_res->soil_water_content_field_capacity) {
         et_struct->actual_et_from_soil_m_per_timestep = min(et_struct->reduced_potential_et_m_per_timestep, layer_storage_m);
       }
       else {
-        Budyko_numerator = soil_res->smc_profile[soil_res->max_root_zone_layer] - soil_parms->wltsmc;
+        Budyko_numerator = soil_res->smc_profile[soil_res->max_rootzone_layer] - soil_parms->wltsmc;
         Budyko_denominator = soil_res->soil_water_content_field_capacity - soil_parms->wltsmc;
         Budyko = Budyko_numerator / Budyko_denominator;
 	
@@ -636,8 +636,8 @@ void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspirati
       
       // Reduce remaining PET and remove moisture from soil profile equal to the calculated AET (actual_et_from_soil_m_per_timestep
       et_struct->reduced_potential_et_m_per_timestep -= et_struct->actual_et_from_soil_m_per_timestep;   
-      soil_res->smc_profile[soil_res->max_root_zone_layer] -= (et_struct->actual_et_from_soil_m_per_timestep / 
-							       soil_res->delta_soil_layer_depth_m[soil_res->max_root_zone_layer]);
+      soil_res->smc_profile[soil_res->max_rootzone_layer] -= (et_struct->actual_et_from_soil_m_per_timestep / 
+							       soil_res->delta_soil_layer_depth_m[soil_res->max_rootzone_layer]);
       soil_res->storage_m -= et_struct->actual_et_from_soil_m_per_timestep;
     }
 
