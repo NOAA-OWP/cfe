@@ -732,9 +732,12 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
         /*-------------------- Root zone AET development -rlm -----------------------*/
 	if (strcmp(param_key, "aet_rootzone") == 0) {
-	  model->soil_reservoir.aet_root_zone = strtod(param_value, NULL);
-	  if ( strcmp(param_value, "true")==0 || strcmp(param_value, "True")==0 || strcmp(param_value,"1")==0)
+
+	  if ( strcmp(param_value, "true")==0 || strcmp(param_value, "True")==0 || strcmp(param_value,"1")==0) {
+	    model->soil_reservoir.aet_root_zone = TRUE;
 	    is_aet_rootzone_set = TRUE;
+	  }
+	  
 	  continue;
         }
 
@@ -1061,6 +1064,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
       model->soil_reservoir.aet_root_zone = FALSE;
       model->soil_reservoir.n_soil_layers = 0;
     }
+
     /*--------------------END OF ROOT ZONE ADJUSTED AET DEVELOPMENT -rlm ------------------------------*/
      
 #if CFE_DEBUG >= 1
@@ -1306,7 +1310,7 @@ static int Initialize (Bmi *self, const char *file)
     cfe_bmi_data_ptr->soil_reservoir.ice_fraction_xinanjiang = 0.0;
 
     if (cfe_bmi_data_ptr->soil_reservoir.aet_root_zone == TRUE)
-      cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*cfe_bmi_data_ptr->soil_reservoir.n_soil_layers);
+      cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*cfe_bmi_data_ptr->soil_reservoir.n_soil_layers + 1);
     else
       cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*1);
     
@@ -1982,10 +1986,11 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
     // Thus, there is only ever one value to return (len must be 1) and it must always be from index 0
     //AJ: modifying it to work with soil moisture column for root zone depth based AET
     if (strcmp(name, "soil_moisture_profile") == 0 || strcmp(name, "soil_layer_depths_m") == 0){ //Adding soil layer depths since they will be needed for root zone adjusted AET estimations -rlm
-      void *ptr = NULL;
-      //      ptr = (double*) malloc (sizeof (double)*4);
-      status = Get_value_ptr(self, name, &ptr);
+      
       len = ((cfe_state_struct *)(self->data))->soil_reservoir.n_soil_layers + 1;
+      void *ptr = (double*) malloc (sizeof (double)* len);
+      status = Get_value_ptr(self, name, &ptr);
+      
 
       if (status == BMI_FAILURE)
         return BMI_FAILURE;
