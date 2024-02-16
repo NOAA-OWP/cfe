@@ -30,10 +30,10 @@ Example configuration files are provided in this directory. To build and run the
 | *b_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable  | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
 | *x_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
 | urban_decimal_fraction  | *double*  |  0.0 - 1.0 |   |  parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang` |
-| aet_rootzone                    | *boolean* | True, true or 1  |  | coupling parameter | `rootzone-based AET` | when `CFE coupled to SoilMoistureProfile` |
-| max_root_zone_layer | *double* |  | meters [m] | parameter_adjustable | AET | layer of the soil that is the maximum root zone depth. That is, the depth of the layer where the AET is drawn from |
+| is_aet_rootzone                    | *boolean* | True, true or 1  |  | coupling parameter | `rootzone-based AET` | when `CFE coupled to SoilMoistureProfile` |
+| max_rootzone_layer | *double* |  | meters [m] | parameter_adjustable | AET | layer of the soil that is the maximum root zone depth. That is, the depth of the layer where the AET is drawn from |
 | soil_layer_depths | 1D array |  | meters [m] | parameter_adjustable | AET | an array of depths from the surface. Example, soil_layer_depths=0.1,0.4,1.0,2.0
-| sft_coupled                     | *boolean* | True, true or 1  |  | coupling parameter | `ice-fraction based runoff` | when `CFE coupled to SoilFreezeThaw`|
+| is_sft_coupled                   | *boolean* | True, true or 1  |  | coupling parameter | `ice_fraction-based runoff` | when `CFE coupled to SoilFreezeThaw`|
 
 
 ## Direct runoff options in CFE
@@ -51,18 +51,18 @@ If the **Xinanjiang** scheme is choosen, four parameters need to be included in 
 
 ## Rootzone-based Actual Evapotranspiration (AET)
 The user has the option to turn ON and OFF rootzone-based AET, default option is OFF. To turn it ON, the following parameters need to be included in the configuration file.
-1. `aet_rootzone=true`
+1. `is_aet_rootzone=true`
 2. `soil_layer_depths` 
-3. `max_root_zone_layer`
+3. `max_rootzone_layer`
 
 ## CFE coupled to Soil freeze-thaw model (SFT)
 The Soil Freeze-Thaw (SFT) model is a standalone model.  For detailed information please refer to the [SFT repo](https://github.com/NOAA-OWP/SoilFreezeThaw). A few things to note when coupling CFE to SFT:
 1. SFT model provides `ice fraction` to CFE runoff schemes (Schaake `ice_fraction_schaake` and Xinanjiang `ice_fraction_xinanjiang`)
 2. To turn ON/OFF SFT set sft_coupled flag.
-    * `sft_coupled` : (type boolean) if `true`, SFT is turned ON. (options: True, true, 1).
+    * `is_sft_coupled` : (type boolean) if `true`, SFT is turned ON. (options: True, true, 1).
     * If the runoff scheme is Xinanjiang, no additional parameters are needed in the CFE config files.
     * If the runoff scheme is Schaake, the CFE config file will need an additional parameter, namely:
       * `ice_content_threshold` : (type double, unit m). This represent the ice content above which soil is impermeable.
   
 
-**Note:** By defualt `sft_coupled` and `aet_rootzone` are `OFF`, that means these changes do not effect the basic functionality of CFE.
+**Note:** By defualt `is_sft_coupled` and `is_aet_rootzone` are set to `OFF`, that means these changes do not affect the basic functionality of CFE.
