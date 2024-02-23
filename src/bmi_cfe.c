@@ -545,12 +545,12 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             }
             continue;
         }
-        if (strcmp(param_key, "soil_params.bb") == 0 || strcmp(param_key, "soil_params.b") == 0) {
+        if (strcmp(param_key, "b") == 0 || strcmp(param_key, "soil_params.bb") == 0 || strcmp(param_key, "soil_params.b") == 0) {
             model->NWM_soil_params.bb = strtod(param_value, NULL);
             is_soil_params__bb_set = TRUE;
             continue;
         }
-        if (strcmp(param_key, "soil_params.satdk") == 0) {
+        if (strcmp(param_key, "satdk") == 0 || strcmp(param_key, "soil_params.satdk") == 0) {
             model->NWM_soil_params.satdk = strtod(param_value, NULL);
             is_soil_params__satdk_set = TRUE;
             // Check if units are present and print warning if missing from config file
@@ -561,7 +561,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             }
             continue;
         }
-        if (strcmp(param_key, "soil_params.satpsi") == 0) {
+        if (strcmp(param_key, "satpsi") == 0 || strcmp(param_key, "soil_params.satpsi") == 0) {
             model->NWM_soil_params.satpsi = strtod(param_value, NULL);
             is_soil_params__satpsi_set = TRUE;
             // Check if units are present and print warning if missing from config file
@@ -572,7 +572,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             }
             continue;
         }
-        if (strcmp(param_key, "soil_params.slope") == 0 || strcmp(param_key, "soil_params.slop") == 0) {
+        if (strcmp(param_key, "slope") == 0 || strcmp(param_key, "soil_params.slope") == 0 || strcmp(param_key, "soil_params.slop") == 0) {
             model->NWM_soil_params.slop = strtod(param_value, NULL);
             is_soil_params__slop_set = TRUE;
             // Check if units are present and print warning if missing from config file
@@ -583,7 +583,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             }
             continue;
         }
-        if (strcmp(param_key, "soil_params.smcmax") == 0 || strcmp(param_key, "soil_params.maxsmc") == 0) {
+        if (strcmp(param_key, "maxsmc") == 0 || strcmp(param_key, "soil_params.smcmax") == 0 || strcmp(param_key, "soil_params.maxsmc") == 0) {
             model->NWM_soil_params.smcmax = strtod(param_value, NULL);
             is_soil_params__smcmax_set = TRUE;
             // Check if units are present and print warning if missing from config file
@@ -594,7 +594,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             }
             continue;
         }
-        if (strcmp(param_key, "soil_params.wltsmc") == 0) {
+        if (strcmp(param_key, "wltsmc") == 0 || strcmp(param_key, "soil_params.wltsmc") == 0) {
             model->NWM_soil_params.wltsmc = strtod(param_value, NULL);
             is_soil_params__wltsmc_set = TRUE;
             // Check if units are present and print warning if missing from config file
@@ -671,7 +671,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             continue;
         }
 
-        if (strcmp(param_key, "soil_params.alpha_fc") == 0 || strcmp(param_key, "alpha_fc") == 0) {
+        if (strcmp(param_key, "alpha_fc") == 0 || strcmp(param_key, "soil_params.alpha_fc") == 0) {
             model->NWM_soil_params.alpha_fc = strtod(param_value, NULL);
             is_alpha_fc_set = TRUE;
             continue;
@@ -701,7 +701,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             is_K_nash_set = TRUE;
             continue;
         }
-        if (strcmp(param_key, "K_lf") == 0) {
+        if (strcmp(param_key, "Klf") == 0 || strcmp(param_key, "K_lf") == 0) {
             model->K_lf = strtod(param_value, NULL);
             is_K_lf_set = TRUE;
             continue;
@@ -906,7 +906,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     }
     if (is_K_lf_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'K_lf' not found in config file\n");
+        printf("Config param 'K_lf' or 'Klf' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
@@ -2008,7 +2008,7 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
         return BMI_FAILURE;
     memcpy(ptr, src, var_item_size * len);
     
-    if (strcmp (name, "maxsmc") == 0 || strcmp (name, "alpha_fc") == 0 || strcmp (name, "wltsmc") == 0 || strcmp (name, "maxsmc") == 0 || strcmp (name, "b") == 0 || strcmp (name, "slope") == 0 || strcmp (name, "satpsi") == 0 || strcmp (name, "Klf") == 0  || strcmp (name, "satdk") == 0){
+    if (strcmp (name, "maxsmc") == 0 || strcmp (name, "alpha_fc") == 0 || strcmp (name, "wltsmc") == 0 || strcmp (name, "b") == 0 || strcmp (name, "slope") == 0 || strcmp (name, "satpsi") == 0 || strcmp (name, "Klf") == 0  || strcmp (name, "satdk") == 0){
     
         cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
         init_soil_reservoir(cfe_ptr); 
