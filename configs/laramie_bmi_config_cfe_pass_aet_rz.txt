@@ -28,4 +28,4 @@ surface_partitioning_scheme=Schaake
 #urban_decimal_fraction=0.0
 aet_rootzone=true
 soil_layer_depths=0.1,0.4,1.0,2.0
-max_root_zone_layer=2
+max_rootzone_layer=2

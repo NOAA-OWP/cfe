@@ -170,7 +170,7 @@ Variable var_info[] = {
 	// -------------------------------------------
 	{ 91, "soil_moisture_profile",                   "double", 1},
         { 92, "soil_layer_depths_m",			 "double", 1},
-        { 93, "max_root_zone_layer",                     "int", 1},
+        { 93, "max_rootzone_layer",                     "int", 1},
 	//--------------------------------------------
 };
 
@@ -493,7 +493,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     /* ------ Root zone adjusted AET development -rlm ------- */
     int is_aet_rootzone_set                 = FALSE;
     int is_soil_layer_depths_string_val_set = FALSE;
-    int is_max_root_zone_layer_set          = FALSE;
+    int is_max_rootzone_layer_set           = FALSE;
     /*--------------------------------------------------------*/
     // Default value
     model->NWM_soil_params.refkdt = 3.0;
@@ -732,13 +732,14 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
         /*-------------------- Root zone AET development -rlm -----------------------*/
 	if (strcmp(param_key, "aet_rootzone") == 0) {
-	  model->soil_reservoir.aet_root_zone = strtod(param_value, NULL);
+
 	  if ( strcmp(param_value, "true")==0 || strcmp(param_value, "True")==0 || strcmp(param_value,"1")==0)
 	    is_aet_rootzone_set = TRUE;
+	  
 	  continue;
         }
 
-	if (is_aet_rootzone_set == TRUE ) {
+	if (is_aet_rootzone_set == TRUE) {
 	  if (strcmp(param_key, "soil_layer_depths") == 0) {
 #if CFE_DEBUG >= 1   
             printf("Found configured soil depth values ('%s')\n", param_value);
@@ -747,9 +748,9 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             is_soil_layer_depths_string_val_set = TRUE;
             continue;
 	  }
-	  if (strcmp(param_key, "max_root_zone_layer") == 0) {
-            model->soil_reservoir.max_root_zone_layer = strtod(param_value, NULL);
-            is_max_root_zone_layer_set = TRUE;
+	  if (strcmp(param_key, "max_rootzone_layer") == 0) {
+            model->soil_reservoir.max_rootzone_layer = strtod(param_value, NULL);
+            is_max_rootzone_layer_set = TRUE;
 	  }
 	}
 
@@ -786,7 +787,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
 	/* Ice fraction: if set to true and runoff scheme is Schaake, additional parameters are needed in the config file, 
         *//////////////////////////////////////////////////////////////////////////////
-        if (strcmp(param_key, "sft_coupled") == 0) {
+        if (strcmp(param_key, "is_sft_coupled") == 0) {
 	  if ( strcmp(param_value, "true")==0 || strcmp(param_value, "True")==0 || strcmp(param_value,"1")==0)
 	    is_sft_coupled_set = TRUE;
 	  
@@ -978,7 +979,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
       if(!is_ice_content_threshold_set) {
 #if CFE_DEBUG >= 1
-	printf("sft_coupled and Schaake scheme are set to TRUE but param 'ice_fraction_threshold' not found in config file\n");
+	printf("is_sft_coupled and Schaake scheme are set to TRUE but param 'ice_fraction_threshold' not found in config file\n");
 	exit(-9);
 #endif
       }
@@ -993,9 +994,9 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     
     /*------------------- Root zone AET development -rlm----------------------------- */
     if (is_aet_rootzone_set == TRUE ) {
-      if (is_max_root_zone_layer_set == FALSE) {
+      if (is_max_rootzone_layer_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'max_root_zone_layer' not found in config file\n");
+        printf("Config param 'max_rootzone_layer' not found in config file\n");
 #endif
         return BMI_FAILURE;
       }
@@ -1041,10 +1042,11 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
 // Calculate the thickness (delta) of each soil layer
     if (is_aet_rootzone_set == TRUE ) {
+      model->soil_reservoir.is_aet_rootzone = TRUE;
       model->soil_reservoir.delta_soil_layer_depth_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers + 1));
       double previous_depth = 0;
       double current_depth = 0;
-      for (int i=1; i <= model->soil_reservoir.n_soil_layers; i++){
+      for (int i=1; i <= model->soil_reservoir.n_soil_layers; i++) {
         current_depth = model->soil_reservoir.soil_layer_depths_m[i];
         if (current_depth <= previous_depth)
 	  printf("WARNING: soil depths may be out of order.  One or more soil layer depths is less than or equal to the previous layer. Check CFE config file.\n");
@@ -1058,9 +1060,10 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
       model->soil_reservoir.soil_water_content_field_capacity = model->NWM_soil_params.smcmax * pow(base, exponent);
     }
     else {
-      model->soil_reservoir.aet_root_zone = FALSE;
-      model->soil_reservoir.n_soil_layers = 0;
+      model->soil_reservoir.is_aet_rootzone = FALSE;
+      model->soil_reservoir.n_soil_layers   = 0;
     }
+
     /*--------------------END OF ROOT ZONE ADJUSTED AET DEVELOPMENT -rlm ------------------------------*/
      
 #if CFE_DEBUG >= 1
@@ -1305,8 +1308,8 @@ static int Initialize (Bmi *self, const char *file)
     cfe_bmi_data_ptr->soil_reservoir.ice_fraction_schaake    = 0.0;
     cfe_bmi_data_ptr->soil_reservoir.ice_fraction_xinanjiang = 0.0;
 
-    if (cfe_bmi_data_ptr->soil_reservoir.aet_root_zone == TRUE)
-      cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*cfe_bmi_data_ptr->soil_reservoir.n_soil_layers);
+    if (cfe_bmi_data_ptr->soil_reservoir.is_aet_rootzone == TRUE)
+      cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*cfe_bmi_data_ptr->soil_reservoir.n_soil_layers + 1);
     else
       cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*1);
     
@@ -1906,8 +1909,8 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
-//--------------Root zone adjusted AET development -rlm -ahmad -------
-    if (strcmp (name, "soil_moisture_profile") == 0){
+//--------------Root zone adjusted AET development -rlm -ajk -------
+    if (strcmp (name, "soil_moisture_profile") == 0) {
       *dest = (void *) ((cfe_state_struct *)(self->data))->soil_reservoir.smc_profile;
       return BMI_SUCCESS;
     }
@@ -1980,12 +1983,13 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
     // For now, all variables are non-array scalar values, with only 1 item of type double
 
     // Thus, there is only ever one value to return (len must be 1) and it must always be from index 0
-    //AJ: modifying it to work with soil moisture column for root zone depth based AET
-    if (strcmp(name, "soil_moisture_profile") == 0 || strcmp(name, "soil_layer_depths_m") == 0){ //Adding soil layer depths since they will be needed for root zone adjusted AET estimations -rlm
-      void *ptr = NULL;
-      //      ptr = (double*) malloc (sizeof (double)*4);
-      status = Get_value_ptr(self, name, &ptr);
+    // ajk: modifying it to work with soil moisture column for rootzone depth based AET
+    if (strcmp(name, "soil_moisture_profile") == 0 || strcmp(name, "soil_layer_depths_m") == 0) { //Adding soil layer depths since they will be needed for root zone adjusted AET estimations -rlm
+      
       len = ((cfe_state_struct *)(self->data))->soil_reservoir.n_soil_layers + 1;
+      void *ptr = NULL; //(double*) malloc (sizeof (double)* len);
+      status = Get_value_ptr(self, name, &ptr);
+      
 
       if (status == BMI_FAILURE)
         return BMI_FAILURE;
@@ -2405,7 +2409,7 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     // Root zone AET development -rlm
     // ------------------------------------------------------------
     ptr_list[90] = &(state->soil_reservoir.soil_layer_depths_m);
-    ptr_list[91] = &(state->soil_reservoir.max_root_zone_layer);
+    ptr_list[91] = &(state->soil_reservoir.max_rootzone_layer);
     //-------------------------------------------------------------
  
 
