@@ -26,6 +26,6 @@ surface_partitioning_scheme=Schaake
 #b_Xinanjiang_shape_parameter=1
 #x_Xinanjiang_shape_parameter=1
 #urban_decimal_fraction=0.0
-aet_rootzone=true
+is_aet_rootzone=true
 soil_layer_depths=0.1,0.4,1.0,2.0
 max_rootzone_layer=2

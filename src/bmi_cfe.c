@@ -731,7 +731,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         }
 
         /*-------------------- Root zone AET development -rlm -----------------------*/
-	if (strcmp(param_key, "aet_rootzone") == 0) {
+	if (strcmp(param_key, "is_aet_rootzone") == 0) {
 
 	  if ( strcmp(param_value, "true")==0 || strcmp(param_value, "True")==0 || strcmp(param_value,"1")==0)
 	    is_aet_rootzone_set = TRUE;
@@ -1966,7 +1966,7 @@ static int Get_value (Bmi *self, const char *name, void *dest)
 
 
 static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int len, void *src)
-{
+/*{
     if (len < 1)
         return BMI_FAILURE;
     
@@ -2033,22 +2033,46 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
      }   
         
     return BMI_SUCCESS;
+}*/
+
+// JG: 02.05.2024 - Implementing "standard" BMI definition 
+{
+    void * to = NULL;
+    int itemsize = 0;
+
+    if (self->get_value_ptr (self, name, &to) == BMI_FAILURE)
+        return BMI_FAILURE;
+
+    if (self->get_var_itemsize(self, name, &itemsize) == BMI_FAILURE)
+        return BMI_FAILURE;
+
+    { /* Copy the data */
+        size_t i;
+        size_t offset;
+        char * ptr;
+        for (i=0, ptr=(char*)src; i<len; i++, ptr+=itemsize) {
+            offset = inds[i] * itemsize;
+            memcpy ((char*)to + offset, ptr, itemsize);
+        }
+    }
+    return BMI_SUCCESS;
 }
 
 
 static int Set_value (Bmi *self, const char *name, void *array)
 {
-    // Avoid using set value, call instead set_value_at_index
+/*    // Avoid using set value, call instead set_value_at_index
     // Use nested call to "by index" version
 
     // Here, for now at least, we know all the variables are scalar, so
     int inds[] = {0};
 
     // Then we can just ...
-    return Set_value_at_indices(self, name, inds, 1, array);
+    return Set_value_at_indices(self, name, inds, 1, array);*/
     
     
-/*  This is the sample code from read the docs
+  	// This is the sample code from read the docs
+	// JG: 02.05.2024 - Implementing "standard" BMI definition 
     void * dest = NULL;
     int nbytes = 0;
 
@@ -2061,7 +2085,7 @@ static int Set_value (Bmi *self, const char *name, void *array)
     memcpy (dest, array, nbytes);
 
     return BMI_SUCCESS;
-*/    
+    
 }
 
 
