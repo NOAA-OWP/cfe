@@ -9,11 +9,10 @@
 #include <assert.h>
 #include "conceptual_reservoir.h"
 #include "giuh.h"
+#include "nash_cascade.h"
 
 #define TRUE 1
 #define FALSE 0
-#define MAX_NUM_GIUH_ORDINATES 10
-#define MAX_NUM_NASH_CASCADE    3
 #define MAX_NUM_RAIN_DATA 720
 
 // t-shirt approximation of the hydrologic routing funtionality of the National Water Model v 1.2, 2.0, and 2.1
@@ -152,12 +151,6 @@ extern void Xinanjiang_partitioning_scheme(double water_input_depth_m, double fi
 					   double max_soil_moisture_storage_m, double column_total_soil_water_m,
 					   struct direct_runoff_parameters_structure *parms, double *surface_runoff_depth_m,
 					   double *infiltration_depth_m, double ice_fraction_xinanjiang);
-
-extern double convolution_integral(double runoff_m, int num_giuh_ordinates, 
-                                   double *giuh_ordinates, double *runoff_queue_m_per_timestep);
-                                   
-extern double nash_cascade(double flux_lat_m,int num_lateral_flow_nash_reservoirs,
-                           double K_nash,double *nash_storage_arr);
 
 extern void et_from_rainfall(double *timestep_rainfall_input_m, struct evapotranspiration_structure *et_struct);
 
