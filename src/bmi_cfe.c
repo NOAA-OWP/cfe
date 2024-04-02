@@ -510,7 +510,8 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
     for (i = 0; i < config_line_count; i++) {
         char *param_key, *param_value, *param_units;
-        fgets(config_line, max_config_line_length + 1, fp);
+        if (fgets(config_line, max_config_line_length + 1, fp) == NULL)
+            return BMI_FAILURE;
 #if CFE_DEBUG >= 3
         printf("Line value: ['%s']\n", config_line);
 #endif
@@ -1252,12 +1253,14 @@ static int Initialize (Bmi *self, const char *file)
         long year, month, day, hour, minute;
         double dsec;
         // First read the header line
-        fgets(line_str, max_forcing_line_length + 1, ffp);
+        if (fgets(line_str, max_forcing_line_length + 1, ffp) == NULL)
+            return BMI_FAILURE;
         
         aorc_forcing_data_cfe forcings;
 
         for (i = 0; i < cfe_bmi_data_ptr->num_timesteps; i++) {
-            fgets(line_str, max_forcing_line_length + 1, ffp);  // read in a line of AORC data.
+            if (fgets(line_str, max_forcing_line_length + 1, ffp) == NULL)  // read in a line of AORC data.
+                return BMI_FAILURE;
             parse_aorc_line_cfe(line_str, &year, &month, &day, &hour, &minute, &dsec, &forcings);
     #if CFE_DEBUG > 0
             printf("Forcing data: [%s]\n", line_str);
