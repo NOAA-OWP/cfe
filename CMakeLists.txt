@@ -7,9 +7,6 @@ set(Red         "${Esc}[32m")
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_C_COMPILER $ENV{CC})
-set(CMAKE_CXX_COMPILER $ENV{CXX})
-
 # module setup options
 
 option(BASE "BASE" OFF)
@@ -46,7 +43,6 @@ endif()
 # set the project name
 project(cfebmi VERSION 1.0.0 DESCRIPTION "OWP CFE BMI Module Shared Library")
 
-set(CMAKE_BUILD_TYPE Debug)
 IF(CMAKE_BUILD_TYPE MATCHES Debug)
     message("Debug build.")
 ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
@@ -54,9 +50,6 @@ ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 message(CMAKE_CXX_COMPILER " ${CMAKE_CXX_COMPILER}")
 message(CMAKE_C_COMPILER " ${CMAKE_C_COMPILER}")
 message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
-
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
 
 # add the executable
 
