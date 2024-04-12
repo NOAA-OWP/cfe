@@ -101,8 +101,8 @@ struct massbal
     double volstart            ;
     double vol_runoff          ;   
     double vol_infilt          ;   
-    double vol_out_giuh        ;
-    double vol_end_giuh        ;
+    double vol_out_surface     ;
+    double vol_end_surface     ;
     double vol_to_gw           ;
     double vol_in_gw_start     ;
     double vol_in_gw_end       ;
@@ -128,6 +128,8 @@ typedef struct massbal massbal;
 //--------------------------
 typedef enum {Schaake=1, Xinanjiang=2} surface_water_partition_type;
 
+typedef enum {GIUH=1, NASH_CASCADE=2} surface_runoff_scheme;
+
 /* xinanjiang_dev*/
 struct direct_runoff_parameters_structure{
     surface_water_partition_type surface_partitioning_scheme;
@@ -144,7 +146,8 @@ typedef struct direct_runoff_parameters_structure direct_runoff_parameters_struc
 // function prototypes
 // --------------------------------
 extern void Schaake_partitioning_scheme(double dt, double field_capacity_m, double magic_number, double deficit, double qinsur,
-					double smcmax, double soil_depth, double *runsrf, double *pddum, double ice_fraction_schaake, double ice_content_threshold);
+					double smcmax, double soil_depth, double *runsrf, double *pddum, double ice_fraction_schaake,
+					double ice_content_threshold);
 
 // xinanjiang_dev: XinJiang function written by Rachel adapted by Jmframe and FLO, 
 extern void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_capacity_m,
@@ -154,7 +157,8 @@ extern void Xinanjiang_partitioning_scheme(double water_input_depth_m, double fi
 
 extern void et_from_rainfall(double *timestep_rainfall_input_m, struct evapotranspiration_structure *et_struct);
 
-extern void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspiration_structure *et_struct, struct NWM_soil_parameters *soil_parms);
+extern void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspiration_structure *et_struct,
+			 struct NWM_soil_parameters *soil_parms);
 
 extern int is_fabs_less_than_epsilon(double a,double epsilon);
 
@@ -190,10 +194,12 @@ extern void cfe(
         int num_lateral_flow_nash_reservoirs,
         double K_nash,
         double *nash_storage_arr,
+	struct nash_cascade_parameters *nash_surface_params,
         struct evapotranspiration_structure *evap_struct,
         double *Qout_m_ptr,
         struct massbal *massbal_struct,
-        double time_step_size
+        double time_step_size,
+	int surface_runoff_scheme
     );
 
 #endif //CFE_CFE_H

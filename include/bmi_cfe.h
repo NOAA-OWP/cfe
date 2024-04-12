@@ -90,6 +90,8 @@ struct cfe_state_struct {
 
     int num_giuh_ordinates;
 
+    int surface_runoff_scheme;   // options: giuh-based runoff and nash cascade-based runoff
+  
     // ***********************************************************
     // ******************* Dynamic allocations *******************
     // ***********************************************************
@@ -103,6 +105,8 @@ struct cfe_state_struct {
     double* nash_storage;
     double* runoff_queue_m_per_timestep;
 
+    struct nash_cascade_parameters nash_surface_params;
+  
     /* xinanjiang_dev
         changing the name to the more general "direct runoff"
     double* flux_Schaake_output_runoff_m;*/
