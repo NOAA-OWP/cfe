@@ -149,7 +149,7 @@ Variable var_info[] = {
 	{ 76, "nash_storage",                   "double*", 1 },  // num_lat_flow
 	{ 77, "runoff_queue_m_per_timestep",    "double*", 1 },  // num_giuh
 	{ 78, "flux_Schaake_output_runoff_m",   "double*", 1 },
-	{ 79, "flux_giuh_runoff_m",             "double*", 1 },
+	{ 79, "flux_surface_runoff_m",             "double*", 1 },
 	{ 80, "flux_nash_lateral_runoff_m",     "double*", 1 },
 	{ 81, "flux_from_deep_gw_to_chan_m",    "double*", 1 },
 	{ 82, "flux_from_soil_to_gw_m",         "double*", 1 },
@@ -181,7 +181,7 @@ int j = 0;
 static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "RAIN_RATE",
         "DIRECT_RUNOFF",
-        "GIUH_RUNOFF",
+        "SURFACE_RUNOFF",
         "NASH_LATERAL_RUNOFF",
         "DEEP_GW_TO_CHANNEL_FLUX",
 	"SOIL_TO_GW_FLUX",
@@ -1302,8 +1302,8 @@ static int Initialize (Bmi *self, const char *file)
     *cfe_bmi_data_ptr->flux_Qout_m = 0.0;
     cfe_bmi_data_ptr->flux_from_deep_gw_to_chan_m = malloc(sizeof(double));
     *cfe_bmi_data_ptr->flux_from_deep_gw_to_chan_m = 0.0;
-    cfe_bmi_data_ptr->flux_giuh_runoff_m = malloc(sizeof(double));
-    *cfe_bmi_data_ptr->flux_giuh_runoff_m = 0.0;
+    cfe_bmi_data_ptr->flux_surface_runoff_m = malloc(sizeof(double));
+    *cfe_bmi_data_ptr->flux_surface_runoff_m = 0.0;
     cfe_bmi_data_ptr->flux_lat_m = malloc(sizeof(double));
     *cfe_bmi_data_ptr->flux_lat_m = 0.0;
     cfe_bmi_data_ptr->flux_nash_lateral_runoff_m = malloc(sizeof(double));
@@ -1568,8 +1568,8 @@ static int Finalize (Bmi *self)
 
         if( model->flux_from_deep_gw_to_chan_m != NULL )
             free(model->flux_from_deep_gw_to_chan_m);
-        if( model->flux_giuh_runoff_m != NULL )
-            free(model->flux_giuh_runoff_m);
+        if( model->flux_surface_runoff_m != NULL )
+            free(model->flux_surface_runoff_m);
         if( model->flux_lat_m != NULL )
             free(model->flux_lat_m);
         if( model->flux_nash_lateral_runoff_m != NULL )
@@ -1930,8 +1930,8 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
-    if (strcmp (name, "GIUH_RUNOFF") == 0) {
-        *dest = (void *) ((cfe_state_struct *)(self->data))->flux_giuh_runoff_m;
+    if (strcmp (name, "SURFACE_RUNOFF") == 0) {
+        *dest = (void *) ((cfe_state_struct *)(self->data))->flux_surface_runoff_m;
         return BMI_SUCCESS;
     }
 
@@ -2484,7 +2484,7 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[76] = state->nash_storage;
     ptr_list[77] = state->runoff_queue_m_per_timestep;
     ptr_list[78] = state->flux_output_direct_runoff_m;
-    ptr_list[79] = state->flux_giuh_runoff_m;
+    ptr_list[79] = state->flux_surface_runoff_m;
     ptr_list[80] = state->flux_nash_lateral_runoff_m;
     ptr_list[81] = state->flux_from_deep_gw_to_chan_m;
     ptr_list[82] = state->flux_perc_m;
@@ -2773,7 +2773,7 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
             state->flux_output_direct_runoff_m[i] = *( ((double *)src) + i); } } 
     else if (index == 77){
         for (i=0; i<size; i++) {
-            state->flux_giuh_runoff_m[i] = *( ((double *)src) + i); } } 
+            state->flux_surface_runoff_m[i] = *( ((double *)src) + i); } } 
     else if (index == 78){
         for (i=0; i<size; i++) {
             state->flux_nash_lateral_runoff_m[i] = *( ((double *)src) + i); } }             
@@ -2998,7 +2998,7 @@ cfe_state_struct *new_bmi_cfe(void)
     data->flux_output_direct_runoff_m = NULL;
 
     data->flux_from_deep_gw_to_chan_m = NULL;
-    data->flux_giuh_runoff_m = NULL;
+    data->flux_surface_runoff_m = NULL;
     data->flux_lat_m = NULL;
     data->flux_nash_lateral_runoff_m = NULL;
     data->flux_perc_m = NULL;
@@ -3068,39 +3068,34 @@ Bmi* register_bmi_cfe(Bmi *model) {
 
 extern void run_cfe(cfe_state_struct* cfe_ptr){
     cfe(
-        &cfe_ptr->soil_reservoir_storage_deficit_m,               // Set in cfe function
-        cfe_ptr->NWM_soil_params,     // Set by config file
-        &cfe_ptr->soil_reservoir,          // Set in "init_soil_reservoir" function 
-        cfe_ptr->timestep_h,                                     // Set in initialize
+        &cfe_ptr->soil_reservoir_storage_deficit_m,     // Set in cfe function
+        cfe_ptr->NWM_soil_params,                       // Set by config file
+        &cfe_ptr->soil_reservoir,                       // Set in "init_soil_reservoir" function 
+        cfe_ptr->timestep_h,                            // Set in initialize
 
-    /* xinanjiang_dev
-        changing the name to the more general "direct runoff"
-        cfe_ptr->Schaake_adjusted_magic_constant_by_soil_type,   // Set by config file*/
-        cfe_ptr->direct_runoff_params_struct,   // Set by config file, includes parameters for Schaake and/or XinanJiang*/
+        cfe_ptr->direct_runoff_params_struct,           // Set by config file, includes parameters for Schaake and/or XinanJiang*/
 
-        cfe_ptr->timestep_rainfall_input_m,                      // Set by bmi (set value) or read from file.
+        cfe_ptr->timestep_rainfall_input_m,             // Set by bmi (set value) or read from file.
 
-     /* xinanjiang_dev
-        cfe_ptr->flux_Schaake_output_runoff_m,                  // Set by cfe function*/
         cfe_ptr->flux_output_direct_runoff_m,
 
-        &cfe_ptr->infiltration_depth_m,                          // Set by Schaake partitioning scheme
-        cfe_ptr->flux_perc_m,                                   // Set to zero in definition.
-        cfe_ptr->flux_lat_m,                                    // Set by CFE function after soil_resevroir calc
-        &cfe_ptr->gw_reservoir_storage_deficit_m,                // Set by CFE function after soil_resevroir calc
-        &cfe_ptr->gw_reservoir,      // Set in initialize and from config file
-        cfe_ptr->flux_from_deep_gw_to_chan_m,                   // Set by CFE function after gw_reservoir calc
-        cfe_ptr->flux_giuh_runoff_m,                            // Set in CFE by convolution_integral
-        cfe_ptr->num_giuh_ordinates,                             // Set by config file with func. count_delimited_values
-        cfe_ptr->giuh_ordinates,                            // Set by configuration file.
-        cfe_ptr->runoff_queue_m_per_timestep,               // Set in initialize
-        cfe_ptr->flux_nash_lateral_runoff_m,                    // Set in CFE from nash_cascade function
-        cfe_ptr->N_nash,               // Set from config file
-        cfe_ptr->K_nash,                                         // Set from config file
-        cfe_ptr->nash_storage,                              // Set from config file
-	&cfe_ptr->nash_surface_params,                          // struct containing Nash cascade model's parameters set by config file
-        &cfe_ptr->et_struct,                                    // Set to zero with initalize. Set by BMI (set_value) during run
-        cfe_ptr->flux_Qout_m,                                    // Set by CFE function
+        &cfe_ptr->infiltration_depth_m,                 // Set by Schaake partitioning scheme
+        cfe_ptr->flux_perc_m,                           // Set to zero in definition.
+        cfe_ptr->flux_lat_m,                            // Set by CFE function after soil_resevroir calc
+        &cfe_ptr->gw_reservoir_storage_deficit_m,       // Set by CFE function after soil_resevroir calc
+        &cfe_ptr->gw_reservoir,                         // Set in initialize and from config file
+        cfe_ptr->flux_from_deep_gw_to_chan_m,           // Set by CFE function after gw_reservoir calc
+        cfe_ptr->flux_surface_runoff_m,                 // Set in CFE by convolution_integral or Nash Cascade model
+        cfe_ptr->num_giuh_ordinates,                    // Set by config file with func. count_delimited_values
+        cfe_ptr->giuh_ordinates,                        // Set by configuration file.
+        cfe_ptr->runoff_queue_m_per_timestep,           // Set in initialize
+        cfe_ptr->flux_nash_lateral_runoff_m,            // Set in CFE from nash_cascade function
+        cfe_ptr->N_nash,                                // Set from config file
+        cfe_ptr->K_nash,                                // Set from config file
+        cfe_ptr->nash_storage,                          // Set from config file
+	&cfe_ptr->nash_surface_params,                  // struct containing Nash cascade model's parameters set by config file
+        &cfe_ptr->et_struct,                            // Set to zero with initalize. Set by BMI (set_value) during run
+        cfe_ptr->flux_Qout_m,                           // Set by CFE function
         &cfe_ptr->vol_struct,
         cfe_ptr->time_step_size,
 	cfe_ptr->surface_runoff_scheme
@@ -3221,7 +3216,7 @@ extern void print_cfe_flux_at_timestep(cfe_state_struct* cfe_ptr){
                            cfe_ptr->current_time_step,
                            cfe_ptr->timestep_rainfall_input_m*1000.0,
                            *cfe_ptr->flux_output_direct_runoff_m*1000.0,
-                           *cfe_ptr->flux_giuh_runoff_m*1000.0,
+                           *cfe_ptr->flux_surface_runoff_m*1000.0,
                            *cfe_ptr->flux_nash_lateral_runoff_m*1000.0, 
                            *cfe_ptr->flux_from_deep_gw_to_chan_m*1000.0,
 	                   *cfe_ptr->flux_Qout_m*1000.0,
