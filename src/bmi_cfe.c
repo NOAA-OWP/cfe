@@ -106,7 +106,7 @@ Variable var_info[] = {
 	{ 43, "volout",                "double", 1 },
 	{ 44, "volin",                 "double", 1 },
 	{ 45, "vol_from_gw",           "double", 1 },
-	{ 46, "vol_out_giuh",          "double", 1 },
+	{ 46, "vol_out_surface",       "double", 1 },
 	{ 47, "vol_in_nash",           "double", 1 },
 	{ 48, "vol_out_nash",          "double", 1 },
 	{ 49, "vol_in_gw_start",       "double", 1 },
@@ -495,6 +495,17 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     int is_soil_layer_depths_string_val_set = FALSE;
     int is_max_rootzone_layer_set           = FALSE;
     /*--------------------------------------------------------*/
+
+    /* ------------ Nash model struct -AJK ------------------ */
+    int is_surface_runoff_scheme_set    = FALSE;
+    int is_K_nash_surface_set           = FALSE;
+    int is_N_nash_surface_set           = FALSE;
+    int is_nsubsteps_nash_surface_set   = FALSE;
+    int is_nash_storage_surface_set     = FALSE;
+
+    char* nash_storage_surface_string_val;
+    /*--------------------------------------------------------*/
+    
     // Default value
     model->NWM_soil_params.refkdt = 3.0;
 
@@ -757,6 +768,40 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
         /*--------------------------------------------------------------------------*/
 
+	/* Nash cascade based surface runoff */
+	if (strcmp(param_key, "surface_runoff_scheme") == 0) {
+	  if (strcmp(param_value, "GIUH")==0 || strcmp(param_value, "giuh")==0 || strcmp(param_value,"1")==0 )
+	    model->surface_runoff_scheme = GIUH;
+	  if (strcmp(param_value, "NASH_CASCADE")==0 || strcmp(param_value, "nash_cascade")==0 || strcmp(param_value,"2")==0)
+	    model->surface_runoff_scheme = NASH_CASCADE;
+	  is_surface_runoff_scheme_set = TRUE;
+	  continue;
+        }
+	
+	if (strcmp(param_key, "N_nash_surface") == 0) {
+	  model->nash_surface_params.N_nash = strtol(param_value, NULL,10);
+	  is_N_nash_surface_set     = TRUE;
+	  continue;
+        }
+        if (strcmp(param_key, "K_nash_surface") == 0) {
+	  model->nash_surface_params.K_nash = strtod(param_value, NULL);
+	  is_K_nash_surface_set     = TRUE;
+	  continue;
+        }
+	if (strcmp(param_key, "nsubsteps_nash_surface") == 0) {
+	  model->nash_surface_params.nsubsteps  = strtol(param_value, NULL, 10);
+	  is_nsubsteps_nash_surface_set = TRUE;
+	  continue;
+        }
+        if (strcmp(param_key, "nash_storage_surface") == 0) {
+	  nash_storage_surface_string_val = strdup(param_value);
+	  is_nash_storage_surface_set     = TRUE;
+	  continue;
+        }
+	
+	
+	/*--------------------------------------------------------------------------*/
+	
         /* xinanjiang_dev: Need the option to run either runoff method in the config file, 
         *//////////////////////////////////////////////////////////////////////////////
         if (strcmp(param_key, "surface_partitioning_scheme") == 0) {
@@ -969,6 +1014,105 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 	}  
     }
 
+    /*------------------- surface runoff scheme -AJK----------------------------- */
+    if(is_surface_runoff_scheme_set == FALSE) {
+#if CFE_DEBUG >= 1
+      printf("Config param 'surface_runoff_scheme' not found in config file\n");
+#endif
+      return BMI_FAILURE;
+    }
+
+    // Used for parsing strings representing arrays of values below
+    char *copy, *value;
+    
+    if (model->surface_runoff_scheme == GIUH) {
+      
+      // Handle GIUH ordinates, bailing if they were not provided
+      if (is_giuh_originates_string_val_set == FALSE) {
+#if CFE_DEBUG >= 1
+        printf("GIUH ordinate string not set!\n");
+#endif
+        return BMI_FAILURE;
+    }
+#if CFE_DEBUG >= 1
+    printf("GIUH ordinates string value found in config ('%s')\n", giuh_originates_string_val);
+#endif
+    
+    model->num_giuh_ordinates = count_delimited_values(giuh_originates_string_val, ",");
+
+#if CFE_DEBUG >= 1
+    printf("Counted number of GIUH ordinates (%d)\n", model->num_giuh_ordinates);
+#endif
+
+    if (model->num_giuh_ordinates < 1)
+        return BMI_FAILURE;
+
+    model->giuh_ordinates = malloc(sizeof(double) * model->num_giuh_ordinates);
+    // Work with copy of the string pointer to make sure the original pointer remains unchanged, so mem can be freed at end
+    copy = giuh_originates_string_val;
+    // Now iterate back through and get the values (this modifies the string, which is why we needed the full string copy above)
+    int i = 0;
+    while ((value = strsep(&copy, ",")) != NULL)
+        model->giuh_ordinates[i++] = strtod(value, NULL);
+    // Finally, free the original string memory
+    free(giuh_originates_string_val);
+    
+    }
+    else if(model->surface_runoff_scheme == NASH_CASCADE) {
+      if (is_N_nash_surface_set == FALSE) {
+#if CFE_DEBUG >= 1
+      printf("Config param 'N_nash_surface' not found in config file\n");
+#endif
+      return BMI_FAILURE;
+      }
+      if (is_K_nash_surface_set == FALSE) {
+#if CFE_DEBUG >= 1
+      printf("Config param 'K_nash_surface' not found in config file\n");
+#endif
+      return BMI_FAILURE;
+      }
+      if (is_nsubsteps_nash_surface_set == FALSE) {
+#if CFE_DEBUG >= 1
+      printf("Config param 'nsubsteps_nash_surface' not found in config file\n");
+#endif
+      return BMI_FAILURE;
+      }
+      if (is_nash_storage_surface_set == FALSE) {
+#if CFE_DEBUG >= 1
+      printf("Config param 'nash_storage_surface' not found in config file\n");
+#endif
+      return BMI_FAILURE;
+      }
+
+      // Now handle the Nash storage array properly
+      // First, when there are values, read how many there are, and have that override any set count value
+      int value_count = count_delimited_values(nash_storage_surface_string_val, ",");
+      
+      assert (value_count == model->nash_surface_params.N_nash);
+      
+      if (value_count > 2) {
+	model->nash_surface_params.nash_storage = malloc(sizeof(double) * value_count);
+	// Work with copy the string pointer to make sure the original remains unchanged, so it can be freed at end
+	copy = nash_storage_surface_string_val;
+	// Now iterate back through and get the values
+	int k = 0;
+	while ((value = strsep(&copy, ",")) != NULL)
+	  model->nash_surface_params.nash_storage[k++] = strtod(value, NULL);
+
+	// Make sure at the end to free this too, since it was a copy
+	free(nash_storage_surface_string_val);
+      }
+      else {
+	// If Nash storage values weren't set, initialize them to 0.0
+	model->nash_surface_params.nash_storage = malloc(sizeof(double) * model->nash_surface_params.N_nash); 
+	for (j = 0; j < model->nash_surface_params.N_nash; j++)
+	  model->nash_surface_params.nash_storage[j] = 0.0;
+      }
+      
+    }
+
+    /*------------------- surface runoff scheme END ----------------------------- */
+    
     if(model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake){
         model->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = model->NWM_soil_params.refkdt * model->NWM_soil_params.satdk / 0.000002;   
 #if CFE_DEBUG >= 1
@@ -990,8 +1134,6 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     // set sft_coupled flag to false if the parameter is not provided in the config file.
     model->soil_reservoir.is_sft_coupled = (is_sft_coupled_set == TRUE) ? TRUE : FALSE;
 
-// Used for parsing strings representing arrays of values below
-    char *copy, *value;
     
     /*------------------- Root zone AET development -rlm----------------------------- */
     if (is_aet_rootzone_set == TRUE ) {
@@ -1070,33 +1212,6 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 #if CFE_DEBUG >= 1
     printf("All CFE config params present\n");
 #endif    
-
-    // Handle GIUH ordinates, bailing if they were not provided
-    if (is_giuh_originates_string_val_set == FALSE) {
-#if CFE_DEBUG >= 1
-        printf("GIUH ordinate string not set!\n");
-#endif
-        return BMI_FAILURE;
-    }
-#if CFE_DEBUG >= 1
-    printf("GIUH ordinates string value found in config ('%s')\n", giuh_originates_string_val);
-#endif
-    model->num_giuh_ordinates = count_delimited_values(giuh_originates_string_val, ",");
-#if CFE_DEBUG >= 1
-    printf("Counted number of GIUH ordinates (%d)\n", model->num_giuh_ordinates);
-#endif
-    if (model->num_giuh_ordinates < 1)
-        return BMI_FAILURE;
-
-    model->giuh_ordinates = malloc(sizeof(double) * model->num_giuh_ordinates);
-    // Work with copy of the string pointer to make sure the original pointer remains unchanged, so mem can be freed at end
-    copy = giuh_originates_string_val;
-    // Now iterate back through and get the values (this modifies the string, which is why we needed the full string copy above)
-    int i = 0;
-    while ((value = strsep(&copy, ",")) != NULL)
-        model->giuh_ordinates[i++] = strtod(value, NULL);
-    // Finally, free the original string memory
-    free(giuh_originates_string_val);
 
     // Now handle the Nash storage array properly
     if (is_nash_storage_string_val_set == TRUE) {
@@ -2321,7 +2436,7 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[43] = &(state->vol_struct.volout );
     ptr_list[44] = &(state->vol_struct.volin );
     ptr_list[45] = &(state->vol_struct.vol_from_gw ); 
-    ptr_list[46] = &(state->vol_struct.vol_out_giuh );
+    ptr_list[46] = &(state->vol_struct.vol_out_surface );
     ptr_list[47] = &(state->vol_struct.vol_in_nash );
     ptr_list[48] = &(state->vol_struct.vol_out_nash );
     ptr_list[49] = &(state->vol_struct.vol_in_gw_start );
@@ -2983,10 +3098,12 @@ extern void run_cfe(cfe_state_struct* cfe_ptr){
         cfe_ptr->N_nash,               // Set from config file
         cfe_ptr->K_nash,                                         // Set from config file
         cfe_ptr->nash_storage,                              // Set from config file
+	&cfe_ptr->nash_surface_params,                          // struct containing Nash cascade model's parameters set by config file
         &cfe_ptr->et_struct,                                    // Set to zero with initalize. Set by BMI (set_value) during run
         cfe_ptr->flux_Qout_m,                                    // Set by CFE function
         &cfe_ptr->vol_struct,
-        cfe_ptr->time_step_size
+        cfe_ptr->time_step_size,
+	cfe_ptr->surface_runoff_scheme
     );
 }
 
@@ -3076,7 +3193,7 @@ extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr){
     cfe_ptr->vol_struct.vol_soil_to_lat_flow = 0;
     cfe_ptr->vol_struct.volout = 0;
     cfe_ptr->vol_struct.vol_from_gw = 0;
-    cfe_ptr->vol_struct.vol_out_giuh = 0;
+    cfe_ptr->vol_struct.vol_out_surface = 0;
     cfe_ptr->vol_struct.vol_in_nash = 0;
     cfe_ptr->vol_struct.vol_out_nash = 0;
     cfe_ptr->vol_struct.volstart       += cfe_ptr->gw_reservoir.storage_m;    // initial mass balance checks in g.w. reservoir
@@ -3120,12 +3237,21 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     
     double volend= cfe_ptr->soil_reservoir.storage_m+cfe_ptr->gw_reservoir.storage_m;
     double vol_in_gw_end = cfe_ptr->gw_reservoir.storage_m;
-    double vol_end_giuh = 0.0;
+    double vol_surface_end = 0.0; // volume in the giuh or nash array at the end (on the surface)
     double vol_in_nash_end = 0.0;
     double vol_soil_end;
     
     // the GIUH queue might have water in it at the end of the simulation, so sum it up.
-    for(i=0;i<cfe_ptr->num_giuh_ordinates;i++) vol_end_giuh+=cfe_ptr->runoff_queue_m_per_timestep[i];
+    if (cfe_ptr->surface_runoff_scheme == GIUH) {
+      for(i=0;i<cfe_ptr->num_giuh_ordinates;i++)
+	vol_surface_end += cfe_ptr->runoff_queue_m_per_timestep[i];
+    }
+    else if (cfe_ptr->surface_runoff_scheme == NASH_CASCADE) {
+      for(i=0;i<cfe_ptr->nash_surface_params.N_nash;i++)
+	vol_surface_end += cfe_ptr->nash_surface_params.nash_storage[i];
+    }
+
+    cfe_ptr->vol_struct.vol_end_surface = vol_surface_end; // update the vol in the mass balance struct
     
     for(i=0;i<cfe_ptr->N_nash;i++)  vol_in_nash_end+=cfe_ptr->nash_storage[i];
     
@@ -3143,87 +3269,74 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     double gw_residual;
     
     global_residual = cfe_ptr->vol_struct.volstart + cfe_ptr->vol_struct.volin - 
-                      cfe_ptr->vol_struct.volout - volend - vol_end_giuh;
-    printf("GLOBAL MASS BALANCE\n");
-    printf("  initial volume: %8.4lf m\n",cfe_ptr->vol_struct.volstart);
-    printf("    volume input: %8.4lf m\n",cfe_ptr->vol_struct.volin);
-    printf("   volume output: %8.4lf m\n",cfe_ptr->vol_struct.volout);
-    printf("    final volume: %8.4lf m\n",volend);
-    printf("        residual: %6.4e m\n",global_residual);
-    if(cfe_ptr->vol_struct.volin>0.0) printf("global pct. err: %6.4e percent of inputs\n",global_residual/cfe_ptr->vol_struct.volin*100.0);
-    else          printf("global pct. err: %6.4e percent of initial\n",global_residual/cfe_ptr->vol_struct.volstart*100.0);
-    if(!is_fabs_less_than_epsilon(global_residual,1.0e-12)) 
-                  printf("WARNING: GLOBAL MASS BALANCE CHECK FAILED\n");
+                      cfe_ptr->vol_struct.volout - volend - cfe_ptr->vol_struct.vol_end_surface;
+    printf("========================= Simulation Summary ========================= \n");
+    printf("********************* GLOBAL MASS BALANCE ********************* \n");
+    printf(" Volume initial   = %8.4lf m\n",cfe_ptr->vol_struct.volstart);
+    printf(" Volume input     = %8.4lf m\n",cfe_ptr->vol_struct.volin);
+    printf(" Volume output    = %8.4lf m\n",cfe_ptr->vol_struct.volout);
+    printf(" Final volume     = %8.4lf m\n",volend);
+    printf(" Global residual  = %6.4e m\n",global_residual);
+    if(cfe_ptr->vol_struct.volin>0.0)
+      printf(" Global percent error = %6.4e percent of inputs\n",global_residual/cfe_ptr->vol_struct.volin*100.0);
+    else
+      printf(" Global pct. err: %6.4e percent of initial\n",global_residual/cfe_ptr->vol_struct.volstart*100.0);
+
+    if(!is_fabs_less_than_epsilon(global_residual,1.0e-12))
+      printf("WARNING: GLOBAL MASS BALANCE CHECK FAILED\n");
     
-    /* xinanjiang_dev
-    schaake_residual = cfe_ptr->vol_struct.volin - cfe_ptr->vol_struct.vol_sch_runoff - cfe_ptr->vol_struct.vol_sch_infilt;
-    printf(" SCHAAKE MASS BALANCE\n");
-    printf("  surface runoff: %8.4lf m\n",cfe_ptr->vol_struct.vol_sch_runoff);
-    printf("    infiltration: %8.4lf m\n",cfe_ptr->vol_struct.vol_sch_infilt);
-    printf("schaake residual: %6.4e m\n",schaake_residual);  // should equal 0.0
-    if(!is_fabs_less_than_epsilon(schaake_residual,1.0e-12))
-                  printf("WARNING: SCHAAKE PARTITIONING MASS BALANCE CHECK FAILED\n");*/
     direct_residual = cfe_ptr->vol_struct.volin - cfe_ptr->vol_struct.vol_runoff - cfe_ptr->vol_struct.vol_infilt-cfe_ptr->vol_struct.vol_et_from_rain;
-    printf(" DIRECT RUNOFF MASS BALANCE\n");
-    printf("  surface runoff: %8.4lf m\n",cfe_ptr->vol_struct.vol_runoff);
-    printf("    infiltration: %8.4lf m\n",cfe_ptr->vol_struct.vol_infilt);
-    printf("    vol_et_from_rain: %8.4lf m\n",cfe_ptr->vol_struct.vol_et_from_rain);
-    printf("direct residual: %6.4e m\n",direct_residual);  // should equal 0.0
+    printf("********************* DIRECT RUNOFF MASS BALANCE ***************\n");
+    printf(" Surface runoff   = %8.4lf m\n",cfe_ptr->vol_struct.vol_runoff);
+    printf(" Infiltration     = %8.4lf m\n",cfe_ptr->vol_struct.vol_infilt);
+    printf(" Vol_et_from_rain = %8.4lf m\n",cfe_ptr->vol_struct.vol_et_from_rain);
+    printf(" Direct residual  = %6.4e m\n",direct_residual);  // should equal 0.0
     if(!is_fabs_less_than_epsilon(direct_residual,1.0e-12))
-                  printf("WARNING: DIRECT RUNOFF PARTITIONING MASS BALANCE CHECK FAILED\n");
+      printf("WARNING: DIRECT RUNOFF PARTITIONING MASS BALANCE CHECK FAILED\n");
     
-    /* xinanjiang_dev
-    giuh_residual = cfe_ptr->vol_struct.vol_out_giuh - cfe_ptr->vol_struct.vol_sch_runoff - vol_end_giuh;   */
-    giuh_residual = cfe_ptr->vol_struct.vol_runoff - cfe_ptr->vol_struct.vol_out_giuh - vol_end_giuh;
-    printf(" GIUH MASS BALANCE\n");
-
-    /* xinanjiang_dev
-    printf("  vol. into giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_sch_runoff);    */
-    printf("  vol. into giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_runoff);
-    fprintf(stderr,"   vol. out giuh: %8.4lf m\n",cfe_ptr->vol_struct.vol_out_giuh);
-    fprintf(stderr," vol. end giuh q: %8.4lf m\n",cfe_ptr->vol_struct.vol_end_giuh);
-    printf("   giuh residual: %6.4e m\n",giuh_residual);  // should equal zero
+    giuh_residual = cfe_ptr->vol_struct.vol_runoff - cfe_ptr->vol_struct.vol_out_surface - cfe_ptr->vol_struct.vol_end_surface;
+    printf("********************* SURFACE MASS BALANCE *********************\n");
+    printf(" Volume into surface  = %8.4lf m\n",cfe_ptr->vol_struct.vol_runoff);
+    fprintf(stderr," Volume out surface   = %8.4lf m\n",cfe_ptr->vol_struct.vol_out_surface);
+    fprintf(stderr," Volume end surface   = %8.4lf m\n",cfe_ptr->vol_struct.vol_end_surface);
+    printf(" Surface residual     = %6.4e m\n",giuh_residual);  // should equal zero
     if(!is_fabs_less_than_epsilon(giuh_residual,1.0e-12))
-                  printf("WARNING: GIUH MASS BALANCE CHECK FAILED\n");
+      printf("WARNING: GIUH MASS BALANCE CHECK FAILED\n");
 
-    /* xinanjiang_dev 
-    soil_residual=cfe_ptr->vol_struct.vol_soil_start + cfe_ptr->vol_struct.vol_sch_infilt -      */
+    
     soil_residual=cfe_ptr->vol_struct.vol_soil_start + cfe_ptr->vol_struct.vol_infilt -
                   cfe_ptr->vol_struct.vol_soil_to_lat_flow - vol_soil_end - cfe_ptr->vol_struct.vol_to_gw - cfe_ptr->vol_struct.vol_et_from_soil;
                   
-    printf(" SOIL WATER CONCEPTUAL RESERVOIR MASS BALANCE\n");
-    printf("   init soil vol: %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_start);     
-
-    /* xinanjiang_dev
-    printf("  vol. into soil: %8.4lf m\n",cfe_ptr->vol_struct.vol_sch_infilt);    */
-    printf("  vol. into soil: %8.4lf m\n",cfe_ptr->vol_struct.vol_infilt);
-    printf("vol.soil2latflow: %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_to_lat_flow);
-    printf(" vol. soil to gw: %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_to_gw);
-    printf(" final vol. soil: %8.4lf m\n",vol_soil_end);  
-    printf(" vol. et from soil: %8.4lf m\n",cfe_ptr->vol_struct.vol_et_from_soil);  
-    printf("vol. soil resid.: %6.4e m\n",soil_residual);
+    printf("*********** SOIL WATER CONCEPTUAL RESERVOIR MASS BALANCE *******\n");
+    printf(" Initial soil vol     = %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_start);
+    printf(" Volume into soil     = %8.4lf m\n",cfe_ptr->vol_struct.vol_infilt);
+    printf(" Volume soil2latflow  = %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_to_lat_flow);
+    printf(" Volume soil to GW    = %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_to_gw);
+    printf(" Final volume soil    =  %8.4lf m\n",vol_soil_end);  
+    printf(" Volume et from soil  =  %8.4lf m\n",cfe_ptr->vol_struct.vol_et_from_soil);  
+    printf(" Volume soil residual = %6.4e m\n",soil_residual);
     if(!is_fabs_less_than_epsilon(soil_residual,1.0e-12))
-                   printf("WARNING: SOIL CONCEPTUAL RESERVOIR MASS BALANCE CHECK FAILED\n");
+      printf("WARNING: SOIL CONCEPTUAL RESERVOIR MASS BALANCE CHECK FAILED\n");
     
     nash_residual=cfe_ptr->vol_struct.vol_in_nash - cfe_ptr->vol_struct.vol_out_nash - vol_in_nash_end;
-    printf(" NASH CASCADE CONCEPTUAL RESERVOIR MASS BALANCE\n");
-    printf("    vol. to nash: %8.4lf m\n",cfe_ptr->vol_struct.vol_in_nash);
-    printf("  vol. from nash: %8.4lf m\n",cfe_ptr->vol_struct.vol_out_nash);
-    printf(" final vol. nash: %8.4lf m\n",vol_in_nash_end);
-    printf("nash casc resid.: %6.4e m\n",nash_residual);
+    printf("********* NASH CASCADE CONCEPTUAL RESERVOIR MASS BALANCE *******\n");
+    printf(" Volume to Nash   = %8.4lf m\n",cfe_ptr->vol_struct.vol_in_nash);
+    printf(" Volume from Nash = %8.4lf m\n",cfe_ptr->vol_struct.vol_out_nash);
+    printf(" Final vol. Nash  = %8.4lf m\n",vol_in_nash_end);
+    printf(" Nash casc resid. = %6.4e m\n",nash_residual);
     if(!is_fabs_less_than_epsilon(nash_residual,1.0e-12))
-                   printf("WARNING: NASH CASCADE CONCEPTUAL RESERVOIR MASS BALANCE CHECK FAILED\n");
+      printf("WARNING: NASH CASCADE CONCEPTUAL RESERVOIR MASS BALANCE CHECK FAILED\n");
     
     
     gw_residual = cfe_ptr->vol_struct.vol_in_gw_start + cfe_ptr->vol_struct.vol_to_gw - cfe_ptr->vol_struct.vol_from_gw - vol_in_gw_end;
-    printf(" GROUNDWATER CONCEPTUAL RESERVOIR MASS BALANCE\n");
-    printf("init gw. storage: %8.4lf m\n",cfe_ptr->vol_struct.vol_in_gw_start);
-    printf("       vol to gw: %8.4lf m\n",cfe_ptr->vol_struct.vol_to_gw);
-    printf("     vol from gw: %8.4lf m\n",cfe_ptr->vol_struct.vol_from_gw);
-    printf("final gw.storage: %8.4lf m\n",vol_in_gw_end);
-    printf("    gw. residual: %6.4e m\n",gw_residual);
+    printf("********** GROUNDWATER CONCEPTUAL RESERVOIR MASS BALANCE *******\n");
+    printf(" Initial GW storage = %8.4lf m\n",cfe_ptr->vol_struct.vol_in_gw_start);
+    printf(" Volume to GW       = %8.4lf m\n",cfe_ptr->vol_struct.vol_to_gw);
+    printf(" Volume from GW     = %8.4lf m\n",cfe_ptr->vol_struct.vol_from_gw);
+    printf(" Final GW storage   = %8.4lf m\n",vol_in_gw_end);
+    printf(" GW residual        = %6.4e m\n",gw_residual);
     if(!is_fabs_less_than_epsilon(gw_residual,1.0e-12))
-                   fprintf(stderr,"WARNING: GROUNDWATER CONCEPTUAL RESERVOIR MASS BALANCE CHECK FAILED\n");
+      fprintf(stderr,"WARNING: GROUNDWATER CONCEPTUAL RESERVOIR MASS BALANCE CHECK FAILED\n");
 }
 
 /**************************************************************************/
