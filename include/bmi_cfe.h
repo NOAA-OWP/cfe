@@ -112,7 +112,7 @@ struct cfe_state_struct {
     double* flux_Schaake_output_runoff_m;*/
     double* flux_output_direct_runoff_m ;
 
-    double* flux_giuh_runoff_m;
+    double* flux_surface_runoff_m;
     double* flux_nash_lateral_runoff_m;
     double* flux_from_deep_gw_to_chan_m;
     double* flux_perc_m;

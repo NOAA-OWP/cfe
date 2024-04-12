@@ -52,8 +52,6 @@ extern void cfe(
 // ####        Note: all of thes variables are storages in [m] or fluxes in [m/timestep]    
     double soil_reservoir_storage_deficit_m = *soil_reservoir_storage_deficit_m_ptr;   // storage [m]
     
-    /* xinanjiang_dev: rename to the general "direct runoff"
-    double Schaake_output_runoff_m          = *Schaake_output_runoff_m_ptr;            // Schaake partitioned runoff this timestep [m]*/
     double direct_output_runoff_m          = *flux_output_direct_runoff_m;            // Schaake partitioned runoff this timestep [m]*/
 
     double infiltration_depth_m             = *infiltration_depth_m_ptr;               // Schaake partitioned infiltration this timestep [m]
@@ -61,9 +59,9 @@ extern void cfe(
     double flux_lat_m                       = *flux_lat_m_ptr;                         // water moved from soil reservoir to lateral flow Nash cascad this timestep [m]
     double gw_reservoir_storage_deficit_m   = *gw_reservoir_storage_deficit_m_ptr;     // deficit in gw reservoir storage [m]
     double flux_from_deep_gw_to_chan_m      = *flux_from_deep_gw_to_chan_m_ptr;        // water moved from gw reservoir to catchment outlet nexus this timestep [m]
-    double surface_runoff_m                    = *surface_runoff_m_ptr;                      // water leaving GIUH to outlet this timestep [m]
+    double surface_runoff_m                 = *surface_runoff_m_ptr;                   // water leaving GIUH or NASH cascade reservoir to outlet this timestep [m]
     double nash_lateral_runoff_m            = *nash_lateral_runoff_m_ptr;              // water leaving lateral subsurface flow Nash cascade this timestep [m]
-    double Qout_m                           = *Qout_m_ptr;                             // the total runoff this timestep (GIUH+Nash+GW) [m]
+    double Qout_m                           = *Qout_m_ptr;                             // the total runoff this timestep (Surface+Nash+GW) [m]
 
     // LOCAL VARIABLES, the values of which are not important to describe the model state.  They are like notes on scrap paper.
  
