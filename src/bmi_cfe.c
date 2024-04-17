@@ -1048,9 +1048,9 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         return BMI_FAILURE;
 
     model->giuh_ordinates = malloc(sizeof(double) * model->num_giuh_ordinates);
-    // Work with copy of the string pointer to make sure the original pointer remains unchanged, so mem can be freed at end
+    // Work with a copy of the original pointer so that the original remains unchanged and can be freed at end
     copy = giuh_originates_string_val;
-    // Now iterate back through and get the values (this modifies the string, which is why we needed the full string copy above)
+    // Now iterate back through and get the values
     int i = 0;
     while ((value = strsep(&copy, ",")) != NULL)
         model->giuh_ordinates[i++] = strtod(value, NULL);
@@ -1092,7 +1092,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
       
       if (value_count > 2) {
 	model->nash_surface_params.nash_storage = malloc(sizeof(double) * value_count);
-	// Work with copy the string pointer to make sure the original remains unchanged, so it can be freed at end
+	// Work with a copy of the original pointer so that the original remains unchanged and can be freed at end
 	copy = nash_storage_surface_string_val;
 	// Now iterate back through and get the values
 	int k = 0;
@@ -1228,7 +1228,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         else {
             model->N_nash = value_count;
             model->nash_storage = malloc(sizeof(double) * value_count);
-            // Work with copy the string pointer to make sure the original remains unchanged, so it can be freed at end
+	    // Work with a copy of the original pointer so that the original remains unchanged and can be freed at end
             copy = nash_storage_string_val;
             // Now iterate back through and get the values
             int k = 0;
