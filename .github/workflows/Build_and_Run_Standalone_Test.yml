@@ -57,6 +57,15 @@ jobs:
         make
         cd ..
         ./run_cfe.sh FORCINGPET
+        
+    - name : Build and Run AETROOTZONE option
+      run: |
+        git clone https://github.com/NOAA-OWP/SoilMoistureProfiles extern/SoilMoistureProfiles
+        cd build
+        cmake ../ -DAETROOTZONE=ON
+        make
+        cd ..
+        ./run_cfe.sh AETROOTZONE
 
     - name: Build and Run BMI Unit Test
       run: |
