@@ -1,4 +1,4 @@
-name: Add pull requests and issues to formulation project
+name: Add to Project
 
 on:
   pull_request_target:
@@ -11,7 +11,7 @@ on:
 
 jobs:
   add-to-project:
-    name: Add pull requests and issues to project
+    name: Add prs and issues to formulation project
     runs-on: ubuntu-latest
     steps:
       - uses: actions/add-to-project@v0.6.1
