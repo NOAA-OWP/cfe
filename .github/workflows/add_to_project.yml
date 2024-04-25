@@ -1,8 +1,8 @@
 name: Add to Project
 
 on:
-  pull_request_target:
-  #pull_request:
+  #pull_request_target:
+  pull_request:
     types:
       - opened
   issues:
