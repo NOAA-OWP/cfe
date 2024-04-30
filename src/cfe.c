@@ -105,7 +105,7 @@ extern void cfe(
   // NEW FLO
   if(0.0 < timestep_rainfall_input_m)
     {
-    if (direct_runoff_params_struct.surface_partitioning_scheme == Schaake)
+    if (direct_runoff_params_struct.surface_water_partitioning_scheme == Schaake)
       {
 	// to ensure that ice_fraction_schaake is set to 0.0 for uncoupled SFT
 	if(!soil_reservoir_struct->is_sft_coupled)
@@ -117,7 +117,7 @@ extern void cfe(
 				    NWM_soil_params_struct.D, &direct_output_runoff_m, &infiltration_depth_m,
 				    soil_reservoir_struct->ice_fraction_schaake, direct_runoff_params_struct.ice_content_threshold);
       }
-    else if (direct_runoff_params_struct.surface_partitioning_scheme == Xinanjiang)
+    else if (direct_runoff_params_struct.surface_water_partitioning_scheme == Xinanjiang)
       {
 
 	// to ensure that ice_fraction_xinan is set to 0.0 for uncoupled SFT
