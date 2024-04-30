@@ -114,17 +114,17 @@ Variable var_info[] = {
 	//-----------------------------------------
 	// More top-level, static allocation vars
 	//-----------------------------------------
-	{ 51, "epoch_start_time",      "long", 1 },
-	{ 52, "num_timesteps",         "int",  1 },
-	{ 53, "current_time_step",     "int",  1 },
-	{ 54, "time_step_size",        "int",  1 },
-	{ 55, "is_forcing_from_bmi",   "int",  1 },
-	{ 56, "forcing_file",          "string", 1 },  // strlen
-	{ 57, "surface_partitioning_scheme", "int", 1 }, // from direct_runoff_params_struct
-	{ 58, "N_nash",                      "int",    1 },
-	{ 59, "K_lf",                        "double", 1 },
-	{ 60, "K_nash",                      "double", 1 },
-	{ 61, "num_giuh_ordinates",          "int",    1 },
+	{ 51, "epoch_start_time",                  "long",   1 },
+	{ 52, "num_timesteps",                     "int",    1 },
+	{ 53, "current_time_step",                 "int",    1 },
+	{ 54, "time_step_size",                    "int",    1 },
+	{ 55, "is_forcing_from_bmi",               "int",    1 },
+	{ 56, "forcing_file",                      "string", 1 },  // strlen
+	{ 57, "surface_water_partitioning_scheme", "int",    1 }, // from direct_runoff_params_struct
+	{ 58, "N_nash",                            "int",    1 },
+	{ 59, "K_lf",                              "double", 1 },
+	{ 60, "K_nash",                            "double", 1 },
+	{ 61, "num_giuh_ordinates",                "int",    1 },
 	//---------------------------------------
 	// Vars in aorc_forcing_data_cfe struct
 	//---------------------------------------
@@ -149,7 +149,7 @@ Variable var_info[] = {
 	{ 76, "nash_storage",                   "double*", 1 },  // num_lat_flow
 	{ 77, "runoff_queue_m_per_timestep",    "double*", 1 },  // num_giuh
 	{ 78, "flux_Schaake_output_runoff_m",   "double*", 1 },
-	{ 79, "flux_surface_runoff_m",             "double*", 1 },
+	{ 79, "flux_surface_runoff_m",          "double*", 1 },
 	{ 80, "flux_nash_lateral_runoff_m",     "double*", 1 },
 	{ 81, "flux_from_deep_gw_to_chan_m",    "double*", 1 },
 	{ 82, "flux_from_soil_to_gw_m",         "double*", 1 },
@@ -810,15 +810,15 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
     /* xinanjiang_dev: Need the option to run either runoff method in the config file,
      *//////////////////////////////////////////////////////////////////////////////
-    if (strcmp(param_key, "surface_partitioning_scheme") == 0) {
+    if (strcmp(param_key, "surface_water_partitioning_scheme") == 0) {
       if (strcmp(param_value, "Schaake")==0 || strcmp(param_value, "schaake")==0 || strcmp(param_value,"1")==0 )
-        model->direct_runoff_params_struct.surface_partitioning_scheme = Schaake;
+        model->direct_runoff_params_struct.surface_water_partitioning_scheme = Schaake;
       if (strcmp(param_value, "Xinanjiang")==0 || strcmp(param_value, "xinanjiang")==0 || strcmp(param_value,"2")==0)
-        model->direct_runoff_params_struct.surface_partitioning_scheme = Xinanjiang;
+        model->direct_runoff_params_struct.surface_water_partitioning_scheme = Xinanjiang;
       is_direct_runoff_method_set = TRUE;
       continue;
     }
-    if (model->direct_runoff_params_struct.surface_partitioning_scheme == Xinanjiang) {  //Check that logical statement is correct
+    if (model->direct_runoff_params_struct.surface_water_partitioning_scheme == Xinanjiang) {  //Check that logical statement is correct
       if (strcmp(param_key, "a_Xinanjiang_inflection_point_parameter") == 0){
         model->direct_runoff_params_struct.a_Xinanjiang_inflection_point_parameter = strtod(param_value, NULL);
         is_a_Xinanjiang_inflection_point_parameter_set = TRUE;
@@ -846,7 +846,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 	  continue;
     }
 
-	if (is_sft_coupled_set == TRUE && model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake) {
+	if (is_sft_coupled_set == TRUE && model->direct_runoff_params_struct.surface_water_partitioning_scheme == Schaake) {
 	  if (strcmp(param_key, "ice_content_threshold") == 0) {
 	    model->direct_runoff_params_struct.ice_content_threshold = strtod(param_value, NULL);
 	    is_ice_content_threshold_set = TRUE;
@@ -993,7 +993,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         return BMI_FAILURE;
     }
 /* xinanjiang_dev*/
-    if(model->direct_runoff_params_struct.surface_partitioning_scheme == Xinanjiang){
+    if(model->direct_runoff_params_struct.surface_water_partitioning_scheme == Xinanjiang){
         if (is_a_Xinanjiang_inflection_point_parameter_set == FALSE) {
 #if CFE_DEBUG >= 1
             printf("Config param 'a_Xinanjiang_inflection_point_parameter' not found in config file\n");
@@ -1116,14 +1116,14 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
     /*------------------- surface runoff scheme END ----------------------------- */
 
-    if(model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake) {
+    if(model->direct_runoff_params_struct.surface_water_partitioning_scheme == Schaake) {
         model->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = model->NWM_soil_params.refkdt * model->NWM_soil_params.satdk / 0.000002;
 #if CFE_DEBUG >= 1
     printf("Schaake Magic Constant calculated\n");
 #endif
     }
 
-    if (is_sft_coupled_set == TRUE && model->direct_runoff_params_struct.surface_partitioning_scheme == Schaake) {
+    if (is_sft_coupled_set == TRUE && model->direct_runoff_params_struct.surface_water_partitioning_scheme == Schaake) {
 
       if(!is_ice_content_threshold_set) {
 #if CFE_DEBUG >= 1
@@ -1969,7 +1969,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
     if (strcmp (name, "SURF_RUNOFF_SCHEME") == 0) {
       cfe_state_struct *cfe_ptr;
       cfe_ptr = (cfe_state_struct *) self->data;
-      *dest = (void*)&cfe_ptr->direct_runoff_params_struct.surface_partitioning_scheme;
+      *dest = (void*)&cfe_ptr->direct_runoff_params_struct.surface_water_partitioning_scheme;
       return BMI_SUCCESS;
     }
 
@@ -2429,7 +2429,7 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[55] = &(state->is_forcing_from_bmi );
     ptr_list[56] = state->forcing_file;
     // ####### ptr_list[55] = &(state->forcing_file );
-    ptr_list[57] = &(state->direct_runoff_params_struct.surface_partitioning_scheme );
+    ptr_list[57] = &(state->direct_runoff_params_struct.surface_water_partitioning_scheme );
     // ptr_list[56] = &(state->Schaake_adjusted_magic_constant_by_soil_type );
     ptr_list[58] = &(state->N_nash);
     ptr_list[59] = &(state->K_lf);
@@ -2682,7 +2682,7 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
         memcpy(state->forcing_file, src, size); }
         // state->forcing_file = (char *)src; }    // Doesn't work
     else if (index == 55){
-        state->direct_runoff_params_struct.surface_partitioning_scheme = *(int *)src; }
+        state->direct_runoff_params_struct.surface_water_partitioning_scheme = *(int *)src; }
     else if (index == 56){
         state->N_nash = *(int *)src; }
     else if (index == 57){
