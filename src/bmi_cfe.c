@@ -833,17 +833,20 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
       }
       if (strcmp(param_key, "urban_decimal_fraction") == 0) {
         model->infiltration_excess_params_struct.urban_decimal_fraction = strtod(param_value, NULL);
-		is_urban_decimal_fraction_set = TRUE;
+	is_urban_decimal_fraction_set = TRUE;
       }
     }
 
-	/* Ice fraction: if set to true and runoff scheme is Schaake, additional parameters are needed in the config file,
+    /* Ice fraction: if set to true and runoff scheme is Schaake, additional parameters are needed in the config file,
      *//////////////////////////////////////////////////////////////////////////////
     if (strcmp(param_key, "is_sft_coupled") == 0) {
-	  if ( strcmp(param_value, "true")==0 || strcmp(param_value, "True")==0 || strcmp(param_value,"1")==0)
-	    is_sft_coupled_set = TRUE;
+      if ( strcmp(param_value, "true")==0 || strcmp(param_value, "True")==0 || strcmp(param_value,"1")==0)
+	is_sft_coupled_set = TRUE;
 
-	  continue;
+      continue;
+    }
+    
+    continue;
     }
 
 	if (is_sft_coupled_set == TRUE && model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Schaake) {
@@ -1118,10 +1121,12 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
     if(model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Schaake) {
         model->infiltration_excess_params_struct.Schaake_adjusted_magic_constant_by_soil_type = model->NWM_soil_params.refkdt * model->NWM_soil_params.satdk / 0.000002;
+
 #if CFE_DEBUG >= 1
     printf("Schaake Magic Constant calculated\n");
 #endif
     }
+
 
     if (is_sft_coupled_set == TRUE && model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Schaake) {
 
@@ -2110,7 +2115,9 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
     }
     if (strcmp (name, "refkdt") == 0 || strcmp (name, "satdk") == 0){
         cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
+
         cfe_ptr->infiltration_excess_params_struct.Schaake_adjusted_magic_constant_by_soil_type = cfe_ptr->NWM_soil_params.refkdt * cfe_ptr->NWM_soil_params.satdk / 0.000002;
+
     }
 
     if (strcmp (name, "N_nash") == 0) {

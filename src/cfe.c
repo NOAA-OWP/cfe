@@ -174,6 +174,7 @@ extern void cfe(
     massbal_struct->vol_runoff+=diff;  // send excess water back to GIUH runoff  edit FLO
     massbal_struct->vol_infilt-=diff;  // correct overprediction of infilt.      edit FLO
     infiltration_excess_m+=diff; // bug found by Nels.  This was missing and fixes it.
+
     // LKC: again here
     soil_reservoir_storage_deficit_m = 0;
     }
@@ -236,7 +237,6 @@ extern void cfe(
   //-----------------------------------------------------------------
 
   gw_reservoir_struct->storage_m -= flux_from_deep_gw_to_chan_m;
-
 
   // Solve the convolution integral ffor this time step
 
