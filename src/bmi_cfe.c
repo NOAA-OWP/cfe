@@ -120,7 +120,7 @@ Variable var_info[] = {
 	{ 54, "time_step_size",                    "int",    1 },
 	{ 55, "is_forcing_from_bmi",               "int",    1 },
 	{ 56, "forcing_file",                      "string", 1 },  // strlen
-	{ 57, "surface_water_partitioning_scheme", "int",    1 }, // from direct_runoff_params_struct
+	{ 57, "surface_water_partitioning_scheme", "int",    1 }, // from infiltration_excess_params_struct
 	{ 58, "N_nash",                            "int",    1 },
 	{ 59, "K_lf",                              "double", 1 },
 	{ 60, "K_nash",                            "double", 1 },
@@ -158,7 +158,7 @@ Variable var_info[] = {
 	{ 85, "flux_Qout_m",                    "double*", 1 },
 	{ 86, "verbosity",                      "int",     1 },
 	//---------------------------------------
-	// direct_runoff_params_struct vars
+	// infiltration_excess_runoff_params_struct vars
 	// xinanjiang or schaake flag [56]
 	//---------------------------------------
 	{ 87, "Schaake_adjusted_magic_constant_by_soil_type",   "double", 1},
@@ -180,9 +180,9 @@ int j = 0;
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
 static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "RAIN_RATE",
-        "DIRECT_RUNOFF",
         "GIUH_RUNOFF",
 	"NASH_RUNOFF",
+        "INFILTRATION_EXCESS",
         "NASH_LATERAL_RUNOFF",
         "DEEP_GW_TO_CHANNEL_FLUX",
 	"SOIL_TO_GW_FLUX",
@@ -480,11 +480,11 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     int is_verbosity_set           = FALSE;
 
     /* xinanjiang_dev*/
-    int is_direct_runoff_method_set         = FALSE;
+    int is_infiltration_excess_method_set              = FALSE;
     int is_a_Xinanjiang_inflection_point_parameter_set = FALSE;
-    int is_b_Xinanjiang_shape_parameter_set = FALSE;
-    int is_x_Xinanjiang_shape_parameter_set = FALSE;
-    int is_urban_decimal_fraction_set       = FALSE;
+    int is_b_Xinanjiang_shape_parameter_set            = FALSE;
+    int is_x_Xinanjiang_shape_parameter_set            = FALSE;
+    int is_urban_decimal_fraction_set                  = FALSE;
 
     /* Ice fraction */
     int is_sft_coupled_set           = FALSE;
@@ -812,27 +812,27 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
      *//////////////////////////////////////////////////////////////////////////////
     if (strcmp(param_key, "surface_water_partitioning_scheme") == 0) {
       if (strcmp(param_value, "Schaake")==0 || strcmp(param_value, "schaake")==0 || strcmp(param_value,"1")==0 )
-        model->direct_runoff_params_struct.surface_water_partitioning_scheme = Schaake;
+        model->infiltration_excess_params_struct.surface_water_partitioning_scheme = Schaake;
       if (strcmp(param_value, "Xinanjiang")==0 || strcmp(param_value, "xinanjiang")==0 || strcmp(param_value,"2")==0)
-        model->direct_runoff_params_struct.surface_water_partitioning_scheme = Xinanjiang;
-      is_direct_runoff_method_set = TRUE;
+        model->infiltration_excess_params_struct.surface_water_partitioning_scheme = Xinanjiang;
+      is_infiltration_excess_method_set = TRUE;
       continue;
     }
-    if (model->direct_runoff_params_struct.surface_water_partitioning_scheme == Xinanjiang) {  //Check that logical statement is correct
+    if (model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Xinanjiang) {  //Check that logical statement is correct
       if (strcmp(param_key, "a_Xinanjiang_inflection_point_parameter") == 0){
-        model->direct_runoff_params_struct.a_Xinanjiang_inflection_point_parameter = strtod(param_value, NULL);
+        model->infiltration_excess_params_struct.a_Xinanjiang_inflection_point_parameter = strtod(param_value, NULL);
         is_a_Xinanjiang_inflection_point_parameter_set = TRUE;
       }
       if (strcmp(param_key, "b_Xinanjiang_shape_parameter") == 0) {
-        model->direct_runoff_params_struct.b_Xinanjiang_shape_parameter = strtod(param_value, NULL);
+        model->infiltration_excess_params_struct.b_Xinanjiang_shape_parameter = strtod(param_value, NULL);
         is_b_Xinanjiang_shape_parameter_set = TRUE;
       }
       if (strcmp(param_key, "x_Xinanjiang_shape_parameter") == 0) {
-        model->direct_runoff_params_struct.x_Xinanjiang_shape_parameter = strtod(param_value, NULL);
+        model->infiltration_excess_params_struct.x_Xinanjiang_shape_parameter = strtod(param_value, NULL);
         is_x_Xinanjiang_shape_parameter_set = TRUE;
       }
       if (strcmp(param_key, "urban_decimal_fraction") == 0) {
-        model->direct_runoff_params_struct.urban_decimal_fraction = strtod(param_value, NULL);
+        model->infiltration_excess_params_struct.urban_decimal_fraction = strtod(param_value, NULL);
 		is_urban_decimal_fraction_set = TRUE;
       }
     }
@@ -846,9 +846,9 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 	  continue;
     }
 
-	if (is_sft_coupled_set == TRUE && model->direct_runoff_params_struct.surface_water_partitioning_scheme == Schaake) {
+	if (is_sft_coupled_set == TRUE && model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Schaake) {
 	  if (strcmp(param_key, "ice_content_threshold") == 0) {
-	    model->direct_runoff_params_struct.ice_content_threshold = strtod(param_value, NULL);
+	    model->infiltration_excess_params_struct.ice_content_threshold = strtod(param_value, NULL);
 	    is_ice_content_threshold_set = TRUE;
 	     // Check if units are present and print warning if missing from config file
             if ((param_units == NULL) || (strlen(param_units) < 1)) {
@@ -986,14 +986,14 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         model->verbosity = 10;
         return BMI_FAILURE;
     }
-    if (is_direct_runoff_method_set == FALSE) {
+    if (is_infiltration_excess_method_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'direct_runoff_method' not found in config file\n");
+        printf("Config param 'infiltration_excess_method' not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
 /* xinanjiang_dev*/
-    if(model->direct_runoff_params_struct.surface_water_partitioning_scheme == Xinanjiang){
+    if(model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Xinanjiang){
         if (is_a_Xinanjiang_inflection_point_parameter_set == FALSE) {
 #if CFE_DEBUG >= 1
             printf("Config param 'a_Xinanjiang_inflection_point_parameter' not found in config file\n");
@@ -1116,14 +1116,14 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
     /*------------------- surface runoff scheme END ----------------------------- */
 
-    if(model->direct_runoff_params_struct.surface_water_partitioning_scheme == Schaake) {
-        model->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = model->NWM_soil_params.refkdt * model->NWM_soil_params.satdk / 0.000002;
+    if(model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Schaake) {
+        model->infiltration_excess_params_struct.Schaake_adjusted_magic_constant_by_soil_type = model->NWM_soil_params.refkdt * model->NWM_soil_params.satdk / 0.000002;
 #if CFE_DEBUG >= 1
     printf("Schaake Magic Constant calculated\n");
 #endif
     }
 
-    if (is_sft_coupled_set == TRUE && model->direct_runoff_params_struct.surface_water_partitioning_scheme == Schaake) {
+    if (is_sft_coupled_set == TRUE && model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Schaake) {
 
       if(!is_ice_content_threshold_set) {
 #if CFE_DEBUG >= 1
@@ -1297,10 +1297,9 @@ static int Initialize (Bmi *self, const char *file)
     ************************************************************************/
 
     /* xinanjiang_dev
-        changing the name to the more general "direct runoff"
-    cfe_bmi_data_ptr->flux_Schaake_output_runoff_m = malloc(sizeof(double));*/
-    cfe_bmi_data_ptr->flux_output_direct_runoff_m  = malloc(sizeof(double));
-    *cfe_bmi_data_ptr->flux_output_direct_runoff_m = 0.0;
+        changing the name to the more suitable "infiltration excess"*/
+    cfe_bmi_data_ptr->flux_infiltration_excess_m  = malloc(sizeof(double));
+    *cfe_bmi_data_ptr->flux_infiltration_excess_m = 0.0;
     cfe_bmi_data_ptr->flux_Qout_m = malloc(sizeof(double));
     *cfe_bmi_data_ptr->flux_Qout_m = 0.0;
     cfe_bmi_data_ptr->flux_from_deep_gw_to_chan_m = malloc(sizeof(double));
@@ -1549,8 +1548,8 @@ static int Finalize (Bmi *self)
         /* xinanjiang_dev: changing name to the more general "direct runoff"
         if( model->flux_Schaake_output_runoff_m != NULL )
             free(model->flux_Schaake_output_runoff_m);*/
-        if( model->flux_output_direct_runoff_m != NULL )
-            free(model->flux_output_direct_runoff_m);
+        if( model->flux_infiltration_excess_m != NULL )
+            free(model->flux_infiltration_excess_m);
 
         if( model->flux_from_deep_gw_to_chan_m != NULL )
             free(model->flux_from_deep_gw_to_chan_m);
@@ -1865,21 +1864,21 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
     if (strcmp (name, "a_Xinanjiang_inflection_point_parameter") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
-        *dest = (void*)&cfe_ptr->direct_runoff_params_struct.a_Xinanjiang_inflection_point_parameter;
+        *dest = (void*)&cfe_ptr->infiltration_excess_params_struct.a_Xinanjiang_inflection_point_parameter;
         return BMI_SUCCESS;
     }
 
     if (strcmp (name, "b_Xinanjiang_shape_parameter") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
-        *dest = (void*)&cfe_ptr->direct_runoff_params_struct.b_Xinanjiang_shape_parameter;
+        *dest = (void*)&cfe_ptr->infiltration_excess_params_struct.b_Xinanjiang_shape_parameter;
         return BMI_SUCCESS;
     }
 
     if (strcmp (name, "x_Xinanjiang_shape_parameter") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
-        *dest = (void*)&cfe_ptr->direct_runoff_params_struct.x_Xinanjiang_shape_parameter;
+        *dest = (void*)&cfe_ptr->infiltration_excess_params_struct.x_Xinanjiang_shape_parameter;
         return BMI_SUCCESS;
     }
 
@@ -1901,8 +1900,8 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
-    if (strcmp (name, "DIRECT_RUNOFF") == 0) {
-        *dest = (void*) ((cfe_state_struct *)(self->data))->flux_output_direct_runoff_m;
+    if (strcmp (name, "INFILTRATION_EXCESS") == 0) {
+        *dest = (void*) ((cfe_state_struct *)(self->data))->flux_infiltration_excess_m;
         return BMI_SUCCESS;
     }
 
@@ -1969,7 +1968,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
     if (strcmp (name, "SURF_RUNOFF_SCHEME") == 0) {
       cfe_state_struct *cfe_ptr;
       cfe_ptr = (cfe_state_struct *) self->data;
-      *dest = (void*)&cfe_ptr->direct_runoff_params_struct.surface_water_partitioning_scheme;
+      *dest = (void*)&cfe_ptr->infiltration_excess_params_struct.surface_water_partitioning_scheme;
       return BMI_SUCCESS;
     }
 
@@ -2111,7 +2110,7 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
     }
     if (strcmp (name, "refkdt") == 0 || strcmp (name, "satdk") == 0){
         cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
-        cfe_ptr->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = cfe_ptr->NWM_soil_params.refkdt * cfe_ptr->NWM_soil_params.satdk / 0.000002;
+        cfe_ptr->infiltration_excess_params_struct.Schaake_adjusted_magic_constant_by_soil_type = cfe_ptr->NWM_soil_params.refkdt * cfe_ptr->NWM_soil_params.satdk / 0.000002;
     }
 
     if (strcmp (name, "N_nash") == 0) {
@@ -2429,7 +2428,7 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[55] = &(state->is_forcing_from_bmi );
     ptr_list[56] = state->forcing_file;
     // ####### ptr_list[55] = &(state->forcing_file );
-    ptr_list[57] = &(state->direct_runoff_params_struct.surface_water_partitioning_scheme );
+    ptr_list[57] = &(state->infiltration_excess_params_struct.surface_water_partitioning_scheme );
     // ptr_list[56] = &(state->Schaake_adjusted_magic_constant_by_soil_type );
     ptr_list[58] = &(state->N_nash);
     ptr_list[59] = &(state->K_lf);
@@ -2461,7 +2460,7 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[75] = state->giuh_ordinates;
     ptr_list[76] = state->nash_storage;
     ptr_list[77] = state->runoff_queue_m_per_timestep;
-    ptr_list[78] = state->flux_output_direct_runoff_m;
+    ptr_list[78] = state->flux_infiltration_excess_m;
     ptr_list[79] = state->flux_surface_runoff_m;
     ptr_list[80] = state->flux_nash_lateral_runoff_m;
     ptr_list[81] = state->flux_from_deep_gw_to_chan_m;
@@ -2470,13 +2469,13 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[84] = state->flux_Qout_m;
     ptr_list[85] = &(state->verbosity);
     //---------------------------------------
-    // direct_runoff_params_struct vars
+    // infiltration_excess_params_struct vars
     // xinanjiang or schaake flag [56]
     //---------------------------------------
-    ptr_list[86] = &(state->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type );
-    ptr_list[87] = &(state->direct_runoff_params_struct.a_Xinanjiang_inflection_point_parameter );
-    ptr_list[88] = &(state->direct_runoff_params_struct.b_Xinanjiang_shape_parameter );
-    ptr_list[89] = &(state->direct_runoff_params_struct.x_Xinanjiang_shape_parameter );
+    ptr_list[86] = &(state->infiltration_excess_params_struct.Schaake_adjusted_magic_constant_by_soil_type );
+    ptr_list[87] = &(state->infiltration_excess_params_struct.a_Xinanjiang_inflection_point_parameter );
+    ptr_list[88] = &(state->infiltration_excess_params_struct.b_Xinanjiang_shape_parameter );
+    ptr_list[89] = &(state->infiltration_excess_params_struct.x_Xinanjiang_shape_parameter );
     //-------------------------------------------------------------
     // Root zone AET development -rlm
     // ------------------------------------------------------------
@@ -2682,7 +2681,7 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
         memcpy(state->forcing_file, src, size); }
         // state->forcing_file = (char *)src; }    // Doesn't work
     else if (index == 55){
-        state->direct_runoff_params_struct.surface_water_partitioning_scheme = *(int *)src; }
+        state->infiltration_excess_params_struct.surface_water_partitioning_scheme = *(int *)src; }
     else if (index == 56){
         state->N_nash = *(int *)src; }
     else if (index == 57){
@@ -2748,7 +2747,7 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
             state->runoff_queue_m_per_timestep[i] = *( ((double *)src) + i); } }
     else if (index == 76){
         for (i=0; i<size; i++) {
-            state->flux_output_direct_runoff_m[i] = *( ((double *)src) + i); } }
+            state->flux_infiltration_excess_m[i] = *( ((double *)src) + i); } }
     else if (index == 77){
         for (i=0; i<size; i++) {
             state->flux_surface_runoff_m[i] = *( ((double *)src) + i); } }
@@ -2771,16 +2770,16 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
         // verbosity is not a pointer
         state->verbosity = *(int *)src; }
     //--------------------------------------------------------------------------
-    // direct_runoff_params_struc vars (includes xinanjiang AND schaake)
+    // infiltration_excess_params_struct vars (includes xinanjiang AND schaake)
     //--------------------------------------------------------------------------
     else if (index == 84){
-        state->direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type = *(double *)src; }
+        state->infiltration_excess_params_struct.Schaake_adjusted_magic_constant_by_soil_type = *(double *)src; }
     else if (index == 85){
-        state->direct_runoff_params_struct.a_Xinanjiang_inflection_point_parameter = *(double *)src; }
+        state->infiltration_excess_params_struct.a_Xinanjiang_inflection_point_parameter = *(double *)src; }
     else if (index == 86){
-        state->direct_runoff_params_struct.b_Xinanjiang_shape_parameter = *(double *)src; }
+        state->infiltration_excess_params_struct.b_Xinanjiang_shape_parameter = *(double *)src; }
     else if (index == 87){
-        state->direct_runoff_params_struct.x_Xinanjiang_shape_parameter = *(double *)src; }
+        state->infiltration_excess_params_struct.x_Xinanjiang_shape_parameter = *(double *)src; }
 
     return BMI_SUCCESS;
 }*/
@@ -2973,7 +2972,7 @@ cfe_state_struct *new_bmi_cfe(void)
     /* xinanjiang_dev
         changing the name to the more general "direct runoff"
     data->flux_Schaake_output_runoff_m = NULL;*/
-    data->flux_output_direct_runoff_m = NULL;
+    data->flux_infiltration_excess_m = NULL;
 
     data->flux_from_deep_gw_to_chan_m = NULL;
     data->flux_surface_runoff_m = NULL;
@@ -3050,9 +3049,9 @@ extern void run_cfe(cfe_state_struct* cfe_ptr){
         cfe_ptr->NWM_soil_params,                       // Set by config file
         &cfe_ptr->soil_reservoir,                       // Set in "init_soil_reservoir" function
         cfe_ptr->timestep_h,                            // Set in initialize
-        cfe_ptr->direct_runoff_params_struct,           // Set by config file, includes parameters for Schaake and/or XinanJiang*/
+        cfe_ptr->infiltration_excess_params_struct,     // Set by config file, includes parameters for Schaake and/or XinanJiang*/
         cfe_ptr->timestep_rainfall_input_m,             // Set by bmi (set value) or read from file.
-        cfe_ptr->flux_output_direct_runoff_m,
+        cfe_ptr->flux_infiltration_excess_m,
         &cfe_ptr->infiltration_depth_m,                 // Set by Schaake partitioning scheme
         cfe_ptr->flux_perc_m,                           // Set to zero in definition.
         cfe_ptr->flux_lat_m,                            // Set by CFE function after soil_resevroir calc
@@ -3189,7 +3188,7 @@ extern void print_cfe_flux_at_timestep(cfe_state_struct* cfe_ptr) {
   printf("%d, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf\n",
          cfe_ptr->current_time_step,
          cfe_ptr->timestep_rainfall_input_m*1000.0,
-         *cfe_ptr->flux_output_direct_runoff_m*1000.0,
+         *cfe_ptr->flux_infiltration_excess_m*1000.0,
          *cfe_ptr->flux_surface_runoff_m*1000.0,
          *cfe_ptr->flux_nash_lateral_runoff_m*1000.0,
          *cfe_ptr->flux_from_deep_gw_to_chan_m*1000.0,

@@ -11,19 +11,13 @@ extern void cfe(
         struct NWM_soil_parameters NWM_soil_params_struct,
         struct conceptual_reservoir *soil_reservoir_struct,
         double timestep_h,
-
         /* xinanjiang_dev: since we are doing the option for Schaake and XinJiang,
                            instead of passing in the constants
                            pass in a structure with the constants for both subroutines.
         //double Schaake_adjusted_magic_constant_by_soil_type,*/
-        struct direct_runoff_parameters_structure direct_runoff_params_struct,
-
+        struct infiltration_excess_parameters_structure infiltration_excess_params_struct,
         double timestep_rainfall_input_m,
-
-        /* xinanjiang_dev: rename to the general "direct runoff"
-        double *Schaake_output_runoff_m_ptr,*/
-        double *flux_output_direct_runoff_m,
-
+        double *flux_infiltration_excess_m,
         double *infiltration_depth_m_ptr,
         double *flux_perc_m_ptr,
         double *flux_lat_m_ptr,
@@ -38,7 +32,7 @@ extern void cfe(
         int num_lateral_flow_nash_reservoirs,
         double K_nash,
         double *nash_storage_arr,
-	struct nash_cascade_parameters *nash_surface_params,
+        struct nash_cascade_parameters *nash_surface_params,
         struct evapotranspiration_structure *evap_struct,
         double *Qout_m_ptr,
         struct massbal *massbal_struct,
@@ -52,7 +46,7 @@ extern void cfe(
 // ####        Note: all of thes variables are storages in [m] or fluxes in [m/timestep]
     double soil_reservoir_storage_deficit_m = *soil_reservoir_storage_deficit_m_ptr;   // storage [m]
 
-    double direct_output_runoff_m          = *flux_output_direct_runoff_m;            // Schaake partitioned runoff this timestep [m]*/
+    double infiltration_excess_m          = *flux_infiltration_excess_m;            // Schaake partitioned runoff this timestep [m]*/
 
     double infiltration_depth_m             = *infiltration_depth_m_ptr;               // Schaake partitioned infiltration this timestep [m]
     double flux_perc_m                      = *flux_perc_m_ptr;                        // water moved from soil reservoir to gw reservoir this timestep [m]
@@ -105,19 +99,19 @@ extern void cfe(
   // NEW FLO
   if(0.0 < timestep_rainfall_input_m)
     {
-    if (direct_runoff_params_struct.surface_water_partitioning_scheme == Schaake)
+    if (infiltration_excess_params_struct.surface_water_partitioning_scheme == Schaake)
       {
 	// to ensure that ice_fraction_schaake is set to 0.0 for uncoupled SFT
 	if(!soil_reservoir_struct->is_sft_coupled)
 	  soil_reservoir_struct->ice_fraction_schaake = 0.0;
 
 	Schaake_partitioning_scheme(timestep_h, soil_reservoir_struct->storage_threshold_primary_m,
-				    direct_runoff_params_struct.Schaake_adjusted_magic_constant_by_soil_type,
+				    infiltration_excess_params_struct.Schaake_adjusted_magic_constant_by_soil_type,
 				    soil_reservoir_storage_deficit_m, timestep_rainfall_input_m, NWM_soil_params_struct.smcmax,
-				    NWM_soil_params_struct.D, &direct_output_runoff_m, &infiltration_depth_m,
-				    soil_reservoir_struct->ice_fraction_schaake, direct_runoff_params_struct.ice_content_threshold);
+				    NWM_soil_params_struct.D, &infiltration_excess_m, &infiltration_depth_m,
+				    soil_reservoir_struct->ice_fraction_schaake, infiltration_excess_params_struct.ice_content_threshold);
       }
-    else if (direct_runoff_params_struct.surface_water_partitioning_scheme == Xinanjiang)
+    else if (infiltration_excess_params_struct.surface_water_partitioning_scheme == Xinanjiang)
       {
 
 	// to ensure that ice_fraction_xinan is set to 0.0 for uncoupled SFT
@@ -126,7 +120,7 @@ extern void cfe(
 
 	Xinanjiang_partitioning_scheme(timestep_rainfall_input_m, soil_reservoir_struct->storage_threshold_primary_m,
 				       soil_reservoir_struct->storage_max_m, soil_reservoir_struct->storage_m,
-				       &direct_runoff_params_struct, &direct_output_runoff_m, &infiltration_depth_m,
+				       &infiltration_excess_params_struct, &infiltration_excess_m, &infiltration_depth_m,
 				       soil_reservoir_struct->ice_fraction_xinanjiang);
       }
     else
@@ -138,7 +132,7 @@ extern void cfe(
     }
   else  // NEW FLO no need to call Schaake or Xinanjiang if it's not raining.
     {
-    direct_output_runoff_m = 0.0;
+    infiltration_excess_m = 0.0;
     infiltration_depth_m = 0.0;
     }
 
@@ -147,7 +141,7 @@ extern void cfe(
   //--------------------------------------------------------------------------------------------------
   if(soil_reservoir_storage_deficit_m<infiltration_depth_m)
     {
-    direct_output_runoff_m+=(infiltration_depth_m-soil_reservoir_storage_deficit_m);  // put infiltration that won't fit back into runoff
+    infiltration_excess_m+=(infiltration_depth_m-soil_reservoir_storage_deficit_m);  // put infiltration that won't fit back into runoff
     infiltration_depth_m=soil_reservoir_storage_deficit_m;
     soil_reservoir_struct->storage_m=soil_reservoir_struct->storage_max_m;
     // LKC: should the deficit of soil be set to zero here - if the condition is reached, soil is full
@@ -162,11 +156,11 @@ extern void cfe(
                                  timestep_rainfall_input_m,Schaake_output_runoff_m*1000.0,infiltration_depth_m*1000.0,
                                  timestep_rainfall_input_m-Schaake_output_runoff_m-infiltration_depth_m);                   */
   printf("After direct runoff function: rain:%8.5lf mm  runoff:%8.5lf mm  infiltration:%8.5lf mm  residual:%e m\n",
-                                 timestep_rainfall_input_m,direct_output_runoff_m*1000.0,infiltration_depth_m*1000.0,
-                                 timestep_rainfall_input_m-direct_output_runoff_m-infiltration_depth_m);
+                                 timestep_rainfall_input_m,infiltration_excess_m*1000.0,infiltration_depth_m*1000.0,
+                                 timestep_rainfall_input_m-infiltration_excess_m-infiltration_depth_m);
 #endif
 
-  massbal_struct->vol_runoff   += direct_output_runoff_m;       // edit FLO
+  massbal_struct->vol_runoff   += infiltration_excess_m;       // edit FLO
   massbal_struct->vol_infilt   += infiltration_depth_m;  // edit FLO
 
   // put infiltration flux into soil conceptual reservoir.  If not enough room
@@ -179,7 +173,7 @@ extern void cfe(
     infiltration_depth_m=soil_reservoir_storage_deficit_m;
     massbal_struct->vol_runoff+=diff;  // send excess water back to GIUH runoff  edit FLO
     massbal_struct->vol_infilt-=diff;  // correct overprediction of infilt.      edit FLO
-    direct_output_runoff_m+=diff; // bug found by Nels.  This was missing and fixes it.
+    infiltration_excess_m+=diff; // bug found by Nels.  This was missing and fixes it.
     // LKC: again here
     soil_reservoir_storage_deficit_m = 0;
     }
@@ -249,10 +243,10 @@ extern void cfe(
   /* xinanjiang_dev
   surface_runoff_m = convolution_integral(Schaake_output_runoff_m,num_giuh_ordinates,    */
   if (surface_runoff_scheme == GIUH)
-    surface_runoff_m = giuh_convolution_integral(direct_output_runoff_m,num_giuh_ordinates,
+    surface_runoff_m = giuh_convolution_integral(infiltration_excess_m,num_giuh_ordinates,
 					      giuh_ordinates_arr,runoff_queue_m_per_timestep_arr);
   else if (surface_runoff_scheme == NASH_CASCADE)
-    surface_runoff_m =  nash_cascade_surface_runoff(direct_output_runoff_m, nash_surface_params);
+    surface_runoff_m =  nash_cascade_surface_runoff(infiltration_excess_m, nash_surface_params);
 
   massbal_struct->vol_out_surface += surface_runoff_m;
   massbal_struct->volout          += surface_runoff_m;
@@ -275,7 +269,7 @@ extern void cfe(
 
     /* xinanjiang_dev
     *Schaake_output_runoff_m_ptr          = Schaake_output_runoff_m;    */
-    *flux_output_direct_runoff_m          = direct_output_runoff_m;
+    *flux_infiltration_excess_m           = infiltration_excess_m;
 
     *infiltration_depth_m_ptr             = infiltration_depth_m;
     *flux_perc_m_ptr                      = flux_perc_m;
@@ -412,7 +406,7 @@ void Schaake_partitioning_scheme(double timestep_h, double field_capacity_m, dou
 
 void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_capacity_m,
                                     double max_soil_moisture_storage_m, double column_total_soil_water_m,
-                                    struct direct_runoff_parameters_structure *parms,
+                                    struct infiltration_excess_parameters_structure *parms,
                                     double *surface_runoff_depth_m, double *infiltration_depth_m,
                                     double ice_fraction_xinanjiang)
 {
