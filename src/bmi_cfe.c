@@ -149,7 +149,7 @@ Variable var_info[] = {
 	{ 76, "nash_storage",                   "double*", 1 },  // num_lat_flow
 	{ 77, "runoff_queue_m_per_timestep",    "double*", 1 },  // num_giuh
 	{ 78, "flux_Schaake_output_runoff_m",   "double*", 1 },
-	{ 79, "flux_surface_runoff_m",          "double*", 1 },
+	{ 79, "flux_direct_runoff_m",           "double*", 1 },
 	{ 80, "flux_nash_lateral_runoff_m",     "double*", 1 },
 	{ 81, "flux_from_deep_gw_to_chan_m",    "double*", 1 },
 	{ 82, "flux_from_soil_to_gw_m",         "double*", 1 },
@@ -183,6 +183,7 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "GIUH_RUNOFF",
 	"NASH_RUNOFF",
         "INFILTRATION_EXCESS",
+        "DIRECT_RUNOFF",
         "NASH_LATERAL_RUNOFF",
         "DEEP_GW_TO_CHANNEL_FLUX",
 	"SOIL_TO_GW_FLUX",
@@ -1298,14 +1299,14 @@ static int Initialize (Bmi *self, const char *file)
 
     /* xinanjiang_dev
         changing the name to the more suitable "infiltration excess"*/
-    cfe_bmi_data_ptr->flux_infiltration_excess_m  = malloc(sizeof(double));
-    *cfe_bmi_data_ptr->flux_infiltration_excess_m = 0.0;
+    cfe_bmi_data_ptr->infiltration_excess_m  = malloc(sizeof(double));
+    *cfe_bmi_data_ptr->infiltration_excess_m = 0.0;
     cfe_bmi_data_ptr->flux_Qout_m = malloc(sizeof(double));
     *cfe_bmi_data_ptr->flux_Qout_m = 0.0;
     cfe_bmi_data_ptr->flux_from_deep_gw_to_chan_m = malloc(sizeof(double));
     *cfe_bmi_data_ptr->flux_from_deep_gw_to_chan_m = 0.0;
-    cfe_bmi_data_ptr->flux_surface_runoff_m = malloc(sizeof(double));
-    *cfe_bmi_data_ptr->flux_surface_runoff_m = 0.0;
+    cfe_bmi_data_ptr->flux_direct_runoff_m = malloc(sizeof(double));
+    *cfe_bmi_data_ptr->flux_direct_runoff_m = 0.0;
     cfe_bmi_data_ptr->flux_lat_m = malloc(sizeof(double));
     *cfe_bmi_data_ptr->flux_lat_m = 0.0;
     cfe_bmi_data_ptr->flux_nash_lateral_runoff_m = malloc(sizeof(double));
@@ -1548,13 +1549,13 @@ static int Finalize (Bmi *self)
         /* xinanjiang_dev: changing name to the more general "direct runoff"
         if( model->flux_Schaake_output_runoff_m != NULL )
             free(model->flux_Schaake_output_runoff_m);*/
-        if( model->flux_infiltration_excess_m != NULL )
-            free(model->flux_infiltration_excess_m);
+        if( model->infiltration_excess_m != NULL )
+            free(model->infiltration_excess_m);
 
         if( model->flux_from_deep_gw_to_chan_m != NULL )
             free(model->flux_from_deep_gw_to_chan_m);
-        if( model->flux_surface_runoff_m != NULL )
-            free(model->flux_surface_runoff_m);
+        if( model->flux_direct_runoff_m != NULL )
+            free(model->flux_direct_runoff_m);
         if( model->flux_lat_m != NULL )
             free(model->flux_lat_m);
         if( model->flux_nash_lateral_runoff_m != NULL )
@@ -1901,11 +1902,11 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
     }
 
     if (strcmp (name, "INFILTRATION_EXCESS") == 0) {
-        *dest = (void*) ((cfe_state_struct *)(self->data))->flux_infiltration_excess_m;
+        *dest = (void*) ((cfe_state_struct *)(self->data))->infiltration_excess_m;
         return BMI_SUCCESS;
     }
 
-    if (strcmp (name, "GIUH_RUNOFF") == 0 || strcmp (name, "NASH_RUNOFF") == 0) {
+    if (strcmp (name, "GIUH_RUNOFF") == 0 || strcmp (name, "NASH_RUNOFF") == 0 || strcmp (name, "DIRECT_RUNOFF") == 0) {
         *dest = (void *) ((cfe_state_struct *)(self->data))->flux_surface_runoff_m;
         return BMI_SUCCESS;
     }
@@ -2460,8 +2461,8 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[75] = state->giuh_ordinates;
     ptr_list[76] = state->nash_storage;
     ptr_list[77] = state->runoff_queue_m_per_timestep;
-    ptr_list[78] = state->flux_infiltration_excess_m;
-    ptr_list[79] = state->flux_surface_runoff_m;
+    ptr_list[78] = state->infiltration_excess_m;
+    ptr_list[79] = state->flux_direct_runoff_m;
     ptr_list[80] = state->flux_nash_lateral_runoff_m;
     ptr_list[81] = state->flux_from_deep_gw_to_chan_m;
     ptr_list[82] = state->flux_perc_m;
@@ -2747,10 +2748,10 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
             state->runoff_queue_m_per_timestep[i] = *( ((double *)src) + i); } }
     else if (index == 76){
         for (i=0; i<size; i++) {
-            state->flux_infiltration_excess_m[i] = *( ((double *)src) + i); } }
+            state->infiltration_excess_m[i] = *( ((double *)src) + i); } }
     else if (index == 77){
         for (i=0; i<size; i++) {
-            state->flux_surface_runoff_m[i] = *( ((double *)src) + i); } }
+            state->flux_direct_runoff_m[i] = *( ((double *)src) + i); } }
     else if (index == 78){
         for (i=0; i<size; i++) {
             state->flux_nash_lateral_runoff_m[i] = *( ((double *)src) + i); } }
@@ -2972,10 +2973,10 @@ cfe_state_struct *new_bmi_cfe(void)
     /* xinanjiang_dev
         changing the name to the more general "direct runoff"
     data->flux_Schaake_output_runoff_m = NULL;*/
-    data->flux_infiltration_excess_m = NULL;
+    data->infiltration_excess_m = NULL;
 
     data->flux_from_deep_gw_to_chan_m = NULL;
-    data->flux_surface_runoff_m = NULL;
+    data->flux_direct_runoff_m = NULL;
     data->flux_lat_m = NULL;
     data->flux_nash_lateral_runoff_m = NULL;
     data->flux_perc_m = NULL;
@@ -3051,14 +3052,14 @@ extern void run_cfe(cfe_state_struct* cfe_ptr){
         cfe_ptr->timestep_h,                            // Set in initialize
         cfe_ptr->infiltration_excess_params_struct,     // Set by config file, includes parameters for Schaake and/or XinanJiang*/
         cfe_ptr->timestep_rainfall_input_m,             // Set by bmi (set value) or read from file.
-        cfe_ptr->flux_infiltration_excess_m,
+        cfe_ptr->infiltration_excess_m,
         &cfe_ptr->infiltration_depth_m,                 // Set by Schaake partitioning scheme
         cfe_ptr->flux_perc_m,                           // Set to zero in definition.
         cfe_ptr->flux_lat_m,                            // Set by CFE function after soil_resevroir calc
         &cfe_ptr->gw_reservoir_storage_deficit_m,       // Set by CFE function after soil_resevroir calc
         &cfe_ptr->gw_reservoir,                         // Set in initialize and from config file
         cfe_ptr->flux_from_deep_gw_to_chan_m,           // Set by CFE function after gw_reservoir calc
-        cfe_ptr->flux_surface_runoff_m,                 // Set in CFE by convolution_integral or Nash Cascade model
+        cfe_ptr->flux_direct_runoff_m,                 // Set in CFE by convolution_integral or Nash Cascade model
         cfe_ptr->num_giuh_ordinates,                    // Set by config file with func. count_delimited_values
         cfe_ptr->giuh_ordinates,                        // Set by configuration file.
         cfe_ptr->runoff_queue_m_per_timestep,           // Set in initialize
@@ -3152,25 +3153,25 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr)
 }*/
 
 extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr) {
-    cfe_ptr->vol_struct.volin = 0;
-    cfe_ptr->vol_struct.vol_runoff = 0;
-    cfe_ptr->vol_struct.vol_infilt = 0;
-    cfe_ptr->vol_struct.vol_to_soil = 0;
-    cfe_ptr->vol_struct.vol_to_gw = 0;
-    cfe_ptr->vol_struct.vol_soil_to_gw = 0;
+    cfe_ptr->vol_struct.volin            = 0;
+    cfe_ptr->vol_struct.vol_runoff       = 0;
+    cfe_ptr->vol_struct.vol_infilt       = 0;
+    cfe_ptr->vol_struct.vol_to_soil      = 0;
+    cfe_ptr->vol_struct.vol_to_gw        = 0;
+    cfe_ptr->vol_struct.vol_soil_to_gw   = 0;
     cfe_ptr->vol_struct.vol_soil_to_lat_flow = 0;
-    cfe_ptr->vol_struct.volout = 0;
-    cfe_ptr->vol_struct.vol_from_gw = 0;
-    cfe_ptr->vol_struct.vol_out_surface = 0;
-    cfe_ptr->vol_struct.vol_in_nash = 0;
-    cfe_ptr->vol_struct.vol_out_nash = 0;
-    cfe_ptr->vol_struct.volstart       += cfe_ptr->gw_reservoir.storage_m;    // initial mass balance checks in g.w. reservoir
-    cfe_ptr->vol_struct.vol_in_gw_start = cfe_ptr->gw_reservoir.storage_m;
-    cfe_ptr->vol_struct.volstart          += cfe_ptr->soil_reservoir.storage_m;    // initial mass balance checks in soil reservoir
-    cfe_ptr->vol_struct.vol_soil_start     = cfe_ptr->soil_reservoir.storage_m;
+    cfe_ptr->vol_struct.volout           = 0;
+    cfe_ptr->vol_struct.vol_from_gw      = 0;
+    cfe_ptr->vol_struct.vol_out_surface  = 0;
+    cfe_ptr->vol_struct.vol_in_nash      = 0;
+    cfe_ptr->vol_struct.vol_out_nash     = 0;
+    cfe_ptr->vol_struct.volstart        += cfe_ptr->gw_reservoir.storage_m;    // initial mass balance checks in g.w. reservoir
+    cfe_ptr->vol_struct.vol_in_gw_start  = cfe_ptr->gw_reservoir.storage_m;
+    cfe_ptr->vol_struct.volstart        += cfe_ptr->soil_reservoir.storage_m;    // initial mass balance checks in soil reservoir
+    cfe_ptr->vol_struct.vol_soil_start   = cfe_ptr->soil_reservoir.storage_m;
     cfe_ptr->vol_struct.vol_et_from_soil = 0;
     cfe_ptr->vol_struct.vol_et_from_rain = 0;
-    cfe_ptr->vol_struct.vol_et_to_atm = 0;
+    cfe_ptr->vol_struct.vol_et_to_atm    = 0;
 }
 
 /**************************************************************************/
@@ -3181,15 +3182,15 @@ extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr) {
 /**************************************************************************/
 /**************************************************************************/
 extern void print_cfe_flux_header() {
-    printf("#    ,            hourly ,  direct,   giuh ,lateral,  base,   total, storage, ice fraction, ice fraction \n");
-    printf("Time [h],rainfall [mm],runoff [mm],runoff [mm],flow [mm],flow [mm],discharge [mm],storage [mm],schaake [mm],xinan [-]\n");
+    printf("#    ,      hourly ,  infiltration excess,  direct ,lateral,  base,   total, storage, ice fraction, ice fraction \n");
+    printf("Time [h],rainfall [mm], excess [mm],runoff [mm],flow [mm],flow [mm],discharge [mm],storage [mm],schaake [mm],xinan [-]\n");
 }
 extern void print_cfe_flux_at_timestep(cfe_state_struct* cfe_ptr) {
   printf("%d, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf, %lf\n",
          cfe_ptr->current_time_step,
          cfe_ptr->timestep_rainfall_input_m*1000.0,
-         *cfe_ptr->flux_infiltration_excess_m*1000.0,
-         *cfe_ptr->flux_surface_runoff_m*1000.0,
+         *cfe_ptr->infiltration_excess_m*1000.0,
+         *cfe_ptr->flux_direct_runoff_m*1000.0,
          *cfe_ptr->flux_nash_lateral_runoff_m*1000.0,
          *cfe_ptr->flux_from_deep_gw_to_chan_m*1000.0,
          *cfe_ptr->flux_Qout_m*1000.0,
@@ -3203,7 +3204,7 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     // PERFORM MASS BALANCE CHECKS AND WRITE RESULTS TO stderr.
     //-----------------------------------------------------------
 
-    double volend= cfe_ptr->soil_reservoir.storage_m+cfe_ptr->gw_reservoir.storage_m;
+    double volend = cfe_ptr->soil_reservoir.storage_m+cfe_ptr->gw_reservoir.storage_m;
     double vol_in_gw_end = cfe_ptr->gw_reservoir.storage_m;
     double vol_surface_end = 0.0; // volume in the giuh or nash array at the end (on the surface)
     double vol_in_nash_end = 0.0;
