@@ -108,6 +108,7 @@ struct cfe_state_struct {
 
     struct nash_cascade_parameters nash_surface_params;
 
+    double* flux_infiltration_excess_m;
     double* flux_direct_runoff_m;
     double* flux_nash_lateral_runoff_m;
     double* flux_from_deep_gw_to_chan_m;
