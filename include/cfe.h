@@ -152,7 +152,7 @@ extern void Schaake_partitioning_scheme(double dt, double field_capacity_m, doub
 // xinanjiang_dev: XinJiang function written by Rachel adapted by Jmframe and FLO,
 extern void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_capacity_m,
                                            double max_soil_moisture_storage_m, double column_total_soil_water_m,
-                                           struct infiltration_excess_parameters_structure *parms, double *surface_runoff_depth_m,
+                                           struct infiltration_excess_parameters_structure *parms, double *infiltration_excess_m,
                                            double *infiltration_depth_m, double ice_fraction_xinanjiang);
 
 extern void et_from_rainfall(double *timestep_rainfall_input_m, struct evapotranspiration_structure *et_struct);
@@ -173,9 +173,7 @@ extern void cfe(
         //double Schaake_adjusted_magic_constant_by_soil_type,*/
         struct infiltration_excess_parameters_structure infiltration_excess_params_struct,
         double timestep_rainfall_input_m,
-        /* xinanjiang_dev:
-        double *Schaake_output_runoff_m_ptr,*/
-        double *flux_output_direct_runoff_m,
+        double *infiltration_excess_m_ptr,
         double *infiltration_depth_m_ptr,
         double *flux_perc_m_ptr,
         double *flux_lat_m_ptr,
@@ -190,12 +188,12 @@ extern void cfe(
         int num_lateral_flow_nash_reservoirs,
         double K_nash,
         double *nash_storage_arr,
-	struct nash_cascade_parameters *nash_surface_params,
+        struct nash_cascade_parameters *nash_surface_params,
         struct evapotranspiration_structure *evap_struct,
         double *Qout_m_ptr,
         struct massbal *massbal_struct,
         double time_step_size,
-	int surface_runoff_scheme
+        int surface_runoff_scheme
     );
 
 #endif //CFE_CFE_H

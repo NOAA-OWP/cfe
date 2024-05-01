@@ -50,6 +50,7 @@ struct cfe_state_struct {
     double timestep_rainfall_input_m;
     double soil_reservoir_storage_deficit_m;
     double infiltration_depth_m;
+    double* infiltration_excess_m;
     double gw_reservoir_storage_deficit_m;
 
     double timestep_h;
@@ -107,12 +108,7 @@ struct cfe_state_struct {
 
     struct nash_cascade_parameters nash_surface_params;
 
-    /* xinanjiang_dev
-        changing the name to the more general "direct runoff"
-    double* flux_Schaake_output_runoff_m;*/
-    double* flux_infiltration_excess_m;
-
-    double* flux_surface_runoff_m;
+    double* flux_direct_runoff_m;
     double* flux_nash_lateral_runoff_m;
     double* flux_from_deep_gw_to_chan_m;
     double* flux_perc_m;
