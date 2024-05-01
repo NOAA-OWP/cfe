@@ -64,7 +64,7 @@ struct cfe_state_struct {
     struct massbal vol_struct;
 
     /* xinanjiang_dev */
-    struct direct_runoff_parameters_structure direct_runoff_params_struct;
+    struct infiltration_excess_parameters_structure infiltration_excess_params_struct;
 
     // Epoch-based start time (BMI start time is considered 0.0)
     long epoch_start_time;
@@ -82,16 +82,16 @@ struct cfe_state_struct {
 
     //LKC Changed this to N_nash for consistency
     //int num_lateral_flow_nash_reservoirs;
-    
+
     //LKC: added N_nash the same way as the other Nash parameters - making this consistent
     double K_lf;
-    double K_nash;   
+    double K_nash;
     int N_nash;
 
     int num_giuh_ordinates;
 
     int surface_runoff_scheme;   // options: giuh-based runoff and nash cascade-based runoff
-  
+
     // ***********************************************************
     // ******************* Dynamic allocations *******************
     // ***********************************************************
@@ -106,11 +106,11 @@ struct cfe_state_struct {
     double* runoff_queue_m_per_timestep;
 
     struct nash_cascade_parameters nash_surface_params;
-  
+
     /* xinanjiang_dev
         changing the name to the more general "direct runoff"
     double* flux_Schaake_output_runoff_m;*/
-    double* flux_output_direct_runoff_m ;
+    double* flux_infiltration_excess_m;
 
     double* flux_surface_runoff_m;
     double* flux_nash_lateral_runoff_m;
@@ -141,13 +141,13 @@ extern void get_word_cfe(char *theString,int *start,int *end,char *theWord,int *
 
 /*int read_init_config_cfe(const char* config_file, cfe_state_struct* model, double* alpha_fc, double* soil_storage,
                      int* is_soil_storage_ratio);*/
-//LKC removed double alpha_fc since it has been added to the soil parameter structure                     
+//LKC removed double alpha_fc since it has been added to the soil parameter structure
 int read_init_config_cfe(const char* config_file, cfe_state_struct* model);
 
 
 /*extern void init_soil_reservoir(cfe_state_struct* cfe_ptr, double alpha_fc, double max_storage, double storage,
                      int is_storage_ratios);*/
-//LKC removed double alpha_fc since it has been added to the soil parameter structure                 
+//LKC removed double alpha_fc since it has been added to the soil parameter structure
 extern void init_soil_reservoir(cfe_state_struct* cfe_ptr);
 
 //extern double init_reservoir_storage(int is_ratio, double amount, double max_amount);
