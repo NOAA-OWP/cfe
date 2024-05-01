@@ -26,32 +26,32 @@ Example configuration files are provided in this directory. To build and run the
 | giuh_ordinates   | *double* |   |   | parameter_adjustable |  | Giuh ordinates in dt time steps   |
 | num_timesteps  | *int* |   |  | time_info |  | set to `1` if `forcing_file=BMI`   |
 | verbosity | *int* | `0`-`3`  |   | option |   |  prints various debug and bmi info  |
-| surface_partitioning_scheme | *char* | `Xinanjiang` or `Schaake`  |  | parameter_adjustable | direct runoff |    |
+| surface_water_partitioning_scheme | *char* | `Xinanjiang` or `Schaake`  |  | parameter_adjustable | infiltraton exces |    |
 | surface_runoff_scheme | *char* | GIUH or NASH_CASCADE | | parameter_adjustable | surface runoff | also supports 1 for GIUH and 2 for NASH_CASCADE; default is GIUH |
 | N_nash_surface | *int* |   |   | parameter_adjustable | surface runoff | number of Nash reservoirs for surface runoff   |
 | K_nash_surface | *double* |   | 1/meters [m^-1]  | parameter_adjustable | surface runoff | Nash Config param for surface runoff   |
 | nash_storage_surface | *double* |   | meters [m]  | parameter_adjustable | surface runoff | Nash Config param; reservoir surface storage; default is zero storage |
-| *a_Xinanjiang_inflection_point_parameter | *double* |   |  | parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
-| *b_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable  | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
-| *x_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang`   |
-| urban_decimal_fraction  | *double*  |  0.0 - 1.0 |   |  parameter_adjustable | direct runoff | when `surface_partitioning_scheme=Xinanjiang` |
+| *a_Xinanjiang_inflection_point_parameter | *double* |   |  | parameter_adjustable | infiltration excess runoff | when `surface_water_partitioning_scheme=Xinanjiang`   |
+| *b_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable  | infiltration excess runoff | when `surface_water_partitioning_scheme=Xinanjiang`   |
+| *x_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable | infiltration excess runoff | when `surface_water_partitioning_scheme=Xinanjiang`   |
+| urban_decimal_fraction  | *double*  |  0.0 - 1.0 |   |  parameter_adjustable | infiltration excess runoff | when `surface_water_partitioning_scheme=Xinanjiang` |
 | is_aet_rootzone                    | *boolean* | True, true or 1  |  | coupling parameter | `rootzone-based AET` | when `CFE coupled to SoilMoistureProfile` |
 | max_rootzone_layer | *double* |  | meters [m] | parameter_adjustable | AET | layer of the soil that is the maximum root zone depth. That is, the depth of the layer where the AET is drawn from |
 | soil_layer_depths | 1D array |  | meters [m] | parameter_adjustable | AET | an array of depths from the surface. Example, soil_layer_depths=0.1,0.4,1.0,2.0
 | is_sft_coupled                   | *boolean* | True, true or 1  |  | coupling parameter | `ice_fraction-based runoff` | when `CFE coupled to SoilFreezeThaw`|
 
-## Direct runoff options in CFE
+## Infiltration excess runoff options in CFE
 
-The user has the option to pick a particular direct runoff (aka surface partitioning) method:
+The user has the option to pick a particular infiltration excess runoff (aka surface water partitioning) method:
 
-1. Schaake function (configuration: `surface_partitioning_scheme=Schaake`)
-2. Xinanjiang function (configuration: `surface_partitioning_scheme=Xinanjiang`). When using this runoff method the user must also include four parameters.
+1. Schaake function (configuration: `surface_water_partitioning_scheme=Schaake`)
+2. Xinanjiang function (configuration: `surface_water_partitioning_scheme=Xinanjiang`). When using this runoff method the user must also include four parameters.
 
 If the **Xinanjiang** scheme is choosen, four parameters need to be included in the configuration file:
 1. a_Xinanjiang_inflection_point_parameter
 2. b_Xinanjiang_shape_parameter
 3. x_Xinanjiang_shape_parameter
-4. urban_decimal_fraction 
+4. urban_decimal_fraction
 
 ## Surface runoff options in CFE
 The user has the option to pick a particular surface runoff (aka surface runoff scheme) method:
@@ -63,7 +63,7 @@ The user has the option to pick a particular surface runoff (aka surface runoff 
 ## Rootzone-based Actual Evapotranspiration (AET)
 The user has the option to turn ON and OFF rootzone-based AET, default option is OFF. To turn it ON, the following parameters need to be included in the configuration file.
 1. `is_aet_rootzone=true`
-2. `soil_layer_depths` 
+2. `soil_layer_depths`
 3. `max_rootzone_layer`
 
 ## CFE coupled to Soil freeze-thaw model (SFT)
@@ -74,6 +74,6 @@ The Soil Freeze-Thaw (SFT) model is a standalone model.  For detailed informatio
     * If the runoff scheme is Xinanjiang, no additional parameters are needed in the CFE config files.
     * If the runoff scheme is Schaake, the CFE config file will need an additional parameter, namely:
       * `ice_content_threshold` : (type double, unit m). This represent the ice content above which soil is impermeable.
-  
+
 
 **Note:** By defualt `is_sft_coupled` and `is_aet_rootzone` are set to `OFF`, that means these changes do not affect the basic functionality of CFE.

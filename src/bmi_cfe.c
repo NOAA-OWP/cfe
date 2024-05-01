@@ -988,7 +988,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     }
     if (is_infiltration_excess_method_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'infiltration_excess_method' not found in config file\n");
+        printf("Config param \"surface_water_partitioning_scheme\" not found in config file\n");
 #endif
         return BMI_FAILURE;
     }
