@@ -20,4 +20,5 @@ nash_storage=0.0,0.0
 giuh_ordinates=0.06,0.51,0.28,0.12,0.03
 num_timesteps=1
 verbosity=2
-surface_partitioning_scheme=Schaake
+surface_runoff_scheme=GIUH
+surface_water_partitioning_scheme=Schaake
