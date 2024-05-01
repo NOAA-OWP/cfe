@@ -1127,7 +1127,6 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 #endif
     }
 
-
     if (is_sft_coupled_set == TRUE && model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Schaake) {
 
       if(!is_ice_content_threshold_set) {
@@ -2115,7 +2114,6 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
     }
     if (strcmp (name, "refkdt") == 0 || strcmp (name, "satdk") == 0){
         cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
-
         cfe_ptr->infiltration_excess_params_struct.Schaake_adjusted_magic_constant_by_soil_type = cfe_ptr->NWM_soil_params.refkdt * cfe_ptr->NWM_soil_params.satdk / 0.000002;
 
     }
@@ -2980,7 +2978,6 @@ cfe_state_struct *new_bmi_cfe(void)
         changing the name to the more general "direct runoff"
     data->flux_Schaake_output_runoff_m = NULL;*/
     data->infiltration_excess_m = NULL;
-
     data->flux_from_deep_gw_to_chan_m = NULL;
     data->flux_direct_runoff_m = NULL;
     data->flux_lat_m = NULL;
