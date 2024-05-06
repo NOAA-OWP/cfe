@@ -2,16 +2,16 @@ name: Add to Project
 
 on:
   #pull_request_target:
-  pull_request:
-    types:
-      - opened
+  #pull_request:
+  #  types:
+  #    - opened
   issues:
     types:
       - opened
 
 jobs:
   add-to-project:
-    name: Add prs and issues to formulation project
+    name: Add issues to formulation project
     runs-on: ubuntu-latest
     steps:
       - uses: actions/add-to-project@v0.6.1
