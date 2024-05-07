@@ -13,7 +13,7 @@
 #define CFE_DEBUG 1
 
 #define INPUT_VAR_NAME_COUNT 5
-#define OUTPUT_VAR_NAME_COUNT 13
+#define OUTPUT_VAR_NAME_COUNT 14
 
 #define STATE_VAR_NAME_COUNT 94   // must match var_info array size
 
@@ -181,7 +181,8 @@ int j = 0;
 static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "RAIN_RATE",
         "DIRECT_RUNOFF",
-        "SURFACE_RUNOFF",
+        "GIUH_RUNOFF",
+	"NASH_RUNOFF",
         "NASH_LATERAL_RUNOFF",
         "DEEP_GW_TO_CHANNEL_FLUX",
 	"SOIL_TO_GW_FLUX",
@@ -207,6 +208,7 @@ static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
         "double",
       	"double",
 	"double",
+	"double",
 	"int"
 };
 
@@ -223,6 +225,7 @@ static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
         1,
         1,
         1,
+	1,
 	1
 };
 
@@ -238,6 +241,7 @@ static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
         "m",
         "m",
       	"m",
+	"m",
 	"m",
 	"none"
 };
@@ -255,6 +259,7 @@ static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
         0,
         0,
         0,
+	0,
 	0
 };
 
@@ -271,7 +276,8 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
         "node",
         "node",
         "node",
-	"node"
+	"node",
+	"none"
 };
 
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
@@ -1016,10 +1022,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
     /*------------------- surface runoff scheme -AJK----------------------------- */
     if(is_surface_runoff_scheme_set == FALSE) {
-#if CFE_DEBUG >= 1
-      printf("Config param 'surface_runoff_scheme' not found in config file\n");
-#endif
-      return BMI_FAILURE;
+      model->surface_runoff_scheme = GIUH;
     }
 
     // Used for parsing strings representing arrays of values below
@@ -1930,7 +1933,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
-    if (strcmp (name, "SURFACE_RUNOFF") == 0) {
+    if (strcmp (name, "GIUH_RUNOFF") == 0 || strcmp (name, "NASH_RUNOFF") == 0) {
         *dest = (void *) ((cfe_state_struct *)(self->data))->flux_surface_runoff_m;
         return BMI_SUCCESS;
     }
