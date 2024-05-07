@@ -1115,6 +1115,10 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
           model->nash_surface_params.nash_storage[j] = 0.0;
       }
 
+
+      // initialize default parameters
+      model->nash_surface_params.K_infiltration = 0.05;
+      model->nash_surface_params.retention_depth = 0.001; // usually in the range of 1-5 mm
     }
 
     /*------------------- surface runoff scheme END ----------------------------- */
