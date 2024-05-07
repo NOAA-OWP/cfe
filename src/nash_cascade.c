@@ -10,24 +10,24 @@ extern double nash_cascade(double flux_lat_m,int num_lateral_flow_nash_reservoir
                            double K_nash,double *nash_storage_arr)
 {
   //##############################################################
-  // Solve for the flow through the Nash cascade to delay the 
+  // Solve for the flow through the Nash cascade to delay the
   // arrival of the lateral flow into the channel
   //##############################################################
   // local vars
   int i;
   double outflow_m;
   static double Q[MAX_NUM_NASH_CASCADE];
-  
+
   //Loop through reservoirs
   for(i = 0; i < num_lateral_flow_nash_reservoirs; i++)
     {
       Q[i] = K_nash*nash_storage_arr[i];
       nash_storage_arr[i]  -= Q[i];
-      
+
       if (i==0) nash_storage_arr[i] += flux_lat_m;
       else      nash_storage_arr[i] +=  Q[i-1];
     }
-  
+
   /*  Get Qout */
   outflow_m = Q[num_lateral_flow_nash_reservoirs-1];
 
@@ -43,23 +43,30 @@ extern double nash_cascade(double flux_lat_m,int num_lateral_flow_nash_reservoir
 double nash_cascade_surface_runoff(double runoff_m, struct nash_cascade_parameters *nash_params)
 {
   //##############################################################
-  // Solve for the flow through the Nash cascade to delay the 
+  // Solve for the flow through the Nash cascade to delay the
   // arrival of the lateral flow into the channel
   //##############################################################
 
   int nsubsteps = nash_params->nsubsteps;
   int N_nash    = nash_params->N_nash;
   double K_nash = nash_params->K_nash;
+  double depth_r = nash_params->retention_depth;
+  double K_infil = nash_params->K_infiltration;
   // local vars
   double dt_h = 1.0; // model timestep [hour]
   double subdt = dt_h/nsubsteps;
   double dS = 0.0; // change in reservoir storage
+  double dS_infil = 0.0; // change in reservoir storage due to infiltration
+  double S  = 0.0;
   double Q_r; // discharge from reservoir
-  double Q_out; // discharge at the outlet (the last reservoir)
-  
-  double outflow_m = 0.0;
+  double Q_out; // discharge at the outlet (the last reservoir) per subtimestep
+  double Q_infil; // discharge from reservoirs to soil
+
+  double Q_to_channel_m = 0.0;  // total outflow to channel per timestep
+  double Q_to_soil_m    = 0.0;  // runon infiltration (losses from surface runoff to soil)
+  printf("nash: %lf \n", runoff_m);
   nash_params->nash_storage[0] += runoff_m;
-  
+
   //for (int i=0; i<2; i++)
   //    printf("before: %lf \n",  nash_params->nash_storage[i]);
   // Loop through number of sub-timesteps
@@ -68,23 +75,46 @@ double nash_cascade_surface_runoff(double runoff_m, struct nash_cascade_paramete
     //Loop through reservoirs
     for(int i = 0; i < N_nash; i++) {
 
-      Q_r = K_nash * nash_params->nash_storage[i]; // flow from reservoir i to i+1
-      dS  = Q_r * subdt;                       // storage change in reservoir i per subtimestep
-      nash_params->nash_storage[i] -= dS;          // updated storage in reservoir i
+      S = nash_params->nash_storage[i];
+
+      // first reservoir
+      if (i == 0 &&  S > depth_r)
+        S -= depth_r;
+      else if (i == 0)
+        S = 0.0;
+
+      Q_r = K_nash * S;                    // flow from reservoir i to i+1
+      dS  = fmin(Q_r * subdt, S);          // storage change in reservoir i per subtimestep
+      nash_params->nash_storage[i] -= dS;  // updated storage in reservoir i
 
       if(i < (N_nash-1))
-	nash_params->nash_storage[i+1] += dS;
+        nash_params->nash_storage[i+1] += dS;
       else
-	Q_out = Q_r;
-      
+        Q_out = Q_r;
+
+      //compute runon infiltration
+      Q_infil = K_infil * nash_params->nash_storage[i];
+      dS_infil = Q_infil * subdt;
+      if  (nash_params->nash_storage[i] >= dS_infil)
+        nash_params->nash_storage[i] = nash_params->nash_storage[i] - dS_infil;
+      else {
+        dS_infil = nash_params->nash_storage[i];
+        nash_params->nash_storage[i] = 0.0;
+      }
+
+      Q_to_soil_m += dS_infil;  // water volume that infiltrates per subtimestep from each reservoir
+
     }
-    
-    outflow_m += Q_out * subdt;  // Q_r at the end of N_nash loop is the discharge at the outlet
-    
+
+   Q_to_channel_m += Q_out * subdt;  // Q_r at the end of N_nash loop is the discharge at the outlet
+
   }
 
+  nash_params->runon_infiltration = Q_to_soil_m;
+  printf("Nash end = %lf %lf %lf \n", nash_params->runon_infiltration, Q_to_soil_m, Q_to_channel_m);
+  
   // Return the flow output
-  return (outflow_m);
+  return (Q_to_channel_m);
 
 }
 
