@@ -64,10 +64,10 @@ double nash_cascade_surface_runoff(double runoff_m, struct nash_cascade_paramete
 
   double Q_to_channel_m = 0.0;  // total outflow to channel per timestep
   double Q_to_soil_m    = 0.0;  // runon infiltration (losses from surface runoff to soil)
-  printf("nash: %lf \n", runoff_m);
+
   nash_params->nash_storage[0] += runoff_m;
 
-  //for (int i=0; i<2; i++)
+  // for (int i=0; i<2; i++)
   //    printf("before: %lf \n",  nash_params->nash_storage[i]);
   // Loop through number of sub-timesteps
   for (int ts = 0; ts < nsubsteps; ts++) {
@@ -110,8 +110,10 @@ double nash_cascade_surface_runoff(double runoff_m, struct nash_cascade_paramete
 
   }
 
+  // for (int i=0; i<2; i++)
+  //    printf("after: %lf \n",  nash_params->nash_storage[i]);
   nash_params->runon_infiltration = Q_to_soil_m;
-  printf("Nash end = %lf %lf %lf \n", nash_params->runon_infiltration, Q_to_soil_m, Q_to_channel_m);
+  //printf("Nash end = %lf %lf \n", nash_params->runon_infiltration, Q_to_channel_m);
   
   // Return the flow output
   return (Q_to_channel_m);
