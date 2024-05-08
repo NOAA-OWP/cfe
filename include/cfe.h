@@ -101,6 +101,7 @@ struct massbal
     double volstart            ;
     double vol_runoff          ;
     double vol_infilt          ;
+    double vol_runon_infilt    ;
     double vol_out_surface     ;
     double vol_end_surface     ;
     double vol_to_gw           ;
