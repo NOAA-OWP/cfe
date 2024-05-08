@@ -503,12 +503,14 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     /*--------------------------------------------------------*/
 
     /* ------------ Nash model struct -AJK ------------------ */
-    int is_surface_runoff_scheme_set    = FALSE;
-    int is_K_nash_surface_set           = FALSE;
-    int is_N_nash_surface_set           = FALSE;
-    int is_nsubsteps_nash_surface_set   = FALSE;
-    int is_nash_storage_surface_set     = FALSE;
-
+    int is_surface_runoff_scheme_set          = FALSE;
+    int is_K_nash_surface_set                 = FALSE;
+    int is_N_nash_surface_set                 = FALSE;
+    int is_nsubsteps_nash_surface_set         = FALSE;
+    int is_nash_storage_surface_set           = FALSE;
+    int is_K_infiltration_nash_surface_set    = FALSE;
+    int is_retention_depth_nash_surface_set   = FALSE;
+	
     char* nash_storage_surface_string_val;
     /*--------------------------------------------------------*/
 
@@ -786,22 +788,32 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
 	if (strcmp(param_key, "N_nash_surface") == 0) {
 	  model->nash_surface_params.N_nash = strtol(param_value, NULL,10);
-	  is_N_nash_surface_set     = TRUE;
+	  is_N_nash_surface_set             = TRUE;
 	  continue;
         }
         if (strcmp(param_key, "K_nash_surface") == 0) {
 	  model->nash_surface_params.K_nash = strtod(param_value, NULL);
-	  is_K_nash_surface_set     = TRUE;
+	  is_K_nash_surface_set             = TRUE;
 	  continue;
         }
 	if (strcmp(param_key, "nsubsteps_nash_surface") == 0) {
-	  model->nash_surface_params.nsubsteps  = strtol(param_value, NULL, 10);
-	  is_nsubsteps_nash_surface_set = TRUE;
+	  model->nash_surface_params.nsubsteps = strtol(param_value, NULL, 10);
+	  is_nsubsteps_nash_surface_set        = TRUE;
 	  continue;
         }
         if (strcmp(param_key, "nash_storage_surface") == 0) {
 	  nash_storage_surface_string_val = strdup(param_value);
 	  is_nash_storage_surface_set     = TRUE;
+	  continue;
+        }
+        if (strcmp(param_key, "Kinf_nash_surface") == 0) {
+	  model->nash_surface_params.K_infiltration = strtod(param_value, NULL);
+	  is_K_infiltration_nash_surface_set        = TRUE;
+	  continue;
+        }
+	if (strcmp(param_key, "retention_depth_nash_surface") == 0) {
+	  model->nash_surface_params.K_infiltration = strtod(param_value, NULL);
+	  is_retention_depth_nash_surface_set       = TRUE;
 	  continue;
         }
 
@@ -1079,17 +1091,30 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
       }
       if (is_nsubsteps_nash_surface_set == FALSE) {
 #if CFE_DEBUG >= 1
-      printf("Config param 'nsubsteps_nash_surface' not found in config file\n");
+	printf("Config param 'nsubsteps_nash_surface' not found in config file, default value is 10.\n");
 #endif
-      return BMI_FAILURE;
+      model->nash_surface_params.nsubsteps = 10;      // default value of the number of sub-timesteps  
       }
       if (is_nash_storage_surface_set == FALSE) {
 #if CFE_DEBUG >= 1
-      printf("Config param 'nash_storage_surface' not found in config file\n");
+	printf("Config param 'nash_storage_surface' not found in config file\n");
 #endif
       return BMI_FAILURE;
       }
-
+      if (is_K_infiltration_nash_surface_set == FALSE) {
+#if CFE_DEBUG >= 1
+	printf("Config param 'Kinf_nash_surface' not found in config file, default value is 0.05 [1/hr] \n");
+#endif
+      model->nash_surface_params.K_infiltration  = 0.05;    // used in the runon infiltration
+      }
+      if (is_retention_depth_nash_surface_set == FALSE) {
+#if CFE_DEBUG >= 1
+	printf("Config param 'retention_depth_nash_surface' not found in config file, default value is 1.0 [mm] \n");
+#endif
+	model->nash_surface_params.retention_depth = 0.001;  // usually in the range of 1-5 mm
+      }
+       
+	
       // Now handle the Nash storage array properly
       // First, when there are values, read how many there are, and have that override any set count value
       int value_count = count_delimited_values(nash_storage_surface_string_val, ",");
@@ -1117,8 +1142,9 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
 
       // initialize default parameters
-      model->nash_surface_params.K_infiltration = 0.05;
-      model->nash_surface_params.retention_depth = 0.0001; // usually in the range of 1-5 mm
+      
+     
+	    
     }
 
     /*------------------- surface runoff scheme END ----------------------------- */

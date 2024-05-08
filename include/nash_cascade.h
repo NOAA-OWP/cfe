@@ -14,8 +14,8 @@ struct nash_cascade_parameters {
     double retention_depth;    // parameter that represents retention depth process that is equivalent [m]
                                // to that used in WRF-Hydro
     double runon_infiltration; // infiltration losses from surface runoff water to soil (or riparian groundwater) [m/hr]
-    int is_riparian_gw;       // flag to turn on/off riparian groundwater (currently used in LASAM only)
-    double K_infiltration;    // Fraction of storage per hour that moves from reservoirs to soil (time constant); [1/hour]
+    int    is_riparian_gw;     // flag to turn on/off riparian groundwater (currently used in LASAM only)
+    double K_infiltration;     // Fraction of storage per hour that moves from reservoirs to soil (time constant); [1/hour]
 };
 
 extern double nash_cascade(double flux_lat_m,int num_lateral_flow_nash_reservoirs,
