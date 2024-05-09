@@ -26,7 +26,7 @@ static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
     "satpsi","wltsmc","alpha_fc","refkdt",
     "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
     "N_nash",
-    "Kinf_C0", "Kinf_C1"
+    "Kinf_c0", "Kinf_c1"
 };
 
 static const char *param_var_types[PARAM_VAR_NAME_COUNT] = {
