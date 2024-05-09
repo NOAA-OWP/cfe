@@ -809,13 +809,16 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 	  continue;
         }
         if (strcmp(param_key, "Kinf_nash_surface") == 0) {
-	  model->nash_surface_params.K_infiltration = strtod(param_value, NULL);
-	  is_K_infiltration_nash_surface_set        = TRUE;
+	  //model->nash_surface_params.K_infiltration = strtod(param_value, NULL);
+	  // Kinf = C0 + C1 * S, so if Kinf is provided in the config file, set C0 and C1 as folows:
+	  model->nash_surface_params.Kinf_c0 = strtod(param_value, NULL);
+	  model->nash_surface_params.Kinf_c1 = 0.0;
+	  is_K_infiltration_nash_surface_set = TRUE;
 	  continue;
         }
 	if (strcmp(param_key, "retention_depth_nash_surface") == 0) {
-	  model->nash_surface_params.K_infiltration = strtod(param_value, NULL);
-	  is_retention_depth_nash_surface_set       = TRUE;
+	  model->nash_surface_params.retention_depth = strtod(param_value, NULL);
+	  is_retention_depth_nash_surface_set        = TRUE;
 	  continue;
         }
 
@@ -1103,7 +1106,10 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 #if CFE_DEBUG >= 1
 	printf("Config param 'Kinf_nash_surface' not found in config file, default value is 0.05 [1/hr] \n");
 #endif
-	model->nash_surface_params.K_infiltration  = 0.05;    // used in the runon infiltration
+	// model->nash_surface_params.K_infiltration  = 0.05;   // used in the runon infiltration
+	// Kinf = C0 + C1 * S, so if Kinf is not provided the default values for C0 and C1 are set below,
+	model->nash_surface_params.Kinf_c0  = 0.05;      // set C0 = value
+	model->nash_surface_params.Kinf_c1  = 0.01;	 // set C1 = 0.0
       }
       if (is_retention_depth_nash_surface_set == FALSE) {
 #if CFE_DEBUG >= 1

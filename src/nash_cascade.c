@@ -51,17 +51,20 @@ double nash_cascade_surface_runoff(double runoff_m, struct nash_cascade_paramete
   int N_nash    = nash_params->N_nash;
   double K_nash = nash_params->K_nash;
   double depth_r = nash_params->retention_depth;
-  double K_infil = nash_params->K_infiltration;
+  //double K_infil = nash_params->K_infiltration;
+  double c0 = nash_params->Kinf_c0;
+  double c1 = nash_params->Kinf_c1;
+  
   // local vars
-  double dt_h = 1.0; // model timestep [hour]
+  double dt_h  = 1.0;             // model timestep [hour]
   double subdt = dt_h/nsubsteps;
-  double dS = 0.0; // change in reservoir storage
-  double dS_infil = 0.0; // change in reservoir storage due to infiltration
-  double S  = 0.0;
-  double Q_r; // discharge from reservoir
-  double Q_out; // discharge at the outlet (the last reservoir) per subtimestep
-  double Q_infil; // discharge from reservoirs to soil
-
+  double S     = 0.0;
+  double dS    = 0.0;            // change in reservoir storage
+  double dS_infil = 0.0;         // change in reservoir storage due to infiltration
+  double Q_r;                    // discharge from reservoir
+  double Q_out;                  // discharge at the outlet (the last reservoir) per subtimestep
+  double Q_infil;                // discharge from reservoirs to soil
+  double K_infil;                  // K infiltration = c0 + c1 * S
   double Q_to_channel_m = 0.0;  // total outflow to channel per timestep
   double Q_to_soil_m    = 0.0;  // runon infiltration (losses from surface runoff to soil)
 
@@ -93,8 +96,11 @@ double nash_cascade_surface_runoff(double runoff_m, struct nash_cascade_paramete
         Q_out = Q_r;
 
       //compute runon infiltration
+      K_infil = c0 + c1 * nash_params->nash_storage[i];
+      printf("N1: %lf %lf %lf %lf \n", c0, c1, K_infil, nash_params->nash_storage[i]);
       Q_infil = K_infil * nash_params->nash_storage[i];
       dS_infil = Q_infil * subdt;
+
       if  (nash_params->nash_storage[i] >= dS_infil)
         nash_params->nash_storage[i] = nash_params->nash_storage[i] - dS_infil;
       else {
