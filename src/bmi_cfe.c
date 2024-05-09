@@ -826,12 +826,16 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 	/*--------------------------------------------------------------------------*/
 	/* xinanjiang_dev: Need the option to run either runoff method in the config file,
 	 *//////////////////////////////////////////////////////////////////////////////
-	if (strcmp(param_key, "surface_water_partitioning_scheme") == 0) {
+	if (strcmp(param_key, "surface_water_partitioning_scheme") == 0 || strcmp(param_key, "surface_partitioning_scheme") == 0) {
 	  if (strcmp(param_value, "Schaake")==0 || strcmp(param_value, "schaake")==0 || strcmp(param_value,"1")==0 )
 	    model->infiltration_excess_params_struct.surface_water_partitioning_scheme = Schaake;
 	  if (strcmp(param_value, "Xinanjiang")==0 || strcmp(param_value, "xinanjiang")==0 || strcmp(param_value,"2")==0)
 	    model->infiltration_excess_params_struct.surface_water_partitioning_scheme = Xinanjiang;
 	  is_infiltration_excess_method_set = TRUE;
+
+	  if (strcmp(param_key, "surface_partitioning_scheme") == 0) {
+	    printf("WARNING: The name \"surface_partitioning_scheme\" in the config file will be deprecated; use the new name \"surface_water_partitioning_scheme\" instead. \n");
+	  }
 	  continue;
 	}
 	if (model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Xinanjiang) {  //Check that logical statement is correct
