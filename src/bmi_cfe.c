@@ -18,21 +18,23 @@
 #define STATE_VAR_NAME_COUNT 94   // must match var_info array size
 
 
-#define PARAM_VAR_NAME_COUNT 17
+#define PARAM_VAR_NAME_COUNT 19
 // NOTE: If you update the params, also update the unit test in ../test/main_unit_test_bmi.c
 static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
     "maxsmc", "satdk", "slope", "b", "Klf",
     "Kn", "Cgw", "expon", "max_gw_storage",
     "satpsi","wltsmc","alpha_fc","refkdt",
     "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
-    "N_nash"
+    "N_nash",
+    "Kinf_C0", "Kinf_C1"
 };
 
 static const char *param_var_types[PARAM_VAR_NAME_COUNT] = {
     "double", "double", "double", "double", "double",
     "double", "double", "double", "double",
     "double", "double", "double", "double",
-    "double","double","double",
+    "double","double","double", "double",
+    "double",
     "int"
 };
 //----------------------------------------------
@@ -284,33 +286,33 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
 static const char *input_var_names[INPUT_VAR_NAME_COUNT] = {
         "atmosphere_water__liquid_equivalent_precipitation_rate",
         "water_potential_evaporation_flux",
-	    "ice_fraction_schaake",
-	    "ice_fraction_xinanjiang",
-	    "soil_moisture_profile"
+	"ice_fraction_schaake",
+	"ice_fraction_xinanjiang",
+	"soil_moisture_profile"
 };
 
 static const char *input_var_types[INPUT_VAR_NAME_COUNT] = {
         "double",
         "double",
-	    "double",
-	    "double",
-	    "double"
+	"double",
+	"double",
+	"double"
 };
 
 static const char *input_var_units[INPUT_VAR_NAME_COUNT] = {
         "mm h-1", //"atmosphere_water__liquid_equivalent_precipitation_rate"
         "m s-1",   //"water_potential_evaporation_flux"
-	    "m",    // ice fraction in meters
-	    "none",     // ice fraction [-]
-	    "none" // soil moisture profile is in decimal fraction -rlm
+	"m",    // ice fraction in meters
+	"none",     // ice fraction [-]
+	"none" // soil moisture profile is in decimal fraction -rlm
 };
 
 static const int input_var_item_count[INPUT_VAR_NAME_COUNT] = {
         1,
         1,
-	    1,
-	    1,
-	    1
+	1,
+	1,
+	1
 };
 
 static const char input_var_grids[INPUT_VAR_NAME_COUNT] = {
@@ -774,7 +776,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 	  }
 	}
 
-    /*--------------------------------------------------------------------------*/
+	/*--------------------------------------------------------------------------*/
 
 	/* Nash cascade based surface runoff */
 	if (strcmp(param_key, "surface_runoff_scheme") == 0) {
@@ -818,54 +820,50 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         }
 
 
-    /*--------------------------------------------------------------------------*/
+	/*--------------------------------------------------------------------------*/
+	/* xinanjiang_dev: Need the option to run either runoff method in the config file,
+	 *//////////////////////////////////////////////////////////////////////////////
+	if (strcmp(param_key, "surface_water_partitioning_scheme") == 0) {
+	  if (strcmp(param_value, "Schaake")==0 || strcmp(param_value, "schaake")==0 || strcmp(param_value,"1")==0 )
+	    model->infiltration_excess_params_struct.surface_water_partitioning_scheme = Schaake;
+	  if (strcmp(param_value, "Xinanjiang")==0 || strcmp(param_value, "xinanjiang")==0 || strcmp(param_value,"2")==0)
+	    model->infiltration_excess_params_struct.surface_water_partitioning_scheme = Xinanjiang;
+	  is_infiltration_excess_method_set = TRUE;
+	  continue;
+	}
+	if (model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Xinanjiang) {  //Check that logical statement is correct
+	  if (strcmp(param_key, "a_Xinanjiang_inflection_point_parameter") == 0){
+	    model->infiltration_excess_params_struct.a_Xinanjiang_inflection_point_parameter = strtod(param_value, NULL);
+	    is_a_Xinanjiang_inflection_point_parameter_set = TRUE;
+	  }
+	  if (strcmp(param_key, "b_Xinanjiang_shape_parameter") == 0) {
+	    model->infiltration_excess_params_struct.b_Xinanjiang_shape_parameter = strtod(param_value, NULL);
+	    is_b_Xinanjiang_shape_parameter_set = TRUE;
+	  }
+	  if (strcmp(param_key, "x_Xinanjiang_shape_parameter") == 0) {
+	    model->infiltration_excess_params_struct.x_Xinanjiang_shape_parameter = strtod(param_value, NULL);
+	    is_x_Xinanjiang_shape_parameter_set = TRUE;
+	  }
+	  if (strcmp(param_key, "urban_decimal_fraction") == 0) {
+	    model->infiltration_excess_params_struct.urban_decimal_fraction = strtod(param_value, NULL);
+	    is_urban_decimal_fraction_set = TRUE;
+	  }
+	}
 
-    /* xinanjiang_dev: Need the option to run either runoff method in the config file,
-     *//////////////////////////////////////////////////////////////////////////////
-    if (strcmp(param_key, "surface_water_partitioning_scheme") == 0) {
-      if (strcmp(param_value, "Schaake")==0 || strcmp(param_value, "schaake")==0 || strcmp(param_value,"1")==0 )
-        model->infiltration_excess_params_struct.surface_water_partitioning_scheme = Schaake;
-      if (strcmp(param_value, "Xinanjiang")==0 || strcmp(param_value, "xinanjiang")==0 || strcmp(param_value,"2")==0)
-        model->infiltration_excess_params_struct.surface_water_partitioning_scheme = Xinanjiang;
-      is_infiltration_excess_method_set = TRUE;
-      continue;
-    }
-    if (model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Xinanjiang) {  //Check that logical statement is correct
-      if (strcmp(param_key, "a_Xinanjiang_inflection_point_parameter") == 0){
-        model->infiltration_excess_params_struct.a_Xinanjiang_inflection_point_parameter = strtod(param_value, NULL);
-        is_a_Xinanjiang_inflection_point_parameter_set = TRUE;
-      }
-      if (strcmp(param_key, "b_Xinanjiang_shape_parameter") == 0) {
-        model->infiltration_excess_params_struct.b_Xinanjiang_shape_parameter = strtod(param_value, NULL);
-        is_b_Xinanjiang_shape_parameter_set = TRUE;
-      }
-      if (strcmp(param_key, "x_Xinanjiang_shape_parameter") == 0) {
-        model->infiltration_excess_params_struct.x_Xinanjiang_shape_parameter = strtod(param_value, NULL);
-        is_x_Xinanjiang_shape_parameter_set = TRUE;
-      }
-      if (strcmp(param_key, "urban_decimal_fraction") == 0) {
-        model->infiltration_excess_params_struct.urban_decimal_fraction = strtod(param_value, NULL);
-	is_urban_decimal_fraction_set = TRUE;
-      }
-    }
+	/* Ice fraction: if set to true and runoff scheme is Schaake, additional parameters are needed in the config file,
+	 *//////////////////////////////////////////////////////////////////////////////
+	if (strcmp(param_key, "is_sft_coupled") == 0) {
+	  if ( strcmp(param_value, "true")==0 || strcmp(param_value, "True")==0 || strcmp(param_value,"1")==0)
+	    is_sft_coupled_set = TRUE;
 
-    /* Ice fraction: if set to true and runoff scheme is Schaake, additional parameters are needed in the config file,
-     *//////////////////////////////////////////////////////////////////////////////
-    if (strcmp(param_key, "is_sft_coupled") == 0) {
-      if ( strcmp(param_value, "true")==0 || strcmp(param_value, "True")==0 || strcmp(param_value,"1")==0)
-	is_sft_coupled_set = TRUE;
-
-      continue;
-    }
-    
-    continue;
-    }
-
+	  continue;
+	}
+	
 	if (is_sft_coupled_set == TRUE && model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Schaake) {
 	  if (strcmp(param_key, "ice_content_threshold") == 0) {
 	    model->infiltration_excess_params_struct.ice_content_threshold = strtod(param_value, NULL);
 	    is_ice_content_threshold_set = TRUE;
-	     // Check if units are present and print warning if missing from config file
+	    // Check if units are present and print warning if missing from config file
             if ((param_units == NULL) || (strlen(param_units) < 1)) {
 #if CFE_DEBUG >= 1
 	      printf ("WARNING: [units] expected for '%s' in config file \n", param_key);
@@ -874,238 +872,238 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 	  }
 	}
     }
-
+    
     if (is_forcing_file_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'forcing_file' not found in config file\n");
+      printf("Config param 'forcing_file' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
     if (is_soil_params__depth_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'soil_params.depth' not found in config file\n");
+      printf("Config param 'soil_params.depth' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
     if (is_soil_params__bb_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'soil_params.bb' not found in config file\n");
+      printf("Config param 'soil_params.bb' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
-
+    
     if (is_soil_params__satdk_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'soil_params.satdk' not found in config file\n");
+      printf("Config param 'soil_params.satdk' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
     if (is_soil_params__satpsi_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'soil_params.satpsi' not found in config file\n");
+      printf("Config param 'soil_params.satpsi' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
     if (is_soil_params__slop_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'soil_params.slop' not found in config file\n");
+      printf("Config param 'soil_params.slop' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
     if (is_soil_params__smcmax_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'soil_params.smcmax' not found in config file\n");
+      printf("Config param 'soil_params.smcmax' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
     if (is_soil_params__wltsmc_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'soil_params.wltsmc' not found in config file\n");
+      printf("Config param 'soil_params.wltsmc' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
     if (is_soil_params__expon_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'soil_params.expon' not found in config file, defaulting to 1 (linear)\n");
+      printf("Config param 'soil_params.expon' not found in config file, defaulting to 1 (linear)\n");
 #endif
-        model->soil_reservoir.exponent_primary = 1.0;
-        //is_soil_params__expon_set == TRUE;
-        // Don't return BMI_FAILURE, this is a optional config
-        //return BMI_FAILURE;
+      model->soil_reservoir.exponent_primary = 1.0;
+      //is_soil_params__expon_set == TRUE;
+      // Don't return BMI_FAILURE, this is a optional config
+      //return BMI_FAILURE;
     }
     if (is_soil_params__expon2_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'soil_params.expon_secondary' not found in config file, defaulting to 1 (linear)\n");
+      printf("Config param 'soil_params.expon_secondary' not found in config file, defaulting to 1 (linear)\n");
 #endif
-        model->soil_reservoir.exponent_secondary = 1.0;
-        // Don't return BMI_FAILURE, this is a optional config
-        //return BMI_FAILURE;
+      model->soil_reservoir.exponent_secondary = 1.0;
+      // Don't return BMI_FAILURE, this is a optional config
+      //return BMI_FAILURE;
     }
     if (is_Cgw_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'Cgw' not found in config file\n");
+      printf("Config param 'Cgw' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
     if (is_expon_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'expon' not found in config file\n");
+      printf("Config param 'expon' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
     if (is_alpha_fc_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'alpha_fc' not found in config file\n");
+      printf("Config param 'alpha_fc' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
     if (is_soil_storage_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'soil_storage' not found in config file\n");
+      printf("Config param 'soil_storage' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
     if (is_K_nash_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'K_nash' not found in config file\n");
+      printf("Config param 'K_nash' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
     if (is_K_lf_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'K_lf' not found in config file\n");
+      printf("Config param 'K_lf' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
     if (is_gw_max_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'max_gw_storage' not found in config file\n");
+      printf("Config param 'max_gw_storage' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
     if (is_gw_storage_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'gw_storage' not found in config file\n");
+      printf("Config param 'gw_storage' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
     if (is_num_timesteps_set == FALSE && strcmp(model->forcing_file, "BMI")) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'num_timesteps' not found in config file\n");
+      printf("Config param 'num_timesteps' not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
     if (is_verbosity_set == FALSE) {
-        printf("Config param 'verbosity' not found in config file\n");
-        printf("setting verbosity to a high value\n");
-        model->verbosity = 10;
-        return BMI_FAILURE;
+      printf("Config param 'verbosity' not found in config file\n");
+      printf("setting verbosity to a high value\n");
+      model->verbosity = 10;
+      return BMI_FAILURE;
     }
     if (is_infiltration_excess_method_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param \"surface_water_partitioning_scheme\" not found in config file\n");
+      printf("Config param \"surface_water_partitioning_scheme\" not found in config file\n");
 #endif
-        return BMI_FAILURE;
+      return BMI_FAILURE;
     }
-/* xinanjiang_dev*/
+    /* xinanjiang_dev*/
     if(model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Xinanjiang){
-        if (is_a_Xinanjiang_inflection_point_parameter_set == FALSE) {
+      if (is_a_Xinanjiang_inflection_point_parameter_set == FALSE) {
 #if CFE_DEBUG >= 1
-            printf("Config param 'a_Xinanjiang_inflection_point_parameter' not found in config file\n");
+	printf("Config param 'a_Xinanjiang_inflection_point_parameter' not found in config file\n");
 #endif
-            return BMI_FAILURE;
-        }
-        if (is_b_Xinanjiang_shape_parameter_set == FALSE) {
+	return BMI_FAILURE;
+      }
+      if (is_b_Xinanjiang_shape_parameter_set == FALSE) {
 #if CFE_DEBUG >= 1
-            printf("Config param 'b_Xinanjiang_shape_parameter' not found in config file\n");
+	printf("Config param 'b_Xinanjiang_shape_parameter' not found in config file\n");
 #endif
-            return BMI_FAILURE;
-        }
-        if (is_x_Xinanjiang_shape_parameter_set == FALSE) {
+	return BMI_FAILURE;
+      }
+      if (is_x_Xinanjiang_shape_parameter_set == FALSE) {
 #if CFE_DEBUG >= 1
-            printf("Config param 'x_Xinanjiang_shape_parameter' not found in config file\n");
+	printf("Config param 'x_Xinanjiang_shape_parameter' not found in config file\n");
 #endif
-            return BMI_FAILURE;
-        }
-	if (is_urban_decimal_fraction_set == FALSE) {
+	return BMI_FAILURE;
+      }
+      if (is_urban_decimal_fraction_set == FALSE) {
 #if CFE_DEBUG >= 1
-	  printf("Config param 'urban_decimal_fraction' not found in config file\n");
+	printf("Config param 'urban_decimal_fraction' not found in config file\n");
 #endif
-	  return BMI_FAILURE;
-	}
+	return BMI_FAILURE;
+      }
     }
 
     /*------------------- surface runoff scheme -AJK----------------------------- */
     if(is_surface_runoff_scheme_set == FALSE) {
       model->surface_runoff_scheme = GIUH;
     }
-
+    
     // Used for parsing strings representing arrays of values below
     char *copy, *value;
-
+    
     if (model->surface_runoff_scheme == GIUH) {
-
+      
       // Handle GIUH ordinates, bailing if they were not provided
       if (is_giuh_originates_string_val_set == FALSE) {
 #if CFE_DEBUG >= 1
         printf("GIUH ordinate string not set!\n");
 #endif
         return BMI_FAILURE;
-    }
+      }
 #if CFE_DEBUG >= 1
-    printf("GIUH ordinates string value found in config ('%s')\n", giuh_originates_string_val);
+      printf("GIUH ordinates string value found in config ('%s')\n", giuh_originates_string_val);
 #endif
-
-    model->num_giuh_ordinates = count_delimited_values(giuh_originates_string_val, ",");
-
+      
+      model->num_giuh_ordinates = count_delimited_values(giuh_originates_string_val, ",");
+      
 #if CFE_DEBUG >= 1
-    printf("Counted number of GIUH ordinates (%d)\n", model->num_giuh_ordinates);
+      printf("Counted number of GIUH ordinates (%d)\n", model->num_giuh_ordinates);
 #endif
-
-    if (model->num_giuh_ordinates < 1)
+      
+      if (model->num_giuh_ordinates < 1)
         return BMI_FAILURE;
-
-    model->giuh_ordinates = malloc(sizeof(double) * model->num_giuh_ordinates);
-    // Work with a copy of the original pointer so that the original remains unchanged and can be freed at end
-    copy = giuh_originates_string_val;
-    // Now iterate back through and get the values
-    int i = 0;
-    while ((value = strsep(&copy, ",")) != NULL)
+      
+      model->giuh_ordinates = malloc(sizeof(double) * model->num_giuh_ordinates);
+      // Work with a copy of the original pointer so that the original remains unchanged and can be freed at end
+      copy = giuh_originates_string_val;
+      // Now iterate back through and get the values
+      int i = 0;
+      while ((value = strsep(&copy, ",")) != NULL)
         model->giuh_ordinates[i++] = strtod(value, NULL);
-    // Finally, free the original string memory
-    free(giuh_originates_string_val);
-
+      // Finally, free the original string memory
+      free(giuh_originates_string_val);
+      
     }
     else if(model->surface_runoff_scheme == NASH_CASCADE) {
       if (is_N_nash_surface_set == FALSE) {
 #if CFE_DEBUG >= 1
-      printf("Config param 'N_nash_surface' not found in config file\n");
+	printf("Config param 'N_nash_surface' not found in config file\n");
 #endif
-      return BMI_FAILURE;
+	return BMI_FAILURE;
       }
       if (is_K_nash_surface_set == FALSE) {
 #if CFE_DEBUG >= 1
-      printf("Config param 'K_nash_surface' not found in config file\n");
+	printf("Config param 'K_nash_surface' not found in config file\n");
 #endif
-      return BMI_FAILURE;
+	return BMI_FAILURE;
       }
       if (is_nsubsteps_nash_surface_set == FALSE) {
 #if CFE_DEBUG >= 1
 	printf("Config param 'nsubsteps_nash_surface' not found in config file, default value is 10.\n");
 #endif
-      model->nash_surface_params.nsubsteps = 10;      // default value of the number of sub-timesteps  
+	model->nash_surface_params.nsubsteps = 10;      // default value of the number of sub-timesteps  
       }
       if (is_nash_storage_surface_set == FALSE) {
 #if CFE_DEBUG >= 1
 	printf("Config param 'nash_storage_surface' not found in config file\n");
 #endif
-      return BMI_FAILURE;
+	return BMI_FAILURE;
       }
       if (is_K_infiltration_nash_surface_set == FALSE) {
 #if CFE_DEBUG >= 1
 	printf("Config param 'Kinf_nash_surface' not found in config file, default value is 0.05 [1/hr] \n");
 #endif
-      model->nash_surface_params.K_infiltration  = 0.05;    // used in the runon infiltration
+	model->nash_surface_params.K_infiltration  = 0.05;    // used in the runon infiltration
       }
       if (is_retention_depth_nash_surface_set == FALSE) {
 #if CFE_DEBUG >= 1
@@ -1113,14 +1111,14 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 #endif
 	model->nash_surface_params.retention_depth = 0.001;  // usually in the range of 1-5 mm
       }
-       
-	
+      
+      
       // Now handle the Nash storage array properly
       // First, when there are values, read how many there are, and have that override any set count value
       int value_count = count_delimited_values(nash_storage_surface_string_val, ",");
-
+      
       assert (value_count == model->nash_surface_params.N_nash);
-
+      
       if (value_count > 2) {
         model->nash_surface_params.nash_storage = malloc(sizeof(double) * value_count);
         // Work with a copy of the original pointer so that the original remains unchanged and can be freed at end
@@ -1129,7 +1127,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         int k = 0;
         while ((value = strsep(&copy, ",")) != NULL)
           model->nash_surface_params.nash_storage[k++] = strtod(value, NULL);
-
+	
         // Make sure at the end to free this too, since it was a copy
         free(nash_storage_surface_string_val);
       }
@@ -1139,39 +1137,36 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         for (j = 0; j < model->nash_surface_params.N_nash; j++)
           model->nash_surface_params.nash_storage[j] = 0.0;
       }
-
-
-      // initialize default parameters
       
-     
-	    
+      
+      // initialize default parameters	    
     }
 
     /*------------------- surface runoff scheme END ----------------------------- */
 
     if(model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Schaake) {
-        model->infiltration_excess_params_struct.Schaake_adjusted_magic_constant_by_soil_type = model->NWM_soil_params.refkdt * model->NWM_soil_params.satdk / 0.000002;
+      model->infiltration_excess_params_struct.Schaake_adjusted_magic_constant_by_soil_type = model->NWM_soil_params.refkdt * model->NWM_soil_params.satdk / 0.000002;
 
 #if CFE_DEBUG >= 1
-    printf("Schaake Magic Constant calculated\n");
+      printf("Schaake Magic Constant calculated\n");
 #endif
     }
-
+    
     if (is_sft_coupled_set == TRUE && model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Schaake) {
-
+      
       if(!is_ice_content_threshold_set) {
 #if CFE_DEBUG >= 1
 	printf("is_sft_coupled and Schaake scheme are set to TRUE but param 'ice_fraction_threshold' not found in config file\n");
 	exit(-9);
 #endif
       }
-
+      
     }
-
+    
     // set sft_coupled flag to false if the parameter is not provided in the config file.
     model->soil_reservoir.is_sft_coupled = (is_sft_coupled_set == TRUE) ? TRUE : FALSE;
-
-
+    
+    
     /*------------------- Root zone AET development -rlm----------------------------- */
     if (is_aet_rootzone_set == TRUE ) {
       if (is_max_rootzone_layer_set == FALSE) {
@@ -1186,38 +1181,38 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 #endif
         return BMI_FAILURE;
       }
-
+      
 #if CFE_DEBUG >=1
       printf("Soil layer depths string values found in config ('%d')\n", is_soil_layer_depths_string_val_set);
 #endif
-
+      
       model->soil_reservoir.n_soil_layers = lround(count_delimited_values(soil_layer_depths_string_val, ","));
       printf("n_soil_layers set in bmi_cfe.c: %d\n", model->soil_reservoir.n_soil_layers);
-
+      
 #if CFE_DEBUG >= 1
       printf("Counted number of soil depths (%d)\n", model->soil_reservoir.n_soil_layers);
 #endif
-
+      
       if (model->soil_reservoir.n_soil_layers < 1)
 	return BMI_FAILURE;
-
+      
       model->soil_reservoir.soil_layer_depths_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers + 1));
       copy = soil_layer_depths_string_val;
-
+      
       i = 1;
       while((value = strsep(&copy, ",")) != NULL) {
         model->soil_reservoir.soil_layer_depths_m[i++] = strtod(value, NULL);
       }
-
+      
       free(soil_layer_depths_string_val);
-
+      
       //Check that the last depth read in from the cfe config file (soil_layer_depths) matches the total depth (soil_params.depth)
       //from the cfe config file.
       if(model->NWM_soil_params.D != model->soil_reservoir.soil_layer_depths_m[model->soil_reservoir.n_soil_layers]){
         printf("WARNING: soil_params.depth is not equal to the last soil layer depth in the CFE config file!\n");
         return BMI_FAILURE;
       }
-
+      
     }
 
     // Calculate the thickness (delta) of each soil layer
@@ -1859,15 +1854,6 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         *dest = (void*)&cfe_ptr->gw_reservoir.storage_max_m;
         return BMI_SUCCESS;
     }
-/**********Parameter Derived from config file - root zone adjusted AET development - rlm ***********/
-    if (strcmp (name, "soil__num_cells") == 0) {
-        cfe_state_struct *cfe_ptr;
-        cfe_ptr = (cfe_state_struct *) self->data;
-        *dest = (void*)&cfe_ptr->soil_reservoir.n_soil_layers;
-        return BMI_SUCCESS;
-    }
-
-/**************************************************************************************************/
 
     if (strcmp (name, "satpsi") == 0) {
         cfe_state_struct *cfe_ptr;
@@ -1923,6 +1909,20 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
+    if (strcmp (name, "Kinf_c0") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->nash_surface_params.Kinf_c0;
+        return BMI_SUCCESS;
+    }
+
+    if (strcmp (name, "Kinf_c1") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->nash_surface_params.Kinf_c1;
+        return BMI_SUCCESS;
+    }
+      
 
     /***********************************************************/
     /***********    OUTPUT   ***********************************/
@@ -2038,12 +2038,21 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
-//--------------Root zone adjusted AET development -rlm -ajk -------
+    /**************************************************************************************************/
+    /**********Parameter Derived from config file - root zone adjusted AET development - rlm ***********/
+    if (strcmp (name, "soil__num_cells") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->soil_reservoir.n_soil_layers;
+        return BMI_SUCCESS;
+    }
+
+    //--------------Root zone adjusted AET development -rlm -ajk -------
     if (strcmp (name, "soil_moisture_profile") == 0) {
       *dest = (void *) ((cfe_state_struct *)(self->data))->soil_reservoir.smc_profile;
       return BMI_SUCCESS;
     }
-//-------------------------------------------------------------------
+    //-------------------------------------------------------------------
 
     return BMI_FAILURE;
 }
