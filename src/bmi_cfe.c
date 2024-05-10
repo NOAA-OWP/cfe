@@ -181,7 +181,6 @@ int j = 0;
 static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "RAIN_RATE",
         "GIUH_RUNOFF",
-	"NASH_RUNOFF",
         "INFILTRATION_EXCESS",
         "DIRECT_RUNOFF",
         "NASH_LATERAL_RUNOFF",
@@ -1907,7 +1906,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
     }
 
     if (strcmp (name, "GIUH_RUNOFF") == 0 || strcmp (name, "NASH_RUNOFF") == 0 || strcmp (name, "DIRECT_RUNOFF") == 0) {
-        *dest = (void *) ((cfe_state_struct *)(self->data))->flux_surface_runoff_m;
+        *dest = (void *) ((cfe_state_struct *)(self->data))->flux_direct_runoff_m;
         return BMI_SUCCESS;
     }
 
