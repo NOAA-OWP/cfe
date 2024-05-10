@@ -1949,7 +1949,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
-    if (strcmp (name, "GIUH_RUNOFF") == 0 || strcmp (name, "NASH_RUNOFF") == 0 || strcmp (name, "DIRECT_RUNOFF") == 0) {
+    if (strcmp (name, "GIUH_RUNOFF") == 0 || strcmp (name, "DIRECT_RUNOFF") == 0) {
         *dest = (void *) ((cfe_state_struct *)(self->data))->flux_direct_runoff_m;
         return BMI_SUCCESS;
     }
