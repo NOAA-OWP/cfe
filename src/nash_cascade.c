@@ -70,8 +70,6 @@ double nash_cascade_surface_runoff(double runoff_m, struct nash_cascade_paramete
 
   nash_params->nash_storage[0] += runoff_m;
 
-  // for (int i=0; i<2; i++)
-  //    printf("before: %lf \n",  nash_params->nash_storage[i]);
   // Loop through number of sub-timesteps
   for (int ts = 0; ts < nsubsteps; ts++) {
 
@@ -97,7 +95,6 @@ double nash_cascade_surface_runoff(double runoff_m, struct nash_cascade_paramete
 
       //compute runon infiltration
       K_infil = c0 + c1 * nash_params->nash_storage[i];
-      printf("N1: %lf %lf %lf %lf \n", c0, c1, K_infil, nash_params->nash_storage[i]);
       Q_infil = K_infil * nash_params->nash_storage[i];
       dS_infil = Q_infil * subdt;
 
@@ -116,10 +113,7 @@ double nash_cascade_surface_runoff(double runoff_m, struct nash_cascade_paramete
 
   }
 
-  // for (int i=0; i<2; i++)
-  //    printf("after: %lf \n",  nash_params->nash_storage[i]);
   nash_params->runon_infiltration = Q_to_soil_m;
-  //printf("Nash end = %lf %lf \n", nash_params->runon_infiltration, Q_to_channel_m);
   
   // Return the flow output
   return (Q_to_channel_m);
