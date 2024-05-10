@@ -25,8 +25,8 @@ static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
     "Kn", "Cgw", "expon", "max_gw_storage",
     "satpsi","wltsmc","alpha_fc","refkdt",
     "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
-    "N_nash",
-    "Kinf_c0", "Kinf_c1"
+    "Kinf_c0", "Kinf_c1",
+    "N_nash"
 };
 
 static const char *param_var_types[PARAM_VAR_NAME_COUNT] = {
@@ -1113,7 +1113,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 	// model->nash_surface_params.K_infiltration  = 0.05;   // used in the runon infiltration
 	// Kinf = C0 + C1 * S, so if Kinf is not provided the default values for C0 and C1 are set below,
 	model->nash_surface_params.Kinf_c0  = 0.05;      // set C0 = value
-	model->nash_surface_params.Kinf_c1  = 0.01;	 // set C1 = 0.0
+	model->nash_surface_params.Kinf_c1  = 0.0;	 // set C1 = 0.0
       }
       if (is_retention_depth_nash_surface_set == FALSE) {
 #if CFE_DEBUG >= 1
