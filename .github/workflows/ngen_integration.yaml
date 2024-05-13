@@ -84,5 +84,5 @@ jobs:
       - name: Run Ngen Test for CFE Couple with PET
         run: |
           mv ${{ steps.ngen_id1.outputs.build-dir }} ./ngen-build/
-          inputfile='extern/cfe/cfe/realizations/realization_cfe_pet.json'
+          inputfile='extern/cfe/cfe/realizations/realization_cfe_pet_surfgiuh.json'
           ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
