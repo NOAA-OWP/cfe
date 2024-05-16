@@ -40,7 +40,8 @@ extern double nash_cascade(double flux_lat_m,int num_lateral_flow_nash_reservoir
 //##############################################################
 //##############   NASH CASCADE SURFACE RUNOFF  ################
 //##############################################################
-double nash_cascade_surface_runoff(double runoff_m, struct nash_cascade_parameters *nash_params)
+double nash_cascade_surface_runoff(double runoff_m, double soil_storage_deficit_m,
+				   struct nash_cascade_parameters *nash_params)
 {
   //##############################################################
   // Solve for the flow through the Nash cascade to delay the
@@ -51,9 +52,7 @@ double nash_cascade_surface_runoff(double runoff_m, struct nash_cascade_paramete
   int N_nash    = nash_params->N_nash;
   double K_nash = nash_params->K_nash;
   double depth_r = nash_params->retention_depth;
-  //double K_infil = nash_params->K_infiltration;
-  double c0 = nash_params->Kinf_c0;
-  double c1 = nash_params->Kinf_c1;
+  double K_infil = nash_params->K_infiltration;
   
   // local vars
   double dt_h  = 1.0;             // model timestep [hour]
@@ -64,10 +63,11 @@ double nash_cascade_surface_runoff(double runoff_m, struct nash_cascade_paramete
   double Q_r;                    // discharge from reservoir
   double Q_out;                  // discharge at the outlet (the last reservoir) per subtimestep
   double Q_infil;                // discharge from reservoirs to soil
-  double K_infil;                  // K infiltration = c0 + c1 * S
   double Q_to_channel_m = 0.0;  // total outflow to channel per timestep
   double Q_to_soil_m    = 0.0;  // runon infiltration (losses from surface runoff to soil)
-
+  double soil_deficit_m = soil_storage_deficit_m; // local variable to track the soil storage deficit
+  double infil_m;
+  
   nash_params->nash_storage[0] += runoff_m;
 
   // Loop through number of sub-timesteps
@@ -76,9 +76,44 @@ double nash_cascade_surface_runoff(double runoff_m, struct nash_cascade_paramete
     //Loop through reservoirs
     for(int i = 0; i < N_nash; i++) {
 
+      // First: infiltration capacity should be satisfied before routing water through Nash reservoirs
+
+      // compute runon infiltration
+      Q_infil = K_infil * nash_params->nash_storage[i];
+      infil_m = Q_infil * subdt;
+
+      // case 1: soil_deficit greater than infil_m, all water can infiltrate, and soil_deficit decreases
+      // case 2: soil_deficit less than infil_m, portion of water can infiltrate, soil_deficit gets zero
+      // case 3: soil_deficit is zero, no infiltration
+
+      // determine the right amount of infiltrated water based on soil deficit
+      if (soil_deficit_m > 0.0 && soil_deficit_m > infil_m) {
+	soil_deficit_m -= infil_m;           // update soil deficit for the next subtimstep iteration
+      }
+      else if (soil_deficit_m > 0.0) {
+	infil_m = soil_deficit_m;
+	soil_deficit_m = 0.0; 
+      }
+      else {
+	infil_m = 0.0; // if got here, then soil is fully saturated, so no infiltration
+      }
+
+      // update nash storage (subtract infiltrated water)
+      if  (nash_params->nash_storage[i] >= infil_m)
+        nash_params->nash_storage[i] = nash_params->nash_storage[i] - infil_m;
+      else {
+        infil_m = nash_params->nash_storage[i];
+        nash_params->nash_storage[i] = 0.0;
+      }
+
+
+      Q_to_soil_m += infil_m;  // water volume that infiltrates per subtimestep from each reservoir
+
+      /*=========================================================================================*/
+      // Second: time to route water through Nash reservoirs
       S = nash_params->nash_storage[i];
 
-      // first reservoir
+      // determine the amount of surface water available for routing from the first reservoir
       if (i == 0 &&  S > depth_r)
         S -= depth_r;
       else if (i == 0)
@@ -92,21 +127,7 @@ double nash_cascade_surface_runoff(double runoff_m, struct nash_cascade_paramete
         nash_params->nash_storage[i+1] += dS;
       else
         Q_out = Q_r;
-
-      //compute runon infiltration
-      K_infil = c0 + c1 * nash_params->nash_storage[i];
-      Q_infil = K_infil * nash_params->nash_storage[i];
-      dS_infil = Q_infil * subdt;
-
-      if  (nash_params->nash_storage[i] >= dS_infil)
-        nash_params->nash_storage[i] = nash_params->nash_storage[i] - dS_infil;
-      else {
-        dS_infil = nash_params->nash_storage[i];
-        nash_params->nash_storage[i] = 0.0;
-      }
-
-      Q_to_soil_m += dS_infil;  // water volume that infiltrates per subtimestep from each reservoir
-
+      
     }
 
    Q_to_channel_m += Q_out * subdt;  // Q_r at the end of N_nash loop is the discharge at the outlet

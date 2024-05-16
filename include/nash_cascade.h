@@ -11,18 +11,17 @@ struct nash_cascade_parameters {
   double K_nash;             // Fraction of storage per hour that moves from one reservoir to the next (time constant); [1/hour]
   int    nsubsteps;          // the number of substeps that each dt is divided into
   double *nash_storage;      // storage array nash cascade reservoirs; [m]
-  double retention_depth;    // parameter that represents retention depth process that is equivalent [m]
-  // to that used in WRF-Hydro
+  double retention_depth;    /* parameter that represents retention depth process that is equivalent [m]
+				to that used in WRF-Hydro */
   double runon_infiltration; // infiltration losses from surface runoff water to soil (or riparian groundwater) [m/hr]
   int    is_riparian_gw;     // flag to turn on/off riparian groundwater (currently used in LASAM only)
   double K_infiltration;     // Fraction of storage per hour that moves from reservoirs to soil (time constant); [1/hour]
-  double Kinf_c0;            // constant c0 in K_infiltration = c0 + c1 * S, where S is the reservoir storage
-  double Kinf_c1;            // constant c1 in K_infiltration = c0 + c1 * S, where S is the reservoir storage
 };
 
 extern double nash_cascade(double flux_lat_m,int num_lateral_flow_nash_reservoirs,
                            double K_nash,double *nash_storage_arr);
 
-double nash_cascade_surface_runoff(double runoff_m, struct nash_cascade_parameters *nash_params);
+double nash_cascade_surface_runoff(double runoff_m, double soil_storage_deficit_m,
+				   struct nash_cascade_parameters *nash_params);
 
 #endif
