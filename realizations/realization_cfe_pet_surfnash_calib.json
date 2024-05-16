@@ -75,8 +75,7 @@
 				    "soil_moisture_profile" : "sloth_smp"
                                 },
 				"model_params": {
-				    "Kinf_c0": 0.04,
-				    "Kinf_c1": 0.02
+				    "K_infiltraton": 0.04
 				},
                                 "uses_forcing_file": false
                             }
