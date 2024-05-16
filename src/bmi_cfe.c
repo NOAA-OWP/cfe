@@ -18,14 +18,14 @@
 #define STATE_VAR_NAME_COUNT 94   // must match var_info array size
 
 
-#define PARAM_VAR_NAME_COUNT 19
+#define PARAM_VAR_NAME_COUNT 18
 // NOTE: If you update the params, also update the unit test in ../test/main_unit_test_bmi.c
 static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
     "maxsmc", "satdk", "slope", "b", "Klf",
     "Kn", "Cgw", "expon", "max_gw_storage",
     "satpsi","wltsmc","alpha_fc","refkdt",
     "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
-    "Kinf_c0", "Kinf_c1",
+    "K_infiltration",
     "N_nash"
 };
 
@@ -34,7 +34,6 @@ static const char *param_var_types[PARAM_VAR_NAME_COUNT] = {
     "double", "double", "double", "double",
     "double", "double", "double", "double",
     "double","double","double", "double",
-    "double",
     "int"
 };
 //----------------------------------------------
@@ -809,10 +808,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 	  continue;
         }
         if (strcmp(param_key, "Kinf_nash_surface") == 0) {
-	  //model->nash_surface_params.K_infiltration = strtod(param_value, NULL);
-	  // Kinf = C0 + C1 * S, so if Kinf is provided in the config file, set C0 and C1 as folows:
-	  model->nash_surface_params.Kinf_c0 = strtod(param_value, NULL);
-	  model->nash_surface_params.Kinf_c1 = 0.0;
+	  model->nash_surface_params.K_infiltration = strtod(param_value, NULL);
 	  is_K_infiltration_nash_surface_set = TRUE;
 	  continue;
         }
@@ -1110,10 +1106,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 #if CFE_DEBUG >= 1
 	printf("Config param 'Kinf_nash_surface' not found in config file, default value is 0.05 [1/hr] \n");
 #endif
-	// model->nash_surface_params.K_infiltration  = 0.05;   // used in the runon infiltration
-	// Kinf = C0 + C1 * S, so if Kinf is not provided the default values for C0 and C1 are set below,
-	model->nash_surface_params.Kinf_c0  = 0.05;      // set C0 = value
-	model->nash_surface_params.Kinf_c1  = 0.0;	 // set C1 = 0.0
+	model->nash_surface_params.K_infiltration  = 0.05;   // used in the runon infiltration
       }
       if (is_retention_depth_nash_surface_set == FALSE) {
 #if CFE_DEBUG >= 1
@@ -1919,20 +1912,12 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
-    if (strcmp (name, "Kinf_c0") == 0) {
+    if (strcmp (name, "K_infiltraton") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
-        *dest = (void*)&cfe_ptr->nash_surface_params.Kinf_c0;
+        *dest = (void*)&cfe_ptr->nash_surface_params.K_infiltration;
         return BMI_SUCCESS;
     }
-
-    if (strcmp (name, "Kinf_c1") == 0) {
-        cfe_state_struct *cfe_ptr;
-        cfe_ptr = (cfe_state_struct *) self->data;
-        *dest = (void*)&cfe_ptr->nash_surface_params.Kinf_c1;
-        return BMI_SUCCESS;
-    }
-      
 
     /***********************************************************/
     /***********    OUTPUT   ***********************************/
