@@ -80,9 +80,9 @@ See general instructions [here](https://github.com/NOAA-OWP/ngen/wiki/NGen-Tutor
      - cmake -B cmake_build -S . -DBMI_C_LIB_ACTIVE=ON -DBMI_FORTRAN_ACTIVE=ON -DNGEN_ACTIVATE_PYTHON=ON
      - make -j4 -C cmake_build
   - #### CFE
-    - git submodule update --remote extern/cfe/cfe 
-    - cmake -B extern/cfe/cmake_build -S extern/cfe/cfe/ -DNGEN=ON
-    - make -C extern/cfe/cmake_build
+    - git submodule update --remote extern/cfe/cfe
+    - cmake -B extern/cfe/cfe/cmake_build -S extern/cfe/cfe/ -DNGEN=ON
+    - make -C extern/cfe/cfe/cmake_build
   - #### SLoTH
     SLoTH is also needed to run SFT in the ngen framework. SLoTH is a BMI that is used to set a bmi variable(s) that is not provided by other BMIs but required by the model. So build [SLoTH](https://github.com/NOAA-OWP/SLoTH) using the following instructions
     - cd extern/sloth/ && git checkout latest 
