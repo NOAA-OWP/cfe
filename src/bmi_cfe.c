@@ -1912,7 +1912,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
-    if (strcmp (name, "K_infiltraton") == 0) {
+    if (strcmp (name, "K_infiltration") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
         *dest = (void*)&cfe_ptr->nash_surface_params.K_infiltration;
