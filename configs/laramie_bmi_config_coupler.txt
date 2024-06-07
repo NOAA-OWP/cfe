@@ -1,9 +1,0 @@
-soil_params.smcmax=0.439
-soil_params.b=5.25
-soil_params.satpsi=0.355
-Z=0.1,0.5,1.0,2.0
-Z_layers=0.25,0.6,1.0,2.0
-soil_params.water_table=1.9
-smc_profile=conceptual
-#smc_profile=layered
-#smc_profile_option=linear
