@@ -32,7 +32,7 @@
                                 "model_type_name": "bmi_c_pet",
                                 "library_file": "./extern/evapotranspiration/evapotranspiration/cmake_build/libpetbmi",
                                 "forcing_file": "",
-                                "init_config": "./extern/cfe/cfe/configs/cat_87_bmi_config_pet_pass.txt",
+                                "init_config": "./extern/evapotranspiration/evapotranspiration/configs/pet_config_cat_87_pass.txt",
                                 "allow_exceed_end_time": true,
                                 "main_output_variable": "water_potential_evaporation_flux",
                                 "registration_function":"register_bmi_pet",
@@ -45,7 +45,7 @@
                                 "model_type_name": "bmi_c_cfe",
                                 "library_file": "./extern/cfe/cfe/cmake_build/libcfebmi",
                                 "forcing_file": "",
-                                "init_config": "./extern/cfe/cfe/configs/cat_87_bmi_config_cfe_pass.txt",
+                                "init_config": "./extern/cfe/cfe/configs/cfe_config_cat_87_pass.txt",
                                 "allow_exceed_end_time": true,
                                 "main_output_variable": "Q_OUT",
                                 "registration_function": "register_bmi_cfe",
@@ -72,7 +72,7 @@
             }
         ],
         "forcing": {
-	    "path" : "./extern/cfe/cfe/forcings/cat87_01Dec2015-.csv"
+	    "path" : "./extern/cfe/cfe/forcings/cat87_01Dec2015_ngen.csv"
         }
     },
     "time": {

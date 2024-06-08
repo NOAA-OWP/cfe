@@ -27,7 +27,7 @@ else if [ $flag == "FORCING" ]; then
 	      args='./configs/cfe_config_cat_87_pass.txt ./extern/aorc_bmi/configs/aorc_config_cat_87.txt ./extern/evapotranspiration/configs/pet_config_cat_87_pass.txt'
 	      exe_name='cfe_forcingpet'
 	  else if [ $flag == "AETROOTZONE" ]; then
-		   args='./configs/cfe_config_laramie_pass_aet_rz.txt ./extern/aorc_bmi/configs/aorc_config_laramie.txt ./extern/evapotranspiration/configs/pet_config_laramie_pass.txt ./configs/smp_config_laramie.txt'
+		   args='./configs/cfe_config_laramie_pass_aet_rz.txt ./extern/aorc_bmi/configs/aorc_config_laramie.txt ./extern/evapotranspiration/configs/pet_config_laramie_pass.txt ./extern/SoilMoistureProfiles/configs/smp_config_laramie.txt'
 		   exe_name='cfe_aet_rootzone'
 	       fi
 	  fi
