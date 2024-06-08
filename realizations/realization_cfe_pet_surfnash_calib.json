@@ -12,6 +12,7 @@
 		    "output_variables" : [
 			"RAIN_RATE",
 			"INFILTRATION_EXCESS",
+			"DIRECT_RUNOFF",
 			"NASH_LATERAL_RUNOFF",
 			"DEEP_GW_TO_CHANNEL_FLUX",
 			"SOIL_TO_GW_FLUX",
@@ -86,12 +87,12 @@
             }
         ],
         "forcing": {
-	    "path" : "./extern/cfe/cfe/forcings/cat87_01Dec2015-.csv"
+	    "path" : "./extern/cfe/cfe/forcings/cat87_01Dec2015_ngen.csv"
         }
     },
     "time": {
-        "start_time": "2015-12-01 00:00:00",
-        "end_time": "2015-12-01 00:00:00",
+	"start_time": "2015-12-01 00:00:00",
+        "end_time": "2015-12-30 23:00:00",
         "output_interval": 3600
     }
 }

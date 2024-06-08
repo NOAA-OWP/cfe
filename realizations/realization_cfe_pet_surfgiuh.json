@@ -9,6 +9,18 @@
                     "init_config": "",
                     "allow_exceed_end_time": true,
                     "main_output_variable": "Q_OUT",
+		    "output_variables" : [
+			"RAIN_RATE",
+			"INFILTRATION_EXCESS",
+			"DIRECT_RUNOFF",
+			"NASH_LATERAL_RUNOFF",
+			"DEEP_GW_TO_CHANNEL_FLUX",
+			"SOIL_TO_GW_FLUX",
+			"Q_OUT",
+			"POTENTIAL_ET",
+			"ACTUAL_ET",
+			"SOIL_STORAGE"
+		    ],
                     "modules": [
 			{
 			    "name": "bmi_c++",
