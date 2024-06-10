@@ -81,8 +81,13 @@ jobs:
           rm -rf extern/cfe/cfe/*
           mv ${{runner.temp}}/cfe/* extern/cfe/cfe
 
-      - name: Run Ngen Test for CFE Couple with PET
+      - name: Run NGen Test for CFE (cfe1.0) Couple with PET
         run: |
           mv ${{ steps.ngen_id1.outputs.build-dir }} ./ngen-build/
           inputfile='extern/cfe/cfe/realizations/realization_cfe_pet_surfgiuh.json'
+          ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
+
+      - name: Run Ngen Test for CFE (cfe2.0) Couple with PET
+        run: |
+          inputfile='extern/cfe/cfe/realizations/realization_cfe_pet_surfnash_calib.json'
           ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
