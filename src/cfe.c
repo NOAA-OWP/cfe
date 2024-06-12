@@ -11,10 +11,6 @@ extern void cfe(
         struct NWM_soil_parameters NWM_soil_params_struct,
         struct conceptual_reservoir *soil_reservoir_struct,
         double timestep_h,
-        /* xinanjiang_dev: since we are doing the option for Schaake and XinJiang,
-                           instead of passing in the constants
-                           pass in a structure with the constants for both subroutines.
-        //double Schaake_adjusted_magic_constant_by_soil_type,*/
         struct infiltration_excess_parameters_structure infiltration_excess_params_struct,
         double timestep_rainfall_input_m,
         double *infiltration_excess_m_ptr,
@@ -244,8 +240,8 @@ extern void cfe(
     direct_runoff_m = giuh_convolution_integral(infiltration_excess_m,num_giuh_ordinates,
                                                 giuh_ordinates_arr,runoff_queue_m_per_timestep_arr);
   else if (surface_runoff_scheme == NASH_CASCADE)
-    direct_runoff_m =  nash_cascade_surface_runoff(infiltration_excess_m, soil_reservoir_storage_deficit_m,
-						   nash_surface_params);
+    direct_runoff_m =  nash_cascade_surface(infiltration_excess_m, soil_reservoir_storage_deficit_m,
+					    nash_surface_params);
   
   soil_reservoir_struct->storage_m += nash_surface_params->runon_infiltration;  // put the runon infiltrated water in the soil.
   soil_reservoir_storage_deficit_m -= nash_surface_params->runon_infiltration; // update soil deficit
@@ -256,8 +252,8 @@ extern void cfe(
   massbal_struct->vol_runon_infilt += nash_surface_params->runon_infiltration;
 
   // Route lateral flow through the Nash cascade.
-  nash_lateral_runoff_m = nash_cascade(flux_lat_m,num_lateral_flow_nash_reservoirs,
-                                       K_nash,nash_storage_arr);
+  nash_lateral_runoff_m = nash_cascade_subsurface(flux_lat_m,num_lateral_flow_nash_reservoirs,
+						  K_nash,nash_storage_arr);
   massbal_struct->vol_in_nash   += flux_lat_m;
   massbal_struct->vol_out_nash  += nash_lateral_runoff_m;
 

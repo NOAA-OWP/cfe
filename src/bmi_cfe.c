@@ -10,6 +10,13 @@
 #define STANDARD_ATMOSPHERIC_PRESSURE_PASCALS 101325
 #endif
 
+/******************************************************************************************************
+  Conceptual Functional Equivalent (CFE) to WRF-Hydro Based National Water Model (Version 3.1 and earlier).
+  Conceived by Fred Ogden, May 2020. Adapted to BMI by Jonathan Frame and Jessica Garrett, May 2021.
+  Modified to replace GIUH with Nash Cascade with ability to simulate retention depth and runon/channel
+  infiltration by Ahmad Jan Khattak, May 2024.
+*******************************************************************************************************/
+
 #define CFE_DEBUG 1
 
 #define INPUT_VAR_NAME_COUNT 5

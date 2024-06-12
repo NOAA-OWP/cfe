@@ -18,10 +18,10 @@ struct nash_cascade_parameters {
   double K_infiltration;     // Fraction of storage per hour that moves from reservoirs to soil (time constant); [1/hour]
 };
 
-extern double nash_cascade(double flux_lat_m,int num_lateral_flow_nash_reservoirs,
-                           double K_nash,double *nash_storage_arr);
+double nash_cascade_subsurface(double flux_lat_m,int N_nash, double K_nash,
+			       double *nash_storage_arr);
 
-double nash_cascade_surface_runoff(double runoff_m, double soil_storage_deficit_m,
-				   struct nash_cascade_parameters *nash_params);
+double nash_cascade_surface(double runoff_m, double soil_storage_deficit_m,
+			    struct nash_cascade_parameters *nash_params);
 
 #endif
