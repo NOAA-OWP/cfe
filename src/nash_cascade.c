@@ -4,22 +4,21 @@
 #include "nash_cascade.h"
 
 //##############################################################
-//###################   NASH CASCADE   #########################
+//###############   NASH CASCADE SUBSURFACE  ###################
 //##############################################################
-extern double nash_cascade(double flux_lat_m,int num_lateral_flow_nash_reservoirs,
-                           double K_nash,double *nash_storage_arr)
+double nash_cascade_subsurface(double flux_lat_m,int N_nash,
+			       double K_nash,double *nash_storage_arr)
 {
   //##############################################################
   // Solve for the flow through the Nash cascade to delay the
   // arrival of the lateral flow into the channel
   //##############################################################
   // local vars
-  int i;
   double outflow_m;
   static double Q[MAX_NUM_NASH_CASCADE];
 
   //Loop through reservoirs
-  for(i = 0; i < num_lateral_flow_nash_reservoirs; i++)
+  for(int i = 0; i < N_nash; i++)
     {
       Q[i] = K_nash*nash_storage_arr[i];
       nash_storage_arr[i]  -= Q[i];
@@ -29,7 +28,7 @@ extern double nash_cascade(double flux_lat_m,int num_lateral_flow_nash_reservoir
     }
 
   /*  Get Qout */
-  outflow_m = Q[num_lateral_flow_nash_reservoirs-1];
+  outflow_m = Q[N_nash-1];
 
   //Return the flow output
   return (outflow_m);
@@ -38,21 +37,21 @@ extern double nash_cascade(double flux_lat_m,int num_lateral_flow_nash_reservoir
 
 
 //##############################################################
-//##############   NASH CASCADE SURFACE RUNOFF  ################
+//#################   NASH CASCADE SURFACE #### ################
 //##############################################################
-double nash_cascade_surface_runoff(double runoff_m, double soil_storage_deficit_m,
-				   struct nash_cascade_parameters *nash_params)
+double nash_cascade_surface(double runoff_m, double soil_storage_deficit_m,
+			    struct nash_cascade_parameters *nash_params)
 {
   //##############################################################
   // Solve for the flow through the Nash cascade to delay the
   // arrival of the lateral flow into the channel
   //##############################################################
 
-  int nsubsteps = nash_params->nsubsteps;
-  int N_nash    = nash_params->N_nash;
-  double K_nash = nash_params->K_nash;
-  double depth_r = nash_params->retention_depth;
+  int nsubsteps  = nash_params->nsubsteps;
+  int N_nash     = nash_params->N_nash;
+  double K_nash  = nash_params->K_nash;
   double K_infil = nash_params->K_infiltration;
+  double retention_depth = nash_params->retention_depth;
   
   // local vars
   double dt_h  = 1.0;             // model timestep [hour]
@@ -114,8 +113,8 @@ double nash_cascade_surface_runoff(double runoff_m, double soil_storage_deficit_
       S = nash_params->nash_storage[i];
 
       // determine the amount of surface water available for routing from the first reservoir
-      if (i == 0 &&  S > depth_r)
-        S -= depth_r;
+      if (i == 0 &&  S > retention_depth)
+        S -= retention_depth;
       else if (i == 0)
         S = 0.0;
 
