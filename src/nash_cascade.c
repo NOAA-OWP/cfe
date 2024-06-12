@@ -60,12 +60,12 @@ double nash_cascade_surface(double runoff_m, double soil_storage_deficit_m,
   double dS    = 0.0;            // change in reservoir storage
   double dS_infil = 0.0;         // change in reservoir storage due to infiltration
   double Q_r;                    // discharge from reservoir
-  double Q_out;                  // discharge at the outlet (the last reservoir) per subtimestep
+  double Q_out = 0.0;            // discharge at the outlet (the last reservoir) per subtimestep
   double Q_infil;                // discharge from reservoirs to soil
-  double Q_to_channel_m = 0.0;  // total outflow to channel per timestep
-  double Q_to_soil_m    = 0.0;  // runon infiltration (losses from surface runoff to soil)
+  double Q_to_channel_m = 0.0;   // total outflow to channel per timestep
+  double Q_to_soil_m    = 0.0;   // runon infiltration (losses from surface runoff to soil)
   double soil_deficit_m = soil_storage_deficit_m; // local variable to track the soil storage deficit
-  double infil_m;
+  double infil_m = 0.0;
   
   nash_params->nash_storage[0] += runoff_m;
 
@@ -75,6 +75,10 @@ double nash_cascade_surface(double runoff_m, double soil_storage_deficit_m,
     //Loop through reservoirs
     for(int i = 0; i < N_nash; i++) {
 
+      // if storage of ith reservoir is zero, move to the next reservoir
+      if (nash_params->nash_storage[i] == 0.0)
+	continue;
+      
       // First: infiltration capacity should be satisfied before routing water through Nash reservoirs
 
       // compute runon infiltration

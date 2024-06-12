@@ -17,7 +17,7 @@
   infiltration by Ahmad Jan Khattak, May 2024.
 *******************************************************************************************************/
 
-#define CFE_DEBUG 1
+#define CFE_DEBUG 0
 
 #define INPUT_VAR_NAME_COUNT 5
 #define OUTPUT_VAR_NAME_COUNT 14
@@ -460,7 +460,6 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     //    - number of Nash lf reservoirs (optional, defaults to 2, ignored if storage values present)
     //    - K_nash
     //    - initial Nash storage values (optional, defaults to 0.0 for all reservoirs according to number)
-    //    - GIUH ordinates
 
     char config_line[max_config_line_length + 1];
 
@@ -1004,10 +1003,11 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
       return BMI_FAILURE;
     }
     if (is_verbosity_set == FALSE) {
+#if CFE_DEBUG >= 1
       printf("Config param 'verbosity' not found in config file\n");
-      printf("setting verbosity to a high value\n");
-      model->verbosity = 10;
-      return BMI_FAILURE;
+      printf("setting verbosity to a low value\n");
+#endif
+      model->verbosity = 0;
     }
     if (is_infiltration_excess_method_set == FALSE) {
 #if CFE_DEBUG >= 1
@@ -3301,11 +3301,12 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     direct_residual = cfe_ptr->vol_struct.volin - cfe_ptr->vol_struct.vol_runoff - cfe_ptr->vol_struct.vol_infilt -
                       cfe_ptr->vol_struct.vol_et_from_rain;
     
-    printf("********************* DIRECT RUNOFF MASS BALANCE ***************\n");
-    printf(" Surface runoff   = %8.4lf m\n",cfe_ptr->vol_struct.vol_runoff);
-    printf(" Infiltration     = %8.4lf m\n",cfe_ptr->vol_struct.vol_infilt);
-    printf(" Vol_et_from_rain = %8.4lf m\n",cfe_ptr->vol_struct.vol_et_from_rain);
-    printf(" Direct residual  = %6.4e m\n",direct_residual);  // should equal 0.0
+    printf("******************* PRECIPITATION MASS BALANCE *****************\n");
+    printf(" Volume input        = %8.4lf m\n",cfe_ptr->vol_struct.volin);
+    printf(" Infiltration Excess = %8.4lf m\n",cfe_ptr->vol_struct.vol_runoff);
+    printf(" Infiltration        = %8.4lf m\n",cfe_ptr->vol_struct.vol_infilt);
+    printf(" Vol_et_from_rain    = %8.4lf m\n",cfe_ptr->vol_struct.vol_et_from_rain);
+    printf(" Precip residual     = %6.4e m\n",direct_residual);  // should equal 0.0
     if(!is_fabs_less_than_epsilon(direct_residual,1.0e-12))
       printf("WARNING: DIRECT RUNOFF PARTITIONING MASS BALANCE CHECK FAILED\n");
 
@@ -3313,9 +3314,9 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
                     cfe_ptr->vol_struct.vol_runon_infilt;
     printf("********************* SURFACE MASS BALANCE *********************\n");
     printf(" Volume into surface  = %8.4lf m\n",cfe_ptr->vol_struct.vol_runoff);
-    fprintf(stderr," Volume out surface   = %8.4lf m\n",cfe_ptr->vol_struct.vol_out_surface);
-    fprintf(stderr," Volume end surface   = %8.4lf m\n",cfe_ptr->vol_struct.vol_end_surface);
-    fprintf(stderr," Runon infiltration   = %8.4lf m\n",cfe_ptr->vol_struct.vol_runon_infilt);
+    printf(" Volume out surface   = %8.4lf m\n",cfe_ptr->vol_struct.vol_out_surface);
+    printf(" Volume end surface   = %8.4lf m\n",cfe_ptr->vol_struct.vol_end_surface);
+    printf(" Runon infiltration   = %8.4lf m\n",cfe_ptr->vol_struct.vol_runon_infilt);
     printf(" Surface residual     = %6.4e m\n",giuh_residual);  // should equal zero
     if(!is_fabs_less_than_epsilon(giuh_residual,1.0e-12))
       printf("WARNING: GIUH MASS BALANCE CHECK FAILED\n");
@@ -3330,14 +3331,14 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     printf(" Volume into soil     = %8.4lf m\n",cfe_ptr->vol_struct.vol_infilt);
     printf(" Volume soil2latflow  = %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_to_lat_flow);
     printf(" Volume soil to GW    = %8.4lf m\n",cfe_ptr->vol_struct.vol_soil_to_gw);
-    printf(" Final volume soil    =  %8.4lf m\n",vol_soil_end);
-    printf(" Volume et from soil  =  %8.4lf m\n",cfe_ptr->vol_struct.vol_et_from_soil);
+    printf(" Final volume soil    = %8.4lf m\n",vol_soil_end);
+    printf(" Volume et from soil  = %8.4lf m\n",cfe_ptr->vol_struct.vol_et_from_soil);
     printf(" Volume soil residual = %6.4e m\n",soil_residual);
     if(!is_fabs_less_than_epsilon(soil_residual,1.0e-12))
       printf("WARNING: SOIL CONCEPTUAL RESERVOIR MASS BALANCE CHECK FAILED\n");
 
     nash_residual = cfe_ptr->vol_struct.vol_in_nash - cfe_ptr->vol_struct.vol_out_nash - vol_in_nash_end;
-    printf("********* NASH CASCADE CONCEPTUAL RESERVOIR MASS BALANCE *******\n");
+    printf("************* NASH CASCADE (SUBSURFACE) MASS BALANCE ***********\n");
     printf(" Volume to Nash   = %8.4lf m\n",cfe_ptr->vol_struct.vol_in_nash);
     printf(" Volume from Nash = %8.4lf m\n",cfe_ptr->vol_struct.vol_out_nash);
     printf(" Final vol. Nash  = %8.4lf m\n",vol_in_nash_end);
