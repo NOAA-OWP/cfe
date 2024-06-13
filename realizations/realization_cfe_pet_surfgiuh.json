@@ -57,7 +57,7 @@
                                 "model_type_name": "bmi_c_cfe",
                                 "library_file": "./extern/cfe/cfe/cmake_build/libcfebmi",
                                 "forcing_file": "",
-                                "init_config": "./extern/cfe/cfe/configs/cfe_config_cat_87_pass.txt",
+                                "init_config": "./extern/cfe/cfe/configs/cfe1.0/cfe_config_cat_87_pass.txt",
                                 "allow_exceed_end_time": true,
                                 "main_output_variable": "Q_OUT",
                                 "registration_function": "register_bmi_cfe",
