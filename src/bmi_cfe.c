@@ -33,7 +33,7 @@ static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
     "satpsi","wltsmc","alpha_fc","refkdt",
     "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
     "K_infiltration",
-    "N_nash"
+    "N_nash_subsurface"
 };
 
 static const char *param_var_types[PARAM_VAR_NAME_COUNT] = {
@@ -129,9 +129,9 @@ Variable var_info[] = {
 	{ 55, "is_forcing_from_bmi",               "int",    1 },
 	{ 56, "forcing_file",                      "string", 1 },  // strlen
 	{ 57, "surface_water_partitioning_scheme", "int",    1 }, // from infiltration_excess_params_struct
-	{ 58, "N_nash",                            "int",    1 },
+	{ 58, "N_nash_subsurface",                 "int",    1 },
 	{ 59, "K_lf",                              "double", 1 },
-	{ 60, "K_nash",                            "double", 1 },
+	{ 60, "K_nash_subsurface",                 "double", 1 },
 	{ 61, "num_giuh_ordinates",                "int",    1 },
 	//---------------------------------------
 	// Vars in aorc_forcing_data_cfe struct
@@ -154,7 +154,7 @@ Variable var_info[] = {
 	{ 73, "forcing_data_precip_kg_per_m2",  "double*", 1 },
 	{ 74, "forcing_data_time",              "long*",   1 },
 	{ 75, "giuh_ordinates",                 "double*", 1 },  // num_giuh
-	{ 76, "nash_storage",                   "double*", 1 },  // num_lat_flow
+	{ 76, "nash_storage_subsurface",        "double*", 1 },  // num_lat_flow
 	{ 77, "runoff_queue_m_per_timestep",    "double*", 1 },  // num_giuh
 	{ 78, "flux_Schaake_output_runoff_m",   "double*", 1 },
 	{ 79, "flux_direct_runoff_m",           "double*", 1 },
@@ -481,7 +481,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     int is_expon_set               = FALSE;
     int is_alpha_fc_set            = FALSE;
     int is_soil_storage_set        = FALSE;
-    int is_K_nash_set              = FALSE;
+    int is_K_nash_subsurface_set   = FALSE;
     int is_K_lf_set                = FALSE;
     int is_num_timesteps_set       = FALSE;
     int is_verbosity_set           = FALSE;
@@ -525,9 +525,9 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     model->NWM_soil_params.refkdt = 3.0;
 
     // Also keep track of Nash stuff and properly set at the end of reading the config file
-    model->N_nash = 2;
-    char* nash_storage_string_val;
-    int is_nash_storage_string_val_set = FALSE;
+    model->N_nash_subsurface = 2;
+    char* nash_storage_subsurface_string_val;
+    int is_nash_storage_subsurface_string_val_set = FALSE;
     // Similarly as for Nash, track stuff for GIUH ordinates
     char* giuh_originates_string_val;
     char* soil_layer_depths_string_val;
@@ -719,13 +719,13 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             }
             continue;
         }
-        if (strcmp(param_key, "number_nash_reservoirs") == 0 || strcmp(param_key, "N_nash") == 0) {
-            model->N_nash = strtol(param_value, NULL, 10);
+        if (strcmp(param_key, "N_nash_subsurface") == 0) {
+            model->N_nash_subsurface = strtol(param_value, NULL, 10);
             continue;
         }
-        if (strcmp(param_key, "K_nash") == 0) {
-            model->K_nash = strtod(param_value, NULL);
-            is_K_nash_set = TRUE;
+        if (strcmp(param_key, "K_nash_subsurface") == 0) {
+            model->K_nash_subsurface = strtod(param_value, NULL);
+            is_K_nash_subsurface_set = TRUE;
             continue;
         }
         if (strcmp(param_key, "K_lf") == 0) {
@@ -733,9 +733,9 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             is_K_lf_set = TRUE;
             continue;
         }
-        if (strcmp(param_key, "nash_storage") == 0) {
-            nash_storage_string_val = strdup(param_value);
-            is_nash_storage_string_val_set = TRUE;
+        if (strcmp(param_key, "nash_storage_subsurface") == 0) {
+            nash_storage_subsurface_string_val = strdup(param_value);
+            is_nash_storage_subsurface_string_val_set = TRUE;
             continue;
         }
         if (strcmp(param_key, "giuh_ordinates") == 0) {
@@ -972,9 +972,9 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 #endif
       return BMI_FAILURE;
     }
-    if (is_K_nash_set == FALSE) {
+    if (is_K_nash_subsurface_set == FALSE) {
 #if CFE_DEBUG >= 1
-      printf("Config param 'K_nash' not found in config file\n");
+      printf("Config param 'K_nash_subsurface' not found in config file\n");
 #endif
       return BMI_FAILURE;
     }
@@ -1255,36 +1255,36 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     printf("All CFE config params present\n");
 #endif
 
-    // Now handle the Nash storage array properly
-    if (is_nash_storage_string_val_set == TRUE) {
+    // Now handle the Nash storage array properly (Nash Cascade for subsurface)
+    if (is_nash_storage_subsurface_string_val_set == TRUE) {
         // First, when there are values, read how many there are, and have that override any set count value
-        int value_count = count_delimited_values(nash_storage_string_val, ",");
+        int value_count = count_delimited_values(nash_storage_subsurface_string_val, ",");
         // TODO: consider adding a warning if value_count and N_nash (assuming it was read from the config and not default) disagree
         // Ignore the values if there are not enough, and use whatever was set, or defaults
         if (value_count < 2) {
 
-            model->nash_storage = malloc(sizeof(double) * model->N_nash);
-            for (j = 0; j < model->N_nash; j++)
-                model->nash_storage[j] = 0.0;
+            model->nash_storage_subsurface = malloc(sizeof(double) * model->N_nash_subsurface);
+            for (j = 0; j < model->N_nash_subsurface; j++)
+                model->nash_storage_subsurface[j] = 0.0;
         }
         else {
-            model->N_nash = value_count;
-            model->nash_storage = malloc(sizeof(double) * value_count);
+            model->N_nash_subsurface = value_count;
+            model->nash_storage_subsurface = malloc(sizeof(double) * value_count);
 	    // Work with a copy of the original pointer so that the original remains unchanged and can be freed at end
-            copy = nash_storage_string_val;
+            copy = nash_storage_subsurface_string_val;
             // Now iterate back through and get the values
             int k = 0;
             while ((value = strsep(&copy, ",")) != NULL)
-                model->nash_storage[k++] = strtod(value, NULL);
+                model->nash_storage_subsurface[k++] = strtod(value, NULL);
         }
         // Make sure at the end to free this too, since it was a copy
-        free(nash_storage_string_val);
+        free(nash_storage_subsurface_string_val);
     }
     // If Nash storage values weren't set, initialize them to 0.0
     else {
-        model->nash_storage = malloc(sizeof(double) * model->N_nash);
-        for (j = 0; j < model->N_nash; j++)
-            model->nash_storage[j] = 0.0;
+        model->nash_storage_subsurface = malloc(sizeof(double) * model->N_nash_subsurface);
+        for (j = 0; j < model->N_nash_subsurface; j++)
+            model->nash_storage_subsurface[j] = 0.0;
     }
     fclose(fp);
 #if CFE_DEBUG >= 1
@@ -1577,8 +1577,8 @@ static int Finalize (Bmi *self)
 
         if( model->giuh_ordinates != NULL )
             free(model->giuh_ordinates);
-        if( model->nash_storage != NULL )
-            free(model->nash_storage);
+        if( model->nash_storage_subsurface != NULL )
+            free(model->nash_storage_subsurface);
         if( model->runoff_queue_m_per_timestep != NULL )
             free(model->runoff_queue_m_per_timestep);
         if( model->flux_Qout_m != NULL )
@@ -1842,7 +1842,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
     if (strcmp (name, "Kn") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
-        *dest = (void*)&cfe_ptr->K_nash;
+        *dest = (void*)&cfe_ptr->K_nash_subsurface;
         return BMI_SUCCESS;
     }
     if (strcmp (name, "Cgw") == 0) {
@@ -1912,10 +1912,10 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
-    if (strcmp (name, "N_nash") == 0) {
+    if (strcmp (name, "N_nash_subsurface") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
-        *dest = (void*)&cfe_ptr->N_nash;
+        *dest = (void*)&cfe_ptr->N_nash_subsurface;
         return BMI_SUCCESS;
     }
 
@@ -2159,13 +2159,13 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
 
     }
 
-    if (strcmp (name, "N_nash") == 0) {
+    if (strcmp (name, "N_nash_subsurface") == 0) {
         cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
-        if( cfe_ptr->nash_storage != NULL ) free(cfe_ptr->nash_storage);
-    	cfe_ptr->nash_storage = malloc(sizeof(double) * cfe_ptr->N_nash);
-    	if( cfe_ptr->nash_storage == NULL ) return BMI_FAILURE;
-    	for (j = 0; j < cfe_ptr->N_nash; j++)
-        	cfe_ptr->nash_storage[j] = 0.0;
+        if( cfe_ptr->nash_storage_subsurface != NULL ) free(cfe_ptr->nash_storage_subsurface);
+    	cfe_ptr->nash_storage_subsurface = malloc(sizeof(double) * cfe_ptr->N_nash_subsurface);
+    	if( cfe_ptr->nash_storage_subsurface == NULL ) return BMI_FAILURE;
+    	for (j = 0; j < cfe_ptr->N_nash_subsurface; j++)
+	  cfe_ptr->nash_storage_subsurface[j] = 0.0;
     }
 
     if (strcmp (name, "storage_max_m") == 0) {
@@ -2356,9 +2356,7 @@ static int Get_state_var_sizes (Bmi *self, unsigned int size_list[])
     //---------------------------------------------------
     unsigned int ff_len = strlen( state->forcing_file );  //##############
     unsigned int num_giuh = state->num_giuh_ordinates + 1;
-    unsigned int num_lat_flow = state->N_nash + 1;
-    // unsigned int num_giuh = state->num_giuh_ordinates;
-    // unsigned int num_lat_flow = state->N_nash;
+    unsigned int num_lat_flow = state->N_nash_subsurface + 1;
 
     //-------------------------------------------------
     // Overwrite the sizes that are not 1 (now known)
@@ -2476,9 +2474,9 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     // ####### ptr_list[55] = &(state->forcing_file );
     ptr_list[57] = &(state->infiltration_excess_params_struct.surface_water_partitioning_scheme );
     // ptr_list[56] = &(state->Schaake_adjusted_magic_constant_by_soil_type );
-    ptr_list[58] = &(state->N_nash);
+    ptr_list[58] = &(state->N_nash_subsurface);
     ptr_list[59] = &(state->K_lf);
-    ptr_list[60] = &(state->K_nash);
+    ptr_list[60] = &(state->K_nash_subsurface);
     ptr_list[61] = &(state->num_giuh_ordinates);
     //---------------------------------------
     // Vars in aorc_forcing_data_cfe struct
@@ -2504,7 +2502,7 @@ static int Get_state_var_ptrs (Bmi *self, void *ptr_list[])
     ptr_list[73] = state->forcing_data_precip_kg_per_m2;
     ptr_list[74] = state->forcing_data_time;
     ptr_list[75] = state->giuh_ordinates;
-    ptr_list[76] = state->nash_storage;
+    ptr_list[76] = state->nash_storage_subsurface;
     ptr_list[77] = state->runoff_queue_m_per_timestep;
     ptr_list[78] = state->infiltration_excess_m;
     ptr_list[79] = state->flux_direct_runoff_m;
@@ -3006,24 +3004,20 @@ cfe_state_struct *new_bmi_cfe(void)
 {
     cfe_state_struct *data;
     data = (cfe_state_struct *) malloc(sizeof(cfe_state_struct));
-    data->time_step_size = 3600;
-    data->time_step_fraction = 1.0;
+    data->time_step_size                = 3600;
+    data->time_step_fraction            = 1.0;
     data->forcing_data_precip_kg_per_m2 = NULL;
-    data->forcing_data_time = NULL;
-    data->giuh_ordinates = NULL;
-    data->nash_storage = NULL;
-    data->runoff_queue_m_per_timestep = NULL;
-    data->flux_Qout_m = NULL;
-
-    /* xinanjiang_dev
-        changing the name to the more general "direct runoff"
-    data->flux_Schaake_output_runoff_m = NULL;*/
-    data->infiltration_excess_m = NULL;
-    data->flux_from_deep_gw_to_chan_m = NULL;
-    data->flux_direct_runoff_m = NULL;
-    data->flux_lat_m = NULL;
-    data->flux_nash_lateral_runoff_m = NULL;
-    data->flux_perc_m = NULL;
+    data->forcing_data_time             = NULL;
+    data->giuh_ordinates                = NULL;
+    data->nash_storage_subsurface       = NULL;
+    data->runoff_queue_m_per_timestep   = NULL;
+    data->flux_Qout_m                   = NULL;
+    data->infiltration_excess_m         = NULL;
+    data->flux_from_deep_gw_to_chan_m   = NULL;
+    data->flux_direct_runoff_m          = NULL;
+    data->flux_lat_m                    = NULL;
+    data->flux_nash_lateral_runoff_m    = NULL;
+    data->flux_perc_m                   = NULL;
 
     return data;
 }
@@ -3108,9 +3102,9 @@ extern void run_cfe(cfe_state_struct* cfe_ptr){
         cfe_ptr->giuh_ordinates,                        // Set by configuration file.
         cfe_ptr->runoff_queue_m_per_timestep,           // Set in initialize
         cfe_ptr->flux_nash_lateral_runoff_m,            // Set in CFE from nash_cascade function
-        cfe_ptr->N_nash,                                // Set from config file
-        cfe_ptr->K_nash,                                // Set from config file
-        cfe_ptr->nash_storage,                          // Set from config file
+        cfe_ptr->N_nash_subsurface,                     // Set from config file
+        cfe_ptr->K_nash_subsurface,                     // Set from config file
+        cfe_ptr->nash_storage_subsurface,               // Set from config file
         &cfe_ptr->nash_surface_params,                  // struct containing Nash cascade model's parameters set by config file
         &cfe_ptr->et_struct,                            // Set to zero with initalize. Set by BMI (set_value) during run
         cfe_ptr->flux_Qout_m,                           // Set by CFE function
@@ -3251,7 +3245,7 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     double volend = cfe_ptr->soil_reservoir.storage_m+cfe_ptr->gw_reservoir.storage_m;
     double vol_in_gw_end = cfe_ptr->gw_reservoir.storage_m;
     double vol_surface_end = 0.0; // volume in the giuh or nash array at the end (on the surface)
-    double vol_in_nash_end = 0.0;
+    double vol_nash_subsurface_end = 0.0; // volume at the end in the nash cascade for subsurface
     double vol_soil_end;
 
     // the GIUH queue might have water in it at the end of the simulation, so sum it up.
@@ -3266,7 +3260,7 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
 
     cfe_ptr->vol_struct.vol_end_surface = vol_surface_end; // update the vol in the mass balance struct
 
-    for(i=0;i<cfe_ptr->N_nash;i++)  vol_in_nash_end+=cfe_ptr->nash_storage[i];
+    for(i=0;i<cfe_ptr->N_nash_subsurface;i++)  vol_nash_subsurface_end += cfe_ptr->nash_storage_subsurface[i];
 
     vol_soil_end=cfe_ptr->soil_reservoir.storage_m;
 
@@ -3337,11 +3331,11 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     if(!is_fabs_less_than_epsilon(soil_residual,1.0e-12))
       printf("WARNING: SOIL CONCEPTUAL RESERVOIR MASS BALANCE CHECK FAILED\n");
 
-    nash_residual = cfe_ptr->vol_struct.vol_in_nash - cfe_ptr->vol_struct.vol_out_nash - vol_in_nash_end;
+    nash_residual = cfe_ptr->vol_struct.vol_in_nash - cfe_ptr->vol_struct.vol_out_nash - vol_nash_subsurface_end;
     printf("************* NASH CASCADE (SUBSURFACE) MASS BALANCE ***********\n");
     printf(" Volume to Nash   = %8.4lf m\n",cfe_ptr->vol_struct.vol_in_nash);
     printf(" Volume from Nash = %8.4lf m\n",cfe_ptr->vol_struct.vol_out_nash);
-    printf(" Final vol. Nash  = %8.4lf m\n",vol_in_nash_end);
+    printf(" Final vol. Nash  = %8.4lf m\n",vol_nash_subsurface_end);
     printf(" Nash casc resid. = %6.4e m\n",nash_residual);
     if(!is_fabs_less_than_epsilon(nash_residual,1.0e-12))
       printf("WARNING: NASH CASCADE CONCEPTUAL RESERVOIR MASS BALANCE CHECK FAILED\n");

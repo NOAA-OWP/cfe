@@ -78,16 +78,9 @@ struct cfe_state_struct {
 
     char* forcing_file;
 
-    /* xinanjiang_dev
-    double Schaake_adjusted_magic_constant_by_soil_type;    */
-
-    //LKC Changed this to N_nash for consistency
-    //int num_lateral_flow_nash_reservoirs;
-
-    //LKC: added N_nash the same way as the other Nash parameters - making this consistent
     double K_lf;
-    double K_nash;
-    int N_nash;
+    double K_nash_subsurface;
+    int N_nash_subsurface;
 
     int num_giuh_ordinates;
 
@@ -103,7 +96,7 @@ struct cfe_state_struct {
     //result_fluxes* fluxes;
 
     double* giuh_ordinates;
-    double* nash_storage;
+    double* nash_storage_subsurface;
     double* runoff_queue_m_per_timestep;
 
     struct nash_cascade_parameters nash_surface_params;
