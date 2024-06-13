@@ -19,10 +19,10 @@ Example configuration files are provided in this directory. To build and run the
 | gw_storage | *double* |   |  meters/meters [m/m] | parameter_adjustable |  | initial condition for groundwater reservoir - it is the ground water as a decimal fraction of the maximum groundwater storage (max_gw_storage) for the initial timestep |
 | alpha_fc | *double* |   |   | parameter_adjustable |  | field capacity |
 | soil_storage| *double* |   | meters/meters [m/m] | parameter_adjustable |  | initial condition for soil reservoir - it is the water in the soil as a decimal fraction of maximum soil water storage (smcmax * depth) for the initial timestep |
-| N_nash | *int* |   |   | parameter_adjustable |   | number of Nash lf reservoirs (optional, defaults to 2, ignored if storage values present)  |
-| K_nash | *double* |   | 1/meters [m^-1]  | parameter_adjustable | subsurface runoff | Nash Config param for lateral subsurface runoff   |
+| N_nash_subsurface | *int* |   |   | parameter_adjustable |   | number of Nash lf reservoirs (optional, defaults to 2, ignored if storage values present)  |
+| K_nash_subsurface | *double* |   | 1/meters [m^-1]  | parameter_adjustable | subsurface runoff | Nash Config param for lateral subsurface runoff   |
 | *K_lf | *double* |   |   | parameter_adjustable |  | Nash Config param - primary reservoir  |
-| nash_storage | *double* |   |   | parameter_adjustable |  | Nash Config param - secondary reservoir   |
+| nash_storage_subsurface | *double* |   |   | parameter_adjustable |  | Nash Config param - secondary reservoir   |
 | giuh_ordinates   | *double* |   |   | parameter_adjustable |  | Giuh ordinates in dt time steps   |
 | num_timesteps  | *int* |   |  | time_info |  | set to `1` if `forcing_file=BMI`   |
 | verbosity | *int* | `0`-`3`  |   | optional |   |  prints various debug and bmi info (defaults to 0) |

@@ -21,19 +21,19 @@ extern void cfe(
         struct conceptual_reservoir *gw_reservoir_struct,
         double *flux_from_deep_gw_to_chan_m_ptr,
         double *direct_runoff_m_ptr,
-        int num_giuh_ordinates,
+        int    num_giuh_ordinates,
         double *giuh_ordinates_arr,
         double *runoff_queue_m_per_timestep_arr,
         double *nash_lateral_runoff_m_ptr,
-        int num_lateral_flow_nash_reservoirs,
-        double K_nash,
+        int    N_nash_subsurface,
+        double K_nash_subsurface,
         double *nash_storage_arr,
         struct nash_cascade_parameters *nash_surface_params,
         struct evapotranspiration_structure *evap_struct,
         double *Qout_m_ptr,
         struct massbal *massbal_struct,
         double time_step_size,
-        int surface_runoff_scheme
+        int    surface_runoff_scheme
     ){                      // #######################################################################
 // CFE STATE SPACE FUNCTION // #######################################################################
 
@@ -252,8 +252,8 @@ extern void cfe(
   massbal_struct->vol_runon_infilt += nash_surface_params->runon_infiltration;
 
   // Route lateral flow through the Nash cascade.
-  nash_lateral_runoff_m = nash_cascade_subsurface(flux_lat_m,num_lateral_flow_nash_reservoirs,
-						  K_nash,nash_storage_arr);
+  nash_lateral_runoff_m = nash_cascade_subsurface(flux_lat_m, N_nash_subsurface,
+						  K_nash_subsurface, nash_storage_arr);
   massbal_struct->vol_in_nash   += flux_lat_m;
   massbal_struct->vol_out_nash  += nash_lateral_runoff_m;
 
