@@ -32,7 +32,7 @@ static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
     "Kn", "Cgw", "expon", "max_gw_storage",
     "satpsi","wltsmc","alpha_fc","refkdt",
     "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
-    "K_infiltration",
+    "Kinf_nash_surface",
     "N_nash_subsurface"
 };
 
@@ -723,7 +723,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
             model->N_nash_subsurface = strtol(param_value, NULL, 10);
             continue;
         }
-        if (strcmp(param_key, "K_nash_subsurface") == 0) {
+        if (strcmp(param_key, "K_nash_subsurface") == 0 || strcmp(param_key, "K_nash") == 0) {
             model->K_nash_subsurface = strtod(param_value, NULL);
             is_K_nash_subsurface_set = TRUE;
             continue;
@@ -1922,7 +1922,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
-    if (strcmp (name, "K_infiltration") == 0) {
+    if (strcmp (name, "Kinf_nash_surface") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
         *dest = (void*)&cfe_ptr->nash_surface_params.K_infiltration;
