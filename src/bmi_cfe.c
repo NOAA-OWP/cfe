@@ -950,68 +950,68 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     }
     if (is_Cgw_set == FALSE) {
 #if CFE_DEBUG >= 1
-      printf("Config param 'Cgw' not found in config file\n");
+      printf("Config param 'Cgw' not found in config file. Aborting...\n");
 #endif
       return BMI_FAILURE;
     }
     if (is_expon_set == FALSE) {
 #if CFE_DEBUG >= 1
-      printf("Config param 'expon' not found in config file\n");
+      printf("Config param 'expon' not found in config file. Aborting...\n");
 #endif
       return BMI_FAILURE;
     }
     if (is_alpha_fc_set == FALSE) {
 #if CFE_DEBUG >= 1
-      printf("Config param 'alpha_fc' not found in config file\n");
+      printf("Config param 'alpha_fc' not found in config file. Aborting...\n");
 #endif
       return BMI_FAILURE;
     }
     if (is_soil_storage_set == FALSE) {
 #if CFE_DEBUG >= 1
-      printf("Config param 'soil_storage' not found in config file\n");
+      printf("Config param 'soil_storage' not found in config file. Aborting...\n");
 #endif
       return BMI_FAILURE;
     }
     if (is_K_nash_subsurface_set == FALSE) {
 #if CFE_DEBUG >= 1
-      printf("Config param 'K_nash_subsurface' not found in config file\n");
+      printf("Config param 'K_nash_subsurface' not found in config file. Aborting...\n");
 #endif
       return BMI_FAILURE;
     }
     if (is_K_lf_set == FALSE) {
 #if CFE_DEBUG >= 1
-      printf("Config param 'K_lf' not found in config file\n");
+      printf("Config param 'K_lf' not found in config file. Aborting...\n");
 #endif
       return BMI_FAILURE;
     }
     if (is_gw_max_set == FALSE) {
 #if CFE_DEBUG >= 1
-      printf("Config param 'max_gw_storage' not found in config file\n");
+      printf("Config param 'max_gw_storage' not found in config file. Aborting...\n");
 #endif
       return BMI_FAILURE;
     }
     if (is_gw_storage_set == FALSE) {
 #if CFE_DEBUG >= 1
-      printf("Config param 'gw_storage' not found in config file\n");
+      printf("Config param 'gw_storage' not found in config file. Aborting...\n");
 #endif
       return BMI_FAILURE;
     }
     if (is_num_timesteps_set == FALSE && strcmp(model->forcing_file, "BMI")) {
 #if CFE_DEBUG >= 1
-      printf("Config param 'num_timesteps' not found in config file\n");
+      printf("Config param 'num_timesteps' not found in config file. Aborting...\n");
 #endif
       return BMI_FAILURE;
     }
     if (is_verbosity_set == FALSE) {
 #if CFE_DEBUG >= 1
-      printf("Config param 'verbosity' not found in config file\n");
+      printf("Config param 'verbosity' not found in config file (optional) \n");
       printf("setting verbosity to a low value\n");
 #endif
       model->verbosity = 0;
     }
     if (is_infiltration_excess_method_set == FALSE) {
 #if CFE_DEBUG >= 1
-      printf("Config param \"surface_water_partitioning_scheme\" not found in config file\n");
+      printf("Config param \"surface_water_partitioning_scheme\" not found in config file. Aborting...\n");
 #endif
       return BMI_FAILURE;
     }
@@ -1019,25 +1019,25 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     if(model->infiltration_excess_params_struct.surface_water_partitioning_scheme == Xinanjiang){
       if (is_a_Xinanjiang_inflection_point_parameter_set == FALSE) {
 #if CFE_DEBUG >= 1
-	printf("Config param 'a_Xinanjiang_inflection_point_parameter' not found in config file\n");
+	printf("Config param 'a_Xinanjiang_inflection_point_parameter' not found in config file. Aborting...\n");
 #endif
 	return BMI_FAILURE;
       }
       if (is_b_Xinanjiang_shape_parameter_set == FALSE) {
 #if CFE_DEBUG >= 1
-	printf("Config param 'b_Xinanjiang_shape_parameter' not found in config file\n");
+	printf("Config param 'b_Xinanjiang_shape_parameter' not found in config file. Aborting...\n");
 #endif
 	return BMI_FAILURE;
       }
       if (is_x_Xinanjiang_shape_parameter_set == FALSE) {
 #if CFE_DEBUG >= 1
-	printf("Config param 'x_Xinanjiang_shape_parameter' not found in config file\n");
+	printf("Config param 'x_Xinanjiang_shape_parameter' not found in config file. Aborting...\n");
 #endif
 	return BMI_FAILURE;
       }
       if (is_urban_decimal_fraction_set == FALSE) {
 #if CFE_DEBUG >= 1
-	printf("Config param 'urban_decimal_fraction' not found in config file\n");
+	printf("Config param 'urban_decimal_fraction' not found in config file. Aborting...\n");
 #endif
 	return BMI_FAILURE;
       }
@@ -1056,7 +1056,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
       // Handle GIUH ordinates, bailing if they were not provided
       if (is_giuh_originates_string_val_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("GIUH ordinate string not set!\n");
+        printf("GIUH ordinate string not set! Aborting...\n");
 #endif
         return BMI_FAILURE;
       }
@@ -1070,8 +1070,10 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
       printf("Counted number of GIUH ordinates (%d)\n", model->num_giuh_ordinates);
 #endif
       
-      if (model->num_giuh_ordinates < 1)
+      if (model->num_giuh_ordinates < 1) {
+	printf("Number of GIUH ordinates less than 1 (%d). Aborting... \n", model->num_giuh_ordinates);
         return BMI_FAILURE;
+      }
       
       model->giuh_ordinates = malloc(sizeof(double) * model->num_giuh_ordinates);
       // Work with a copy of the original pointer so that the original remains unchanged and can be freed at end
@@ -1087,13 +1089,13 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     else if(model->surface_runoff_scheme == NASH_CASCADE) {
       if (is_N_nash_surface_set == FALSE) {
 #if CFE_DEBUG >= 1
-	printf("Config param 'N_nash_surface' not found in config file\n");
+	printf("Config param 'N_nash_surface' not found in config file. Aborting...\n");
 #endif
 	return BMI_FAILURE;
       }
       if (is_K_nash_surface_set == FALSE) {
 #if CFE_DEBUG >= 1
-	printf("Config param 'K_nash_surface' not found in config file\n");
+	printf("Config param 'K_nash_surface' not found in config file. Aborting...\n");
 #endif
 	return BMI_FAILURE;
       }
@@ -1105,7 +1107,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
       }
       if (is_nash_storage_surface_set == FALSE) {
 #if CFE_DEBUG >= 1
-	printf("Config param 'nash_storage_surface' not found in config file\n");
+	printf("Config param 'nash_storage_surface' not found in config file. Aborting...\n");
 #endif
 	return BMI_FAILURE;
       }
@@ -1181,13 +1183,13 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     if (is_aet_rootzone_set == TRUE ) {
       if (is_max_rootzone_layer_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Config param 'max_rootzone_layer' not found in config file\n");
+        printf("Config param 'max_rootzone_layer' not found in config file. Aborting...\n");
 #endif
         return BMI_FAILURE;
       }
       if (is_soil_layer_depths_string_val_set == FALSE) {
 #if CFE_DEBUG >= 1
-        printf("Soil layer depths string/values not set!\n");
+        printf("Soil layer depths string/values not set! Aborting...\n");
 #endif
         return BMI_FAILURE;
       }
@@ -1197,14 +1199,15 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 #endif
       
       model->soil_reservoir.n_soil_layers = lround(count_delimited_values(soil_layer_depths_string_val, ","));
-      printf("n_soil_layers set in bmi_cfe.c: %d\n", model->soil_reservoir.n_soil_layers);
       
 #if CFE_DEBUG >= 1
-      printf("Counted number of soil depths (%d)\n", model->soil_reservoir.n_soil_layers);
+      printf("Number of soil layer (%d)\n", model->soil_reservoir.n_soil_layers);
 #endif
       
-      if (model->soil_reservoir.n_soil_layers < 1)
+      if (model->soil_reservoir.n_soil_layers < 1) {
+	printf("Number of soil depths less than 1 (%d). Aborting... \n", model->soil_reservoir.n_soil_layers);
 	return BMI_FAILURE;
+      }
       
       model->soil_reservoir.soil_layer_depths_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers + 1));
       copy = soil_layer_depths_string_val;
@@ -1219,7 +1222,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
       //Check that the last depth read in from the cfe config file (soil_layer_depths) matches the total depth (soil_params.depth)
       //from the cfe config file.
       if(model->NWM_soil_params.D != model->soil_reservoir.soil_layer_depths_m[model->soil_reservoir.n_soil_layers]){
-        printf("WARNING: soil_params.depth is not equal to the last soil layer depth in the CFE config file!\n");
+        printf("WARNING: soil_params.depth is not equal to the last soil layer depth in the CFE config file! Aborting...\n");
         return BMI_FAILURE;
       }
       
