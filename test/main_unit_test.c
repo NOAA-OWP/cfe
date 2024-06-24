@@ -401,16 +401,16 @@ main(int argc, const char *argv[]){
     "Kn", "Cgw", "expon", "max_gw_storage",
     "satpsi","wltsmc","alpha_fc","refkdt",
     "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
-    "K_infiltration",
-    "N_nash"};
+    "Kinf_nash_surface",
+    "N_nash_subsurface"};
   double test_set_value = 4.2;
   double test_get_value = 0.0;
   int    test_set_value_int = 5;
   int    test_get_value_int = 0;
   
   // Loop through params to test get and set
-  for( int i = 0; i < PARAM_COUNT; i++ ){
-    if(strcmp(expected_param_names[i], "N_nash") == 0){
+  for( int i = 0; i < PARAM_COUNT; i++ ) {
+    if(strcmp(expected_param_names[i], "N_nash_subsurface") == 0){
       status = model->set_value(model, expected_param_names[i], &test_set_value_int);
       assert(status == BMI_SUCCESS);
       status = model->get_value(model, expected_param_names[i], &test_get_value_int);
@@ -418,7 +418,7 @@ main(int argc, const char *argv[]){
       assert(test_set_value_int == test_get_value_int);
       printf(" get & set values match for parameter: %s \n", expected_param_names[i]);
     }
-    else{
+    else {
       status = model->set_value(model, expected_param_names[i], &test_set_value);
       //if (status == BMI_FAILURE)return BMI_FAILURE;
       assert(status == BMI_SUCCESS);
