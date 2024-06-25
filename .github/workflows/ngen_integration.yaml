@@ -81,13 +81,17 @@ jobs:
           rm -rf extern/cfe/cfe/*
           mv ${{runner.temp}}/cfe/* extern/cfe/cfe
 
-      - name: Run NGen Test for CFE (cfe1.0) Couple with PET
+      - name: PET (checkout master -- remove later)
+        run: |
+          git submodule update --remote extern/evapotranspiration/evapotranspiration
+	  
+      - name: Run NGen Test for CFE (cfe1.0) Coupled with PET
         run: |
           mv ${{ steps.ngen_id1.outputs.build-dir }} ./ngen-build/
           inputfile='extern/cfe/cfe/realizations/realization_cfe_pet_surfgiuh.json'
           ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
 
-      - name: Run Ngen Test for CFE (cfe2.0) Couple with PET
+      - name: Run Ngen Test for CFE (cfe2.0) Coupled with PET
         run: |
-          inputfile='extern/cfe/cfe/realizations/realization_cfe_pet_surfnash_calib.json'
+          inputfile='extern/cfe/cfe/realizations/realization_cfe_pet_surfnash.json'
           ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
