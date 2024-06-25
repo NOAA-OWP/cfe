@@ -1048,6 +1048,8 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
       model->surface_runoff_scheme = GIUH;
     }
     
+    model->num_giuh_ordinates = 0; // initialize num_giuh_ordinates 
+    
     // Used for parsing strings representing arrays of values below
     char *copy, *value;
     
@@ -1151,7 +1153,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
       }
       
       
-      // initialize default parameters	    
+      // initialize default parameters
     }
 
     /*------------------- surface runoff scheme END ----------------------------- */
