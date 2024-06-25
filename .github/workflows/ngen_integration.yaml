@@ -84,7 +84,7 @@ jobs:
       - name: PET (checkout master -- remove later)
         run: |
           git submodule update --remote extern/evapotranspiration/evapotranspiration
-	  
+
       - name: Run NGen Test for CFE (cfe1.0) Coupled with PET
         run: |
           mv ${{ steps.ngen_id1.outputs.build-dir }} ./ngen-build/
