@@ -85,6 +85,7 @@ See general instructions [here](https://github.com/NOAA-OWP/ngen/wiki/NGen-Tutor
     - make -C extern/cfe/cfe/cmake_build
     
   - #### PET (optional)
+    - git submodule update --remote extern/evapotranspiration/evapotranspiration
     - cmake -B extern/evapotranspiration/evapotranspiration/cmake_build -S extern/evapotranspiration/evapotranspiration/
     - make -C extern/evapotranspiration/evapotranspiration/cmake_build/
     
@@ -117,7 +118,7 @@ The following pre-process step needs to be completed before running the examples
   ../cmake_build/ngen data/catchment_data.geojson cat-27 data/nexus_data.geojson nex-26 realizations/realization_cfe_pet_surfgiuh.json
   ```
   ```
-  ../cmake_build/ngen data/catchment_data.geojson cat-27 data/nexus_data.geojson nex-26 realizations/realization_cfe_pet_surfnash_calib.json
+  ../cmake_build/ngen data/catchment_data.geojson cat-27 data/nexus_data.geojson nex-26 realizations/realization_cfe_pet_surfnash.json
   ```
 
 ## Alternative: Compiling and Running CFE
