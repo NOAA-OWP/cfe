@@ -76,7 +76,8 @@
 				    "soil_moisture_profile" : "sloth_smp"
                                 },
 				"model_params": {
-				    "Kinf_nash_surface": 0.04
+				    "Kinf_nash_surface": 0.04,
+				    "retention_depth_nash_surface": 0.1043
 				},
                                 "uses_forcing_file": false
                             }
