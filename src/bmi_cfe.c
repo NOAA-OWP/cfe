@@ -25,7 +25,7 @@
 #define STATE_VAR_NAME_COUNT 94   // must match var_info array size
 
 
-#define PARAM_VAR_NAME_COUNT 18
+#define PARAM_VAR_NAME_COUNT 19
 // NOTE: If you update the params, also update the unit test in ../test/main_unit_test_bmi.c
 static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
     "maxsmc", "satdk", "slope", "b", "Klf",
@@ -33,6 +33,7 @@ static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
     "satpsi","wltsmc","alpha_fc","refkdt",
     "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
     "Kinf_nash_surface",
+    "retention_depth_nash_surface",
     "N_nash_subsurface"
 };
 
@@ -41,7 +42,7 @@ static const char *param_var_types[PARAM_VAR_NAME_COUNT] = {
     "double", "double", "double", "double",
     "double", "double", "double", "double",
     "double","double","double", "double",
-    "int"
+    "double", "int"
 };
 //----------------------------------------------
 // Put variable info into a struct to simplify
@@ -1931,6 +1932,12 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
+    if (strcmp(name, "retention_depth_nash_surface") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+        *dest = (void*)&cfe_ptr->nash_surface_params.retention_depth;
+        return BMI_SUCCESS;
+    }
     /***********************************************************/
     /***********    OUTPUT   ***********************************/
     /***********************************************************/

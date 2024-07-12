@@ -393,7 +393,7 @@ main(int argc, const char *argv[]){
   printf("\nTEST BMI MODEL PARAMETERS\n*************************\n");
   
   //Set number of params -- UPDATE if params changed
-#define PARAM_COUNT 18
+#define PARAM_COUNT 19
   
   // expected_param_names copied directly from param_var_names[PARAM_VAR_NAME_COUNT] in ../src/bmi_cfe.c
   static const char *expected_param_names[PARAM_COUNT] = {
@@ -401,8 +401,9 @@ main(int argc, const char *argv[]){
     "Kn", "Cgw", "expon", "max_gw_storage",
     "satpsi","wltsmc","alpha_fc","refkdt",
     "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
-    "Kinf_nash_surface",
+    "Kinf_nash_surface", "retention_depth_nash_surface",
     "N_nash_subsurface"};
+  
   double test_set_value = 4.2;
   double test_get_value = 0.0;
   int    test_set_value_int = 5;
