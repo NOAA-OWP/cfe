@@ -1801,10 +1801,19 @@ static int Get_var_nbytes (Bmi *self, const char *name, int * nbytes)
             }
         }
     }
+    if (item_count < 1) {
+      for (i = 0; i < PARAM_VAR_NAME_COUNT; i++) {
+        if (strcmp(name, param_var_names[i]) == 0) {
+	  item_count = 1;
+	  break;
+        }
+      }
+    }
     if (item_count < 1)
         item_count = ((cfe_state_struct *) self->data)->num_timesteps;
 
     *nbytes = item_size * item_count;
+
     return BMI_SUCCESS;
 }
 
@@ -2144,8 +2153,10 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
 
 }
 
-static int Set_value (Bmi *self, const char *name, void *array)
+
+static int Set_value (Bmi *self, const char *name, void *src)
 {
+
     void * dest = NULL;
     int nbytes  = 0;
 
@@ -2155,15 +2166,9 @@ static int Set_value (Bmi *self, const char *name, void *array)
     if (self->get_var_nbytes(self, name, &nbytes) == BMI_FAILURE)
         return BMI_FAILURE;
 
-    memcpy (dest, array, nbytes);
+    memcpy (dest, src, nbytes);
 
-    /*
-    // Calibratable parameters
-    
-
-    if (strcmp (name, "maxsmc") == 0 || strcmp (name, "alpha_fc") == 0 || strcmp (name, "wltsmc") == 0 ||
-	strcmp (name, "maxsmc") == 0 || strcmp (name, "b") == 0 || strcmp (name, "slope") == 0 ||
-	strcmp (name, "satpsi") == 0 || strcmp (name, "Klf") == 0  || strcmp (name, "satdk") == 0) {
+    if (strcmp (name, "maxsmc") == 0 || strcmp (name, "alpha_fc") == 0 || strcmp (name, "wltsmc") == 0 || strcmp (name, "maxsmc") == 0 || strcmp (name, "b") == 0 || strcmp (name, "slope") == 0 || strcmp (name, "satpsi") == 0 || strcmp (name, "Klf") == 0  || strcmp (name, "satdk") == 0){
 
         cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
         init_soil_reservoir(cfe_ptr);
@@ -2176,10 +2181,10 @@ static int Set_value (Bmi *self, const char *name, void *array)
 
     if (strcmp (name, "N_nash_subsurface") == 0) {
         cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
-        if( cfe_ptr->nash_storage_subsurface != NULL )
-	  free(cfe_ptr->nash_storage_subsurface);
 
-	cfe_ptr->nash_storage_subsurface = malloc(sizeof(double) * cfe_ptr->N_nash_subsurface);
+	if( cfe_ptr->nash_storage_subsurface != NULL )
+	  free(cfe_ptr->nash_storage_subsurface);
+        cfe_ptr->nash_storage_subsurface = malloc(sizeof(double) * cfe_ptr->N_nash_subsurface);
 
 	if( cfe_ptr->nash_storage_subsurface == NULL )
 	  return BMI_FAILURE;
@@ -2192,7 +2197,6 @@ static int Set_value (Bmi *self, const char *name, void *array)
          cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
          cfe_ptr->gw_reservoir.storage_m = cfe_ptr->gw_reservoir.gw_storage * cfe_ptr->gw_reservoir.storage_max_m;
      }
-    */
     
     return BMI_SUCCESS;
 }
