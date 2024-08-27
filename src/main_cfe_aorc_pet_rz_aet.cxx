@@ -180,20 +180,20 @@ int
       Initializing the BMI model for CFE and AORC and Freeze-thaw model
   ************************************************************************/
   
-  printf("Initializeing BMI CFE model\n");
+  printf("Initializing BMI CFE model\n");
   const char *cfg_file_cfe = argv[1];
   cfe_bmi_model->initialize(cfe_bmi_model, cfg_file_cfe); 
 
-  printf("Initializeing BMI AORC model\n");
+  printf("Initializing BMI AORC model\n");
   const char *cfg_file_aorc = argv[2];
   printf("AORC config file %s\n", cfg_file_aorc);
   aorc_bmi_model->initialize(aorc_bmi_model, cfg_file_aorc);
 
-  printf("Initializeing BMI PET model\n");
+  printf("Initializing BMI PET model\n");
   const char *cfg_file_pet = argv[3];
   pet_bmi_model->initialize(pet_bmi_model, cfg_file_pet);
 
-  printf("Initializeing BMI Coupler model\n"); 
+  printf("Initializing BMI Coupler model\n"); 
   const char *cfg_file_coupler = argv[4];      
   coupler_bmi.Initialize(cfg_file_coupler); 
   
@@ -231,7 +231,7 @@ int
   /************************************************************************
     Now loop through time and call the models with the intermediate get/set
   ************************************************************************/
-  printf("looping through and calling updata\n");
+  printf("looping through and calling update \n");
   if (cfe->verbosity > 0)
     print_cfe_flux_header();
   for (int i = 0; i < 24862; i++){
@@ -270,7 +270,7 @@ int
       printf("PET value from PET is %8.9lf\n", pet->pet_m_per_s);
       printf("PET value from CFE is %8.9lf\n", cfe->et_struct.potential_et_m_per_s);
     }
-    
+
     cfe_bmi_model->update(cfe_bmi_model);                           // Update model 2
   
     if (cfe->verbosity > 0)

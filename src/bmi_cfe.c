@@ -1775,7 +1775,6 @@ static int Get_var_units (Bmi *self, const char *name, char * units)
     return BMI_FAILURE;
 }
 
-
 static int Get_var_nbytes (Bmi *self, const char *name, int * nbytes)
 {
     int item_size;
@@ -1787,6 +1786,10 @@ static int Get_var_nbytes (Bmi *self, const char *name, int * nbytes)
     for (i = 0; i < INPUT_VAR_NAME_COUNT; i++) {
         if (strcmp(name, input_var_names[i]) == 0) {
             item_count = input_var_item_count[i];
+	    if (strcmp(name, "soil_moisture_profile") == 0 || strcmp(name, "soil_layer_depths_m") == 0) {
+	      cfe_state_struct *cfe_ptr;
+	      item_count = ((cfe_state_struct *)(self->data))->soil_reservoir.n_soil_layers + 1;
+	    }
             break;
         }
     }
@@ -2054,7 +2057,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
 
     /**************************************************************************************************/
     /**********Parameter Derived from config file - root zone adjusted AET development - rlm ***********/
-    if (strcmp (name, "soil__num_cells") == 0) {
+    if (strcmp (name, "soil_num_cells") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
         *dest = (void*)&cfe_ptr->soil_reservoir.n_soil_layers;
@@ -2116,51 +2119,51 @@ static int Get_value (Bmi *self, const char *name, void *dest)
     return Get_value_at_indices(self, name, dest, inds, 1);
 }
 
-
 static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int len, void *src)
 {
-    if (len < 1)
+    void * dest  = NULL;
+    int itemsize = 0;
+
+    if (self->get_value_ptr(self, name, &dest) == BMI_FAILURE)
         return BMI_FAILURE;
 
-    // Get "adjusted_index" for variable
-    int adjusted_index = Get_adjusted_index_for_variable(name);
-    if (adjusted_index < 0)
+    if (self->get_var_itemsize(self, name, &itemsize) == BMI_FAILURE)
         return BMI_FAILURE;
 
-    int var_item_size;
-    int status = Get_var_itemsize(self, name, &var_item_size);
-    if (status == BMI_FAILURE)
-        return BMI_FAILURE;
-
-    // For now, all variables are non-array scalar values, with only 1 item of type double
-
-    // Thus, there is only ever one value to return (len must be 1) and it must always be from index 0
-    // ajk: modifying it to work with soil moisture column for rootzone depth based AET
-    if (strcmp(name, "soil_moisture_profile") == 0 || strcmp(name, "soil_layer_depths_m") == 0) { //Adding soil layer depths since they will be needed for root zone adjusted AET estimations -rlm
-
-      len = ((cfe_state_struct *)(self->data))->soil_reservoir.n_soil_layers + 1;
-      void *ptr = NULL; //(double*) malloc (sizeof (double)* len);
-      status = Get_value_ptr(self, name, &ptr);
-
-
-      if (status == BMI_FAILURE)
-        return BMI_FAILURE;
-
-      memcpy(ptr, src, var_item_size * len);
-
-      return BMI_SUCCESS;
-
+    { /* Copy the data */
+      size_t i;
+      size_t offset;
+      char * ptr;
+      for (i=0, ptr=(char*)src; i<len; i++, ptr+=itemsize) {
+	offset = inds[i] * itemsize;
+	memcpy ((char*)dest + offset, ptr, itemsize);
+      }
     }
-    else if (len > 1 || inds[0] != 0)
+
+    return BMI_SUCCESS;
+
+}
+
+static int Set_value (Bmi *self, const char *name, void *array)
+{
+    void * dest = NULL;
+    int nbytes  = 0;
+
+    if (self->get_value_ptr(self, name, &dest) == BMI_FAILURE)
         return BMI_FAILURE;
 
-    void* ptr;
-    status = Get_value_ptr(self, name, &ptr);
-    if (status == BMI_FAILURE)
+    if (self->get_var_nbytes(self, name, &nbytes) == BMI_FAILURE)
         return BMI_FAILURE;
-    memcpy(ptr, src, var_item_size * len);
 
-    if (strcmp (name, "maxsmc") == 0 || strcmp (name, "alpha_fc") == 0 || strcmp (name, "wltsmc") == 0 || strcmp (name, "maxsmc") == 0 || strcmp (name, "b") == 0 || strcmp (name, "slope") == 0 || strcmp (name, "satpsi") == 0 || strcmp (name, "Klf") == 0  || strcmp (name, "satdk") == 0){
+    memcpy (dest, array, nbytes);
+
+    /*
+    // Calibratable parameters
+    
+
+    if (strcmp (name, "maxsmc") == 0 || strcmp (name, "alpha_fc") == 0 || strcmp (name, "wltsmc") == 0 ||
+	strcmp (name, "maxsmc") == 0 || strcmp (name, "b") == 0 || strcmp (name, "slope") == 0 ||
+	strcmp (name, "satpsi") == 0 || strcmp (name, "Klf") == 0  || strcmp (name, "satdk") == 0) {
 
         cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
         init_soil_reservoir(cfe_ptr);
@@ -2173,10 +2176,15 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
 
     if (strcmp (name, "N_nash_subsurface") == 0) {
         cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
-        if( cfe_ptr->nash_storage_subsurface != NULL ) free(cfe_ptr->nash_storage_subsurface);
-    	cfe_ptr->nash_storage_subsurface = malloc(sizeof(double) * cfe_ptr->N_nash_subsurface);
-    	if( cfe_ptr->nash_storage_subsurface == NULL ) return BMI_FAILURE;
-    	for (j = 0; j < cfe_ptr->N_nash_subsurface; j++)
+        if( cfe_ptr->nash_storage_subsurface != NULL )
+	  free(cfe_ptr->nash_storage_subsurface);
+
+	cfe_ptr->nash_storage_subsurface = malloc(sizeof(double) * cfe_ptr->N_nash_subsurface);
+
+	if( cfe_ptr->nash_storage_subsurface == NULL )
+	  return BMI_FAILURE;
+
+	for (j = 0; j < cfe_ptr->N_nash_subsurface; j++)
 	  cfe_ptr->nash_storage_subsurface[j] = 0.0;
     }
 
@@ -2184,37 +2192,9 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
          cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
          cfe_ptr->gw_reservoir.storage_m = cfe_ptr->gw_reservoir.gw_storage * cfe_ptr->gw_reservoir.storage_max_m;
      }
-
+    */
+    
     return BMI_SUCCESS;
-}
-
-
-static int Set_value (Bmi *self, const char *name, void *array)
-{
-    // Avoid using set value, call instead set_value_at_index
-    // Use nested call to "by index" version
-
-    // Here, for now at least, we know all the variables are scalar, so
-    int inds[] = {0};
-
-    // Then we can just ...
-    return Set_value_at_indices(self, name, inds, 1, array);
-
-
-/*  This is the sample code from read the docs
-    void * dest = NULL;
-    int nbytes = 0;
-
-    if (self->get_value_ptr(self, name, &dest) == BMI_FAILURE)
-        return BMI_FAILURE;
-
-    if (self->get_var_nbytes(self, name, &nbytes) == BMI_FAILURE)
-        return BMI_FAILURE;
-
-    memcpy (dest, array, nbytes);
-
-    return BMI_SUCCESS;
-*/
 }
 
 
