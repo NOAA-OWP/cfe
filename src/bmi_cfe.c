@@ -1804,7 +1804,7 @@ static int Get_var_nbytes (Bmi *self, const char *name, int * nbytes)
     if (item_count < 1) {
       for (i = 0; i < PARAM_VAR_NAME_COUNT; i++) {
         if (strcmp(name, param_var_names[i]) == 0) {
-	  item_count = 1;
+	  item_count = 1; // all of the calibratable parameters are (and will be?) scalars - AJK
 	  break;
         }
       }
