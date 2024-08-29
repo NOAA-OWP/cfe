@@ -727,6 +727,12 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         if (strcmp(param_key, "K_nash_subsurface") == 0 || strcmp(param_key, "K_nash") == 0) {
             model->K_nash_subsurface = strtod(param_value, NULL);
             is_K_nash_subsurface_set = TRUE;
+	    // Check if units are present and print warning if missing from config file
+            if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEBUG >= 1
+	      printf ("WARNING: [units] expected for '%s' in config file. [1/hour]\n", param_key);
+#endif
+            }
             continue;
         }
         if (strcmp(param_key, "K_lf") == 0) {
@@ -802,6 +808,11 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         if (strcmp(param_key, "K_nash_surface") == 0) {
 	  model->nash_surface_params.K_nash = strtod(param_value, NULL);
 	  is_K_nash_surface_set             = TRUE;
+	  if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEBUG >= 1
+	    printf ("WARNING: [units] expected for '%s' in config file. [1/hour]\n", param_key);
+#endif
+	  }
 	  continue;
         }
 	if (strcmp(param_key, "nsubsteps_nash_surface") == 0) {
@@ -812,16 +823,31 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         if (strcmp(param_key, "nash_storage_surface") == 0) {
 	  nash_storage_surface_string_val = strdup(param_value);
 	  is_nash_storage_surface_set     = TRUE;
+	  if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEBUG >= 1
+	    printf ("WARNING: [units] expected for '%s' in config file. [m]\n", param_key);
+#endif
+	  }
 	  continue;
         }
         if (strcmp(param_key, "Kinf_nash_surface") == 0) {
 	  model->nash_surface_params.K_infiltration = strtod(param_value, NULL);
 	  is_K_infiltration_nash_surface_set = TRUE;
+	  if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEBUG >= 1
+	    printf ("WARNING: [units] expected for '%s' in config file. [1/hour]\n", param_key);
+#endif
+	  }
 	  continue;
         }
 	if (strcmp(param_key, "retention_depth_nash_surface") == 0) {
 	  model->nash_surface_params.retention_depth = strtod(param_value, NULL);
 	  is_retention_depth_nash_surface_set        = TRUE;
+	  if ((param_units == NULL) || (strlen(param_units) < 1)) {
+#if CFE_DEBUG >= 1
+	    printf ("WARNING: [units] expected for '%s' in config file. [m]\n", param_key);
+#endif
+	  }
 	  continue;
         }
 
