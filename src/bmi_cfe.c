@@ -1956,7 +1956,7 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
     if (strcmp (name, "RAIN_RATE") == 0) {   //jmframe: Seems unnecessary to have rain rate as an output variable.
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
-        *dest = (void*)&cfe_ptr->aorc.precip_kg_per_m2;
+        *dest = (void*)&cfe_ptr->timestep_rainfall_input_m;
         return BMI_SUCCESS;
     }
 
