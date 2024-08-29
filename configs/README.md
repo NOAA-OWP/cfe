@@ -22,15 +22,15 @@ Example configuration files are provided in this directory. To build and run the
 | N_nash_subsurface | *int* |   |   | parameter_adjustable |   | number of Nash lf reservoirs (optional, defaults to 2, ignored if storage values present)  |
 | K_nash_subsurface | *double* |   | 1/meters [m^-1]  | parameter_adjustable | subsurface runoff | Nash Config param for lateral subsurface runoff   |
 | *K_lf | *double* |   |   | parameter_adjustable |  | Nash Config param - primary reservoir  |
-| nash_storage_subsurface | *double* |   |   | parameter_adjustable |  | Nash Config param - secondary reservoir   |
-| giuh_ordinates   | *double* |   |   | parameter_adjustable |  | Giuh ordinates in dt time steps   |
+| nash_storage_subsurface | 1D array (*double*) |   |   | parameter_adjustable |  | Nash Config param - secondary reservoir   |
+| giuh_ordinates   | 1D array (*double*) |   |   | parameter_adjustable |  | Giuh ordinates in dt time steps   |
 | num_timesteps  | *int* |   |  | time_info |  | set to `1` if `forcing_file=BMI`   |
 | verbosity | *int* | `0`-`3`  |   | optional |   |  prints various debug and bmi info (defaults to 0) |
 | surface_water_partitioning_scheme | *char* | `Xinanjiang` or `Schaake`  |  | parameter_adjustable | infiltraton excess |    |
 | surface_runoff_scheme | *char* | GIUH or NASH_CASCADE | | parameter_adjustable | surface runoff | also supports 1 for GIUH and 2 for NASH_CASCADE; default is GIUH |
 | N_nash_surface | *int* |   |   | parameter_adjustable | surface runoff | number of Nash reservoirs for surface runoff   |
 | K_nash_surface | *double* |   | 1/hour [h^-1]  | parameter_adjustable | surface runoff | Nash Config param for surface runoff   |
-| nash_storage_surface | *double* |   | meters [m]  | parameter_adjustable | surface runoff | Nash Config param; reservoir surface storage; default is zero storage |
+| nash_storage_surface | 1D array (*double*) |   | meters [m]  | parameter_adjustable | surface runoff | Nash Config param; reservoir surface storage; default is zero storage |
 | nsubsteps_nash_surface | *int* |   |   | parameter_adjustable | surface runoff | optional (default = 10); number of subtimstep for Nash runoff |
 | Kinf_nash_surface | *double* |   | 1/hour [h^-1] | parameter_adjustable | surface runoff | optional (default = 0.05); storage fraction per hour that moves from reservoirs to soil |
 | retention_depth_nash_surface | *double* |   | m | parameter_adjustable | surface runoff | optional (default = 0.001); water retention depth threshold (only applied to the first reservoir) |
@@ -40,7 +40,7 @@ Example configuration files are provided in this directory. To build and run the
 | urban_decimal_fraction  | *double*  |  0.0 - 1.0 |   |  parameter_adjustable | infiltration excess runoff | when `surface_water_partitioning_scheme=Xinanjiang` |
 | is_aet_rootzone                    | *boolean* | True, true or 1  |  | coupling parameter | `rootzone-based AET` | when `CFE coupled to SoilMoistureProfile` |
 | max_rootzone_layer | *double* |  | meters [m] | parameter_adjustable | AET | layer of the soil that is the maximum root zone depth. That is, the depth of the layer where the AET is drawn from |
-| soil_layer_depths | 1D array |  | meters [m] | parameter_adjustable | AET | an array of depths from the surface. Example, soil_layer_depths=0.1,0.4,1.0,2.0
+| soil_layer_depths | 1D array (*double*) |  | meters [m] | parameter_adjustable | AET | an array of depths from the surface. Example, soil_layer_depths=0.1,0.4,1.0,2.0
 | is_sft_coupled                   | *boolean* | True, true or 1  |  | coupling parameter | `ice_fraction-based runoff` | when `CFE coupled to SoilFreezeThaw`|
 
 ## Infiltration excess runoff options in CFE
