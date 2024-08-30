@@ -76,12 +76,11 @@ void pass_smc_from_coupler_to_cfe(Bmi *cfe_bmi_model,BmiSoilMoistureProfile coup
       coupler_bmi.SetValue("soil_moisture_layered",&smc_layers[0]);
       coupler_bmi.Update();
   }
-  double *smct = new double[n_soil_layers + 1];
-  coupler_bmi.GetValue("soil_moisture_profile",&smct[1]);
+  double *smct = new double[n_soil_layers];
+  coupler_bmi.GetValue("soil_moisture_profile",&smct[0]);
   cfe_bmi_model->set_value(cfe_bmi_model, "soil_moisture_profile", &smct[0]);
 
 }
-
 
 /***************************************************************
     Function to pass the forcing data from AORC to PET using BMI.
