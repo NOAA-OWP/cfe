@@ -1212,10 +1212,10 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 	return BMI_FAILURE;
       }
       
-      model->soil_reservoir.soil_layer_depths_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers + 1));
+      model->soil_reservoir.soil_layer_depths_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers));
       copy = soil_layer_depths_string_val;
       
-      i = 1;
+      i = 0;
       while((value = strsep(&copy, ",")) != NULL) {
         model->soil_reservoir.soil_layer_depths_m[i++] = strtod(value, NULL);
       }
@@ -1224,7 +1224,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
       
       //Check that the last depth read in from the cfe config file (soil_layer_depths) matches the total depth (soil_params.depth)
       //from the cfe config file.
-      if(model->NWM_soil_params.D != model->soil_reservoir.soil_layer_depths_m[model->soil_reservoir.n_soil_layers]){
+      if(model->NWM_soil_params.D != model->soil_reservoir.soil_layer_depths_m[model->soil_reservoir.n_soil_layers - 1]){
         printf("WARNING: soil_params.depth is not equal to the last soil layer depth in the CFE config file! Aborting...\n");
         return BMI_FAILURE;
       }
@@ -1234,10 +1234,10 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     // Calculate the thickness (delta) of each soil layer
     if (is_aet_rootzone_set == TRUE ) {
       model->soil_reservoir.is_aet_rootzone = TRUE;
-      model->soil_reservoir.delta_soil_layer_depth_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers + 1));
+      model->soil_reservoir.delta_soil_layer_depth_m = malloc(sizeof(double) * (model->soil_reservoir.n_soil_layers));
       double previous_depth = 0;
       double current_depth = 0;
-      for (int i=1; i <= model->soil_reservoir.n_soil_layers; i++) {
+      for (int i=0; i <model->soil_reservoir.n_soil_layers; i++) {
         current_depth = model->soil_reservoir.soil_layer_depths_m[i];
         if (current_depth <= previous_depth)
 	  printf("WARNING: soil depths may be out of order.  One or more soil layer depths is less than or equal to the previous layer. Check CFE config file.\n");
@@ -1474,7 +1474,7 @@ static int Initialize (Bmi *self, const char *file)
     cfe_bmi_data_ptr->soil_reservoir.ice_fraction_xinanjiang = 0.0;
 
     if (cfe_bmi_data_ptr->soil_reservoir.is_aet_rootzone == TRUE)
-      cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*cfe_bmi_data_ptr->soil_reservoir.n_soil_layers + 1);
+      cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*cfe_bmi_data_ptr->soil_reservoir.n_soil_layers);
     else
       cfe_bmi_data_ptr->soil_reservoir.smc_profile = malloc(sizeof(double)*1);
 
@@ -1786,9 +1786,9 @@ static int Get_var_nbytes (Bmi *self, const char *name, int * nbytes)
     for (i = 0; i < INPUT_VAR_NAME_COUNT; i++) {
         if (strcmp(name, input_var_names[i]) == 0) {
             item_count = input_var_item_count[i];
-	    if (strcmp(name, "soil_moisture_profile") == 0 || strcmp(name, "soil_layer_depths_m") == 0) {
+	    if (strcmp(name, "soil_moisture_profile") == 0) {
 	      cfe_state_struct *cfe_ptr;
-	      item_count = ((cfe_state_struct *)(self->data))->soil_reservoir.n_soil_layers + 1;
+	      item_count = ((cfe_state_struct *)(self->data))->soil_reservoir.n_soil_layers;
 	    }
             break;
         }
@@ -2065,15 +2065,8 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
     }
 
     /**************************************************************************************************/
-    /**********Parameter Derived from config file - root zone adjusted AET development - rlm ***********/
-    if (strcmp (name, "soil_num_cells") == 0) {
-        cfe_state_struct *cfe_ptr;
-        cfe_ptr = (cfe_state_struct *) self->data;
-        *dest = (void*)&cfe_ptr->soil_reservoir.n_soil_layers;
-        return BMI_SUCCESS;
-    }
+    /**********Parameter Derived from config file - root zone adjusted AET development - rlm -ajk ***********/
 
-    //--------------Root zone adjusted AET development -rlm -ajk -------
     if (strcmp (name, "soil_moisture_profile") == 0) {
       *dest = (void *) ((cfe_state_struct *)(self->data))->soil_reservoir.smc_profile;
       return BMI_SUCCESS;
@@ -2139,17 +2132,15 @@ static int Set_value_at_indices (Bmi *self, const char *name, int * inds, int le
     if (self->get_var_itemsize(self, name, &itemsize) == BMI_FAILURE)
         return BMI_FAILURE;
 
-    { /* Copy the data */
-      size_t i;
-      size_t offset;
-      char * ptr;
-      // iterate over the source pointer, src, by itemsize byte chunks
-      // and set the destination pointer, dest, to the value in src 
-      // based on the linear offset provided by inds[i]
-      for (i=0, ptr=(char*)src; i<len; i++, ptr+=itemsize) {
-	offset = inds[i] * itemsize;
-	memcpy ((char*)dest + offset, ptr, itemsize);
-      }
+    size_t i;
+    size_t offset;
+    char * ptr;
+    // iterate over the source pointer, src, by itemsize byte chunks
+    // and set the destination pointer, dest, to the value in src 
+    // based on the linear offset provided by inds[i]
+    for (i=0, ptr=(char*)src; i<len; i++, ptr+=itemsize) {
+      offset = inds[i] * itemsize;
+      memcpy ((char*)dest + offset, ptr, itemsize);
     }
 
     return BMI_SUCCESS;
