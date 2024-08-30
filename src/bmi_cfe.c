@@ -1252,7 +1252,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     }
     else {
       model->soil_reservoir.is_aet_rootzone = FALSE;
-      model->soil_reservoir.n_soil_layers   = 0;
+      model->soil_reservoir.n_soil_layers   = 1;
     }
 
     /*--------------------END OF ROOT ZONE ADJUSTED AET DEVELOPMENT -rlm ------------------------------*/
