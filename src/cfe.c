@@ -240,16 +240,18 @@ extern void cfe(
     direct_runoff_m = giuh_convolution_integral(infiltration_excess_m,num_giuh_ordinates,
                                                 giuh_ordinates_arr,runoff_queue_m_per_timestep_arr);
   else if (surface_runoff_scheme == NASH_CASCADE)
+  {
     direct_runoff_m =  nash_cascade_surface(infiltration_excess_m, soil_reservoir_storage_deficit_m,
 					    nash_surface_params);
-  
-  soil_reservoir_struct->storage_m += nash_surface_params->runon_infiltration;  // put the runon infiltrated water in the soil.
-  soil_reservoir_storage_deficit_m -= nash_surface_params->runon_infiltration; // update soil deficit
-  
+    soil_reservoir_struct->storage_m += nash_surface_params->runon_infiltration;  // put the runon infiltrated water in the soil.
+    soil_reservoir_storage_deficit_m -= nash_surface_params->runon_infiltration; // update soil deficit
+
+    massbal_struct->vol_runon_infilt += nash_surface_params->runon_infiltration;
+  }
+
   massbal_struct->vol_out_surface  += direct_runoff_m;
   massbal_struct->volout           += direct_runoff_m;
   massbal_struct->volout           += flux_from_deep_gw_to_chan_m;
-  massbal_struct->vol_runon_infilt += nash_surface_params->runon_infiltration;
 
   // Route lateral flow through the Nash cascade.
   nash_lateral_runoff_m = nash_cascade_subsurface(flux_lat_m, N_nash_subsurface,
