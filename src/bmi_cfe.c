@@ -25,7 +25,7 @@
 #define STATE_VAR_NAME_COUNT 94   // must match var_info array size
 
 
-#define PARAM_VAR_NAME_COUNT 19
+#define PARAM_VAR_NAME_COUNT 18
 // NOTE: If you update the params, also update the unit test in ../test/main_unit_test_bmi.c
 static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
     "maxsmc", "satdk", "slope", "b", "Klf",
@@ -33,8 +33,7 @@ static const char *param_var_names[PARAM_VAR_NAME_COUNT] = {
     "satpsi","wltsmc","alpha_fc","refkdt",
     "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
     "Kinf_nash_surface",
-    "retention_depth_nash_surface",
-    "N_nash_subsurface"
+    "retention_depth_nash_surface"
 };
 
 static const char *param_var_types[PARAM_VAR_NAME_COUNT] = {
@@ -42,7 +41,7 @@ static const char *param_var_types[PARAM_VAR_NAME_COUNT] = {
     "double", "double", "double", "double",
     "double", "double", "double", "double",
     "double","double","double", "double",
-    "double", "int"
+    "double"
 };
 //----------------------------------------------
 // Put variable info into a struct to simplify
@@ -1956,13 +1955,6 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
-    if (strcmp (name, "N_nash_subsurface") == 0) {
-        cfe_state_struct *cfe_ptr;
-        cfe_ptr = (cfe_state_struct *) self->data;
-        *dest = (void*)&cfe_ptr->N_nash_subsurface;
-        return BMI_SUCCESS;
-    }
-
     if (strcmp (name, "Kinf_nash_surface") == 0) {
         cfe_state_struct *cfe_ptr;
         cfe_ptr = (cfe_state_struct *) self->data;
@@ -2197,20 +2189,6 @@ static int Set_value (Bmi *self, const char *name, void *src)
         cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
         cfe_ptr->infiltration_excess_params_struct.Schaake_adjusted_magic_constant_by_soil_type = cfe_ptr->NWM_soil_params.refkdt * cfe_ptr->NWM_soil_params.satdk / 0.000002;
 
-    }
-
-    if (strcmp (name, "N_nash_subsurface") == 0) {
-        cfe_state_struct* cfe_ptr = (cfe_state_struct *) self->data;
-
-	if( cfe_ptr->nash_storage_subsurface != NULL )
-	  free(cfe_ptr->nash_storage_subsurface);
-        cfe_ptr->nash_storage_subsurface = malloc(sizeof(double) * cfe_ptr->N_nash_subsurface);
-
-	if( cfe_ptr->nash_storage_subsurface == NULL )
-	  return BMI_FAILURE;
-
-	for (j = 0; j < cfe_ptr->N_nash_subsurface; j++)
-	  cfe_ptr->nash_storage_subsurface[j] = 0.0;
     }
 
     if (strcmp (name, "storage_max_m") == 0) {
