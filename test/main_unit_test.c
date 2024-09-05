@@ -393,7 +393,7 @@ main(int argc, const char *argv[]){
   printf("\nTEST BMI MODEL PARAMETERS\n*************************\n");
   
   //Set number of params -- UPDATE if params changed
-#define PARAM_COUNT 19
+#define PARAM_COUNT 18
   
   // expected_param_names copied directly from param_var_names[PARAM_VAR_NAME_COUNT] in ../src/bmi_cfe.c
   static const char *expected_param_names[PARAM_COUNT] = {
@@ -401,25 +401,13 @@ main(int argc, const char *argv[]){
     "Kn", "Cgw", "expon", "max_gw_storage",
     "satpsi","wltsmc","alpha_fc","refkdt",
     "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
-    "Kinf_nash_surface", "retention_depth_nash_surface",
-    "N_nash_subsurface"};
+    "Kinf_nash_surface", "retention_depth_nash_surface"};
   
   double test_set_value = 4.2;
   double test_get_value = 0.0;
-  int    test_set_value_int = 5;
-  int    test_get_value_int = 0;
   
   // Loop through params to test get and set
   for( int i = 0; i < PARAM_COUNT; i++ ) {
-    if(strcmp(expected_param_names[i], "N_nash_subsurface") == 0){
-      status = model->set_value(model, expected_param_names[i], &test_set_value_int);
-      assert(status == BMI_SUCCESS);
-      status = model->get_value(model, expected_param_names[i], &test_get_value_int);
-      assert(status == BMI_SUCCESS);
-      assert(test_set_value_int == test_get_value_int);
-      printf(" get & set values match for parameter: %s \n", expected_param_names[i]);
-    }
-    else {
       status = model->set_value(model, expected_param_names[i], &test_set_value);
       //if (status == BMI_FAILURE)return BMI_FAILURE;
       assert(status == BMI_SUCCESS);
@@ -427,7 +415,6 @@ main(int argc, const char *argv[]){
       assert(status == BMI_SUCCESS);
       assert(test_set_value == test_get_value);
       printf(" get & set values match for parameter: %s \n", expected_param_names[i]);
-    }
   }
   
   // Test BMI: CONTROL FUNCTION update_until()
