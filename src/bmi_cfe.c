@@ -765,7 +765,7 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
         }
 
         /*-------------------- Root zone AET development -rlm -----------------------*/
-	if (strcmp(param_key, "aet_rootzone") == 0) {
+	if (strcmp(param_key, "is_aet_rootzone") == 0) {
 
 	  if ( strcmp(param_value, "true")==0 || strcmp(param_value, "True")==0 || strcmp(param_value,"1")==0)
 	    is_aet_rootzone_set = TRUE;
