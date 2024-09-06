@@ -23,6 +23,6 @@ K_nash_surface=0.83089
 nsubsteps_nash_surface=10
 nash_storage_surface=0.0,0.0
 surface_water_partitioning_scheme=Schaake
-aet_rootzone=true
+is_aet_rootzone=true
 soil_layer_depths=0.1,0.4,1.0,2.0
 max_rootzone_layer=2
