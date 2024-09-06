@@ -1,5 +1,12 @@
 ## Configuration File
-Example configuration files are provided in this directory. To build and run the given examples see the instructions [here](https://github.com/NOAA-OWP/cfe/blob/master/INSTALL.md). A detailed description of the parameters for model configuration (i.e., initialize/setup) is provided below. The asterisk (*) denotes calibratable parameters. The has (#) shows the parameters only used with the Nash Cascade-based runoff.
+Example configuration files are provided in this directory. To build and run the given examples see the instructions [here](https://github.com/NOAA-OWP/cfe/blob/master/INSTALL.md). A detailed description of the parameters for model configuration (i.e., initialize/setup) is provided below. 
+
+
+**Key**:
+
+<sup>*</sup>: denotes parameter is calibratable
+
+<sup>1</sup>: denotes the parameters only used when `surface_runoff_scheme` is `NASH_CASCADE`.
 
 | Variable | Datatype |  Limits  | Units | Role | Process | Description |
 | -------- | -------- | ------ | ----- | ---- | ------- | ----------- |
