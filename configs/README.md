@@ -35,7 +35,7 @@ Example configuration files are provided in this directory. To build and run the
 | verbosity | *int* | `0`-`3`  |   | optional |   |  prints various debug and bmi info (defaults to 0) |
 | surface_water_partitioning_scheme | *char* | `Xinanjiang` or `Schaake`  |  | parameter_adjustable | infiltraton excess |    |
 | surface_runoff_scheme | *char* | GIUH or NASH_CASCADE | | parameter_adjustable | surface runoff | also supports 1 for GIUH and 2 for NASH_CASCADE; default is GIUH |
-| #N_nash_surface | *int* |   |   | parameter_adjustable | surface runoff | number of Nash reservoirs for surface runoff   |
+| N_nash_surface<sup>1</sup> | *int* |   |   | parameter_adjustable | surface runoff | number of Nash reservoirs for surface runoff   |
 | #K_nash_surface | *double* |   | 1/hour [h^-1]  | parameter_adjustable | surface runoff | Nash Config param for surface runoff   |
 | #nash_storage_surface | 1D array (*double*) |   | meters [m]  | parameter_adjustable | surface runoff | Nash Config param; reservoir surface storage; default is zero storage |
 | #nsubsteps_nash_surface | *int* |   |   | parameter_adjustable | surface runoff | optional (default = 10); number of subtimstep for Nash runoff |
