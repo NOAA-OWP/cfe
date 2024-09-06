@@ -12,23 +12,23 @@ Example configuration files are provided in this directory. To build and run the
 | -------- | -------- | ------ | ----- | ---- | ------- | ----------- |
 | forcing_file | *char* | 256  |   | filename |   | path to forcing inputs csv; set to `BMI` if passed via `bmi.set_value*()`  |
 | soil_params.depth | *double* |   | meters [m]| state |  | soil depth  |
-| *soil_params.b | *double* |   |   | state |   | beta exponent on Clapp-Hornberger (1978) soil water relations  |
-| *soil_params.satdk | *double* |   |  meters/second [m s-1] | state |  | saturated hydraulic conductivity  |
-| *soil_params.satpsi  | *double* |   |  meters [m] | state |  | saturated capillary head  |
-| *soil_params.slop   | *double* |   |  meters/meters [m/m]| state |  | this factor (0-1) modifies the gradient of the hydraulic head at the soil bottom.  0=no-flow. |
-| *soil_params.smcmax  | *double* |   |  meters/meters [m/m] | state |  | saturated soil moisture content  |
+| soil_params.b<sup>*</sup> | *double* |   |   | state |   | beta exponent on Clapp-Hornberger (1978) soil water relations  |
+| soil_params.satdk<sup>*</sup> | *double* |   |  meters/second [m s-1] | state |  | saturated hydraulic conductivity  |
+| soil_params.satpsi<sup>*</sup>  | *double* |   |  meters [m] | state |  | saturated capillary head  |
+| soil_params.slop<sup>*</sup>   | *double* |   |  meters/meters [m/m]| state |  | this factor (0-1) modifies the gradient of the hydraulic head at the soil bottom.  0=no-flow. |
+| soil_params.smcmax<sup>*</sup>  | *double* |   |  meters/meters [m/m] | state |  | saturated soil moisture content  |
 | soil_params.wltsmc | *double* |   |  meters/meters [m/m] | state |   | wilting point soil moisture content  |
 | soil_params.expon  | *double* |   |  | parameter_adjustable |    | optional; defaults to `1.0`  |
 | soil_params.expon_secondary  | *double* |  |   | parameter_adjustable |  | optional; defaults to `1.0` |
-| *max_gw_storage | *double* |   |  meters [m] | parameter_adjustable |  | maximum storage in the conceptual reservoir |
-| *Cgw | *double* |   |  meters/hour [m h-1] | parameter_adjustable |  | the primary outlet coefficient |
-| *expon | *double* |   |   | parameter_adjustable |  | exponent parameter (1.0 for linear reservoir) |
+| max_gw_storage<sup>*</sup> | *double* |   |  meters [m] | parameter_adjustable |  | maximum storage in the conceptual reservoir |
+| Cgw<sup>*</sup> | *double* |   |  meters/hour [m h-1] | parameter_adjustable |  | the primary outlet coefficient |
+| expon<sup>*</sup> | *double* |   |   | parameter_adjustable |  | exponent parameter (1.0 for linear reservoir) |
 | gw_storage | *double* |   |  meters/meters [m/m] | parameter_adjustable |  | initial condition for groundwater reservoir - it is the ground water as a decimal fraction of the maximum groundwater storage (max_gw_storage) for the initial timestep |
 | alpha_fc | *double* |   |   | parameter_adjustable |  | field capacity |
 | soil_storage| *double* |   | meters/meters [m/m] | parameter_adjustable |  | initial condition for soil reservoir - it is the water in the soil as a decimal fraction of maximum soil water storage (smcmax * depth) for the initial timestep |
 | N_nash_subsurface | *int* |   |   | parameter_adjustable |   | number of Nash lf reservoirs (optional, defaults to 2, ignored if storage values present)  |
 | K_nash_subsurface | *double* |   | 1/meters [m^-1]  | parameter_adjustable | subsurface runoff | Nash Config param for lateral subsurface runoff   |
-| *K_lf | *double* |   |   | parameter_adjustable |  | Nash Config param - primary reservoir  |
+| K_lf<sup>*</sup>  | *double* |   |   | parameter_adjustable |  | Nash Config param - primary reservoir  |
 | nash_storage_subsurface | 1D array (*double*) |   |   | parameter_adjustable |  | Nash Config param - secondary reservoir   |
 | giuh_ordinates   | 1D array (*double*) |   |   | parameter_adjustable |  | Giuh ordinates in dt time steps   |
 | num_timesteps  | *int* |   |  | time_info |  | set to `1` if `forcing_file=BMI`   |
@@ -36,14 +36,14 @@ Example configuration files are provided in this directory. To build and run the
 | surface_water_partitioning_scheme | *char* | `Xinanjiang` or `Schaake`  |  | parameter_adjustable | infiltraton excess |    |
 | surface_runoff_scheme | *char* | GIUH or NASH_CASCADE | | parameter_adjustable | surface runoff | also supports 1 for GIUH and 2 for NASH_CASCADE; default is GIUH |
 | N_nash_surface<sup>1</sup> | *int* |   |   | parameter_adjustable | surface runoff | number of Nash reservoirs for surface runoff   |
-| #K_nash_surface | *double* |   | 1/hour [h^-1]  | parameter_adjustable | surface runoff | Nash Config param for surface runoff   |
-| #nash_storage_surface | 1D array (*double*) |   | meters [m]  | parameter_adjustable | surface runoff | Nash Config param; reservoir surface storage; default is zero storage |
-| #nsubsteps_nash_surface | *int* |   |   | parameter_adjustable | surface runoff | optional (default = 10); number of subtimstep for Nash runoff |
+| K_nash_surface<sup>1</sup> | *double* |   | 1/hour [h^-1]  | parameter_adjustable | surface runoff | Nash Config param for surface runoff   |
+| nash_storage_surface<sup>1</sup> | 1D array (*double*) |   | meters [m]  | parameter_adjustable | surface runoff | Nash Config param; reservoir surface storage; default is zero storage |
+| nsubsteps_nash_surface<sup>1</sup> | *int* |   |   | parameter_adjustable | surface runoff | optional (default = 10); number of subtimstep for Nash runoff |
 | Kinf_nash_surface<sup>*,1</sup> | *double* |   | 1/hour [h^-1] | parameter_adjustable | surface runoff | optional (default = 0.05); storage fraction per hour that moves from reservoirs to soil |
-| #*retention_depth_nash_surface | *double* |   | m | parameter_adjustable | surface runoff | optional (default = 0.001); water retention depth threshold (only applied to the first reservoir) |
-| *a_Xinanjiang_inflection_point_parameter | *double* |   |  | parameter_adjustable | infiltration excess runoff | when `surface_water_partitioning_scheme=Xinanjiang`   |
-| *b_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable  | infiltration excess runoff | when `surface_water_partitioning_scheme=Xinanjiang`   |
-| *x_Xinanjiang_shape_parameter=1  | *double* |   |   | parameter_adjustable | infiltration excess runoff | when `surface_water_partitioning_scheme=Xinanjiang`   |
+| retention_depth_nash_surface<sup>*,1</sup> | *double* |   | m | parameter_adjustable | surface runoff | optional (default = 0.001); water retention depth threshold (only applied to the first reservoir) |
+| a_Xinanjiang_inflection_point_parameter<sup>*</sup> | *double* |   |  | parameter_adjustable | infiltration excess runoff | when `surface_water_partitioning_scheme=Xinanjiang`   |
+| b_Xinanjiang_shape_parameter<sup>*</sup>  | *double* |   |   | parameter_adjustable  | infiltration excess runoff | when `surface_water_partitioning_scheme=Xinanjiang`   |
+| x_Xinanjiang_shape_parameter<sup>*</sup>  | *double* |   |   | parameter_adjustable | infiltration excess runoff | when `surface_water_partitioning_scheme=Xinanjiang`   |
 | urban_decimal_fraction  | *double*  |  0.0 - 1.0 |   |  parameter_adjustable | infiltration excess runoff | when `surface_water_partitioning_scheme=Xinanjiang` |
 | is_aet_rootzone                    | *boolean* | True, true or 1  |  | coupling parameter | `rootzone-based AET` | when `CFE coupled to SoilMoistureProfile` |
 | max_rootzone_layer | *double* |  | meters [m] | parameter_adjustable | AET | layer of the soil that is the maximum root zone depth. That is, the depth of the layer where the AET is drawn from |
