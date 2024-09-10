@@ -20,7 +20,7 @@
 #define CFE_DEBUG 0
 
 #define INPUT_VAR_NAME_COUNT 5
-#define OUTPUT_VAR_NAME_COUNT 14
+#define OUTPUT_VAR_NAME_COUNT 15
 
 #define STATE_VAR_NAME_COUNT 95   // must match var_info array size
 
@@ -202,7 +202,8 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "GW_STORAGE",
         "SOIL_STORAGE",
         "SOIL_STORAGE_CHANGE",
-        "SURF_RUNOFF_SCHEME"
+        "SURF_RUNOFF_SCHEME",
+	"NWM_PONDED_DEPTH"
 };
 
 static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
@@ -219,7 +220,8 @@ static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
       	"double",
 	"double",
 	"double",
-	"int"
+	"int",
+	"double"
 };
 
 static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
@@ -235,6 +237,7 @@ static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
         1,
         1,
         1,
+	1,
 	1,
 	1
 };
@@ -253,7 +256,8 @@ static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
       	"m",
 	"m",
 	"m",
-	"none"
+	"none",
+	"m"
 };
 
 static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
@@ -269,6 +273,7 @@ static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
         0,
         0,
         0,
+	0,
 	0,
 	0
 };
@@ -287,7 +292,8 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
         "node",
         "node",
 	"node",
-	"none"
+	"none",
+	"node"
 };
 
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
