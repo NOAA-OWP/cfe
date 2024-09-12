@@ -20,9 +20,9 @@
 #define CFE_DEBUG 0
 
 #define INPUT_VAR_NAME_COUNT 5
-#define OUTPUT_VAR_NAME_COUNT 14
+#define OUTPUT_VAR_NAME_COUNT 15
 
-#define STATE_VAR_NAME_COUNT 94   // must match var_info array size
+#define STATE_VAR_NAME_COUNT 95   // must match var_info array size
 
 
 #define PARAM_VAR_NAME_COUNT 18
@@ -178,8 +178,10 @@ Variable var_info[] = {
 	// -------------------------------------------
 	{ 91, "soil_moisture_profile",                   "double", 1},
         { 92, "soil_layer_depths_m",			 "double", 1},
-        { 93, "max_rootzone_layer",                     "int", 1},
+        { 93, "max_rootzone_layer",                      "int", 1},
 	//--------------------------------------------
+	{ 94, "nwm_ponded_depth",                        "double", 1},
+
 };
 
 int i = 0;
@@ -200,7 +202,8 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "GW_STORAGE",
         "SOIL_STORAGE",
         "SOIL_STORAGE_CHANGE",
-        "SURF_RUNOFF_SCHEME"
+        "SURF_RUNOFF_SCHEME",
+	"NWM_PONDED_DEPTH"
 };
 
 static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
@@ -217,7 +220,8 @@ static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
       	"double",
 	"double",
 	"double",
-	"int"
+	"int",
+	"double"
 };
 
 static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
@@ -233,6 +237,7 @@ static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
         1,
         1,
         1,
+	1,
 	1,
 	1
 };
@@ -251,7 +256,8 @@ static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
       	"m",
 	"m",
 	"m",
-	"none"
+	"none",
+	"m"
 };
 
 static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
@@ -267,6 +273,7 @@ static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
         0,
         0,
         0,
+	0,
 	0,
 	0
 };
@@ -285,7 +292,8 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
         "node",
         "node",
 	"node",
-	"none"
+	"none",
+	"node"
 };
 
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
@@ -1141,9 +1149,9 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
       }
       if (is_K_infiltration_nash_surface_set == FALSE) {
 #if CFE_DEBUG >= 1
-	printf("Config param 'Kinf_nash_surface' not found in config file, default value is 0.05 [1/hr] \n");
+	printf("Config param 'Kinf_nash_surface' not found in config file, default value is 0.001 [1/hr] \n");
 #endif
-	model->nash_surface_params.K_infiltration  = 0.05;   // used in the runon infiltration
+	model->nash_surface_params.K_infiltration  = 0.001;   // used in the runon infiltration
       }
       if (is_retention_depth_nash_surface_set == FALSE) {
 #if CFE_DEBUG >= 1
@@ -1546,6 +1554,17 @@ static int Update (Bmi *self)
 
     // Advance the model time
     cfe_ptr->current_time_step += 1;
+
+    // compute NWM ponded depth, which is assumed to be the leftover water in the GIUH/NASH queue
+    cfe_ptr->nwm_ponded_depth_m = 0.0;
+    if (cfe_ptr->surface_runoff_scheme == GIUH) {
+      for(i=0;i<cfe_ptr->num_giuh_ordinates;i++)
+	cfe_ptr->nwm_ponded_depth_m += cfe_ptr->runoff_queue_m_per_timestep[i];
+    }
+    else if (cfe_ptr->surface_runoff_scheme == NASH_CASCADE) {
+      for(i=0;i<cfe_ptr->nash_surface_params.N_nash;i++)
+	cfe_ptr->nwm_ponded_depth_m += cfe_ptr->nash_surface_params.nash_storage[i];
+    }
 
     return BMI_SUCCESS;
 }
@@ -2050,7 +2069,12 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
       return BMI_SUCCESS;
     }
 
-
+    if (strcmp (name, "NWM_PONDED_DEPTH") == 0) {
+      cfe_state_struct *cfe_ptr;
+      cfe_ptr = (cfe_state_struct *) self->data;
+      *dest = (void*)&cfe_ptr->nwm_ponded_depth_m;
+      return BMI_SUCCESS;
+    }
     /***********************************************************/
     /***********    INPUT    ***********************************/
     /***********************************************************/

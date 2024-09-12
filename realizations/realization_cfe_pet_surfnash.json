@@ -19,7 +19,8 @@
 			"Q_OUT",
 			"POTENTIAL_ET",
 			"ACTUAL_ET",
-			"SOIL_STORAGE"
+			"SOIL_STORAGE",
+			"NWM_PONDED_DEPTH"
 		    ],
                     "modules": [
 			{

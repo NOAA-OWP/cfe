@@ -86,6 +86,7 @@ struct cfe_state_struct {
 
     int surface_runoff_scheme;   // options: giuh-based runoff and nash cascade-based runoff
 
+    double nwm_ponded_depth_m;
     // ***********************************************************
     // ******************* Dynamic allocations *******************
     // ***********************************************************

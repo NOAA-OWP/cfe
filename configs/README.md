@@ -39,7 +39,7 @@ Example configuration files are provided in this directory. To build and run the
 | K_nash_surface<sup>1</sup> | *double* |   | 1/hour [h^-1]  | parameter_adjustable | surface runoff | Nash Config param for surface runoff   |
 | nash_storage_surface<sup>1</sup> | 1D array (*double*) |   | meters [m]  | parameter_adjustable | surface runoff | Nash Config param; reservoir surface storage; default is zero storage |
 | nsubsteps_nash_surface<sup>1</sup> | *int* |   |   | parameter_adjustable | surface runoff | optional (default = 10); number of subtimstep for Nash runoff |
-| Kinf_nash_surface<sup>*,1</sup> | *double* |   | 1/hour [h^-1] | parameter_adjustable | surface runoff | optional (default = 0.05); storage fraction per hour that moves from reservoirs to soil |
+| Kinf_nash_surface<sup>*,1</sup> | *double* |   | 1/hour [h^-1] | parameter_adjustable | surface runoff | optional (default = 0.001); storage fraction per hour that moves from reservoirs to soil |
 | retention_depth_nash_surface<sup>*,1</sup> | *double* |   | m | parameter_adjustable | surface runoff | optional (default = 0.001); water retention depth threshold (only applied to the first reservoir) |
 | a_Xinanjiang_inflection_point_parameter<sup>*</sup> | *double* |   |  | parameter_adjustable | infiltration excess runoff | when `surface_water_partitioning_scheme=Xinanjiang`   |
 | b_Xinanjiang_shape_parameter<sup>*</sup>  | *double* |   |   | parameter_adjustable  | infiltration excess runoff | when `surface_water_partitioning_scheme=Xinanjiang`   |
