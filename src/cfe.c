@@ -403,117 +403,146 @@ void Schaake_partitioning_scheme(double timestep_h, double field_capacity_m, dou
 
 void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_capacity_m,
                                     double max_soil_moisture_storage_m, double column_total_soil_water_m,
-                                    struct infiltration_excess_parameters_structure *parms,
+                                    struct infiltration_excess_params_struct *parms, 
                                     double *infiltration_excess_m, double *infiltration_depth_m,
-                                    double ice_fraction_xinanjiang)
-{
-  //------------------------------------------------------------------------
-  //  This module takes the water_input_depth_m and separates it into infiltration_excess_m
-  //  and infiltration_depth_m by calculating the saturated area and runoff based on a scheme developed
-  //  for the Xinanjiang model by Jaywardena and Zhou (2000). According to Knoben et al.
-  //  (2019) "the model uses a variable contributing area to simulate runoff.  [It] uses
-  //  a double parabolic curve to simulate tension water capacities within the catchment,
-  //  instead of the original single parabolic curve" which is also used as the standard
-  //  VIC fomulation.  This runoff scheme was selected for implementation into NWM v3.0.
-  //  REFERENCES:
-  //  1. Jaywardena, A.W. and M.C. Zhou, 2000. A modified spatial soil moisture storage
-  //     capacity distribution curve for the Xinanjiang model. Journal of Hydrology 227: 93-113
-  //  2. Knoben, W.J.M. et al., 2019. Supplement of Modular Assessment of Rainfall-Runoff Models
-  //     Toolbox (MARRMoT) v1.2: an open-source, extendable framework providing implementations
-  //     of 46 conceptual hydrologic models as continuous state-space formulations. Supplement of
-  //     Geosci. Model Dev. 12: 2463-2480.
-  //-------------------------------------------------------------------------
-  //  Written by RLM May 2021
-  //  Adapted by JMFrame September 2021 for new version of CFE
-  //-------------------------------------------------------------------------
-  // Inputs
-  //   double  water_input_depth_m           amount of water input to soil surface this time step [m]
-  //   double  field_capacity_m              amount of water stored in soil reservoir when at field capacity [m]
-  //   double  max_soil_moisture_storage_m   total storage of the soil moisture reservoir (porosity*soil thickness) [m]
-  //   double  column_total_soil_water_m     current storage of the soil moisture reservoir [m]
-  //   double  a_inflection_point_parameter  a parameter
-  //   double  b_shape_parameter             b parameter
-  //   double  x_shape_parameter             x parameter
-  //   double  urban_decimal_fraction        fraction of land cover in the modeled area that is classified as urban [unitless decimal]
-  //   double  ice_fraction_xinanjiang       fraction of top soil layer that is frozen [unitless decimal]
-  //
-  // Outputs
-  //   double  infiltration_excess_m        amount of water partitioned to surface water this time step [m]
-  //   double  infiltration_depth_m          amount of water partitioned as infiltration (soil water input) this time step [m]
-  //-------------------------------------------------------------------------
+                                    double ice_fraction_xinanjiang)  {
+    //------------------------------------------------------------------------
+    //  This module takes the water_input_depth_m and separates it into infiltration_excess_m
+    //  and infiltration_depth_m by calculating the saturated area and runoff based on a scheme developed
+    //  for the Xinanjiang model by Jaywardena and Zhou (2000). According to Knoben et al.
+    //  (2019) "the model uses a variable contributing area to simulate runoff.  [It] uses
+    //  a double parabolic curve to simulate tension water capacities within the catchment,
+    //  instead of the original single parabolic curve" which is also used as the standard
+    //  VIC fomulation.  This runoff scheme was selected for implementation into NWM v3.0.
+    //  REFERENCES:
+    //  1. Jaywardena, A.W. and M.C. Zhou, 2000. A modified spatial soil moisture storage
+    //     capacity distribution curve for the Xinanjiang model. Journal of Hydrology 227: 93-113
+    //  2. Knoben, W.J.M. et al., 2019. Supplement of Modular Assessment of Rainfall-Runoff Models
+    //     Toolbox (MARRMoT) v1.2: an open-source, extendable framework providing implementations
+    //     of 46 conceptual hydrologic models as continuous state-space formulations. Supplement of
+    //     Geosci. Model Dev. 12: 2463-2480.
+    //-------------------------------------------------------------------------
+    //  Written by RLM May 2021
+    //  Adapted by JMFrame September 2021 for new version of CFE
+    //  Reviewed by FLO Feb. 2025, compared against Jayawardena & Zhou (2000) and NWM 3.0 code.  Fixed bug and refactored.
+    //        Compared against NWM 3.0 and found identical performance within approx. 1e-05 on calculated outputs
+    //-------------------------------------------------------------------------
+    // Inputs
+    //   double  water_input_depth_m           amount of water input to soil surface this time step [m]
+    //   double  field_capacity_m              amount of water stored in soil reservoir when at field capacity [m]
+    //   double  max_soil_moisture_storage_m   total storage of the soil moisture reservoir (porosity*soil thickness) [m]
+    //   double  column_total_soil_water_m     current storage of the soil moisture reservoir [m]
+    //   double  a_inflection_point_parameter  a parameter
+    //   double  b_shape_parameter             b parameter
+    //   double  x_shape_parameter             x parameter
+    //   double  urban_decimal_fraction        fraction of land cover in the modeled area that is classified as urban [unitless decimal]
+    //   double  ice_fraction_xinanjiang       fraction of top soil layer that is frozen [unitless decimal]
+    //
+    // Outputs
+    //   double  infiltration_excess_m         amount of water partitioned to surface water this time step [m]
+    //   double  infiltration_depth_m          amount of water partitioned as infiltration (soil water input) this time step [m]
+    //-------------------------------------------------------------------------
 
-  double tension_water_m, free_water_m, max_tension_water_m, max_free_water_m, pervious_runoff_m;
+    // local variables
+    double tension_water_m, free_water_m, max_tension_water_m, max_free_water_m, pervious_runoff_m,water_input_pervious_fraction_m;
+    double impervious_fraction, impervious_runoff_m;
+    double f_over_F;  // notation from Jayawardena and Zhou (2000) see Fig 2.
 
-  double impervious_fraction, impervious_runoff_m;
+    
+    // first thing, check whether we can just rreturn without calculating anything to save compute
+    //----------------------                  NWM variable name
+    *infiltration_excess_m   = 0.0;          // RUNSRF
+    *infiltration_depth_m    = 0.0;          // PDDUM
 
-  //could move this if statement outside of both the Schaake and Xinanjiang subroutines  edit FLO- moved to main().
+    if(water_input_depth_m < 1.0e-08)   {  // zero or really close to zero so calculations not needed
+       return;
+    }
 
-  // partition the total soil water in the column between free water and tension water
-  free_water_m = column_total_soil_water_m - field_capacity_m;
+    // calculations required
 
-  if(0.0 < free_water_m) {      //edit FLO
-    tension_water_m = field_capacity_m;
-  } else {
-    free_water_m = 0.0;
-    tension_water_m = column_total_soil_water_m;
-  }
+    // initialize                          // NWM variable name
+    tension_water_m               = 0.0;   // WM
+    max_tension_water_m           = 0.0;   // WM_MAX
+    free_water_m                  = 0.0;   // SM
+    max_free_water_m              = 0.0;   // SM_MAX
+    impervious_runoff_m           = 0.0;   // IRUNOFF
+    
 
-  // estimate the maximum free water and tension water available in the soil column
-  max_free_water_m = max_soil_moisture_storage_m - field_capacity_m;
-  max_tension_water_m = field_capacity_m;
+    // Partition the total soil water in the column between free water and tension water assuming that 
+    // total pore space in the soil Vtot, given by (porosity * soil_thickness) also equals max_tension_water_m + max_free_water_m.
+    //                                                                          
+    // Water input to soil fills up the tension water storage first.  Once it is full, any additiona
+    // input of water goes into free water storage.  This means that iff there is _any_ free water then
+    // the tension water storage is full.
 
-  if (max_free_water_m <= 0 || max_tension_water_m <=0) { //edited by RLM; added logic block to handle parameter values of zero.
-      *infiltration_excess_m = 0.95 * water_input_depth_m;
+    if( column_total_soil_water_m - field_capacity_m  > 0.0)  { // soil moisture greater than field capacity
+        free_water_m    = column_total_soil_water_m - field_capacity_m;
+        tension_water_m = field_capacity_m;
+    } else {
+        tension_water_m = column_total_soil_water_m;
+    }
+    max_tension_water_m = field_capacity_m;                             
+    max_free_water_m = max_soil_moisture_storage_m - field_capacity_m;  
 
-  } else {
-
-      // check that the free_water_m and tension_water_m do not exceed the maximum and if so, change to the max value
-      if(max_free_water_m < free_water_m) free_water_m = max_free_water_m;
-      if(max_tension_water_m < tension_water_m) tension_water_m = max_tension_water_m;
-
-      // estimate the fraction of the modeled area that is impervious (impervious_fraction) based on
-	   // urban classification (hard coded 95% [0.95] impervious) and frozen soils (passed to cfe
-      // from freeze-thaw model) using a weighted average.
-      impervious_fraction = (parms->urban_decimal_fraction * 0.95) + ((1 - parms->urban_decimal_fraction) * ice_fraction_xinanjiang);
+    if(tension_water_m >  max_tension_water_m) tension_water_m = max_tension_water_m; // as done in NWM - could cause massbal err.
+    if(free_water_m    >  max_free_water_m)    free_water_m    = max_free_water_m;    // as done in NWM - could cause massbal err.
 
     // Calculate the impervious runoff (see eq. 309 from Knoben et al).
+    // estimate the fraction of the modeled area that is impervious (impervious_fraction) based on
+    // urban classification (hard coded 95% [0.95] impervious) and frozen soils (passed to cfe
+    // from freeze-thaw model) using a weighted average. 
+    
+    impervious_fraction = (parms->urban_decimal_fraction * 0.95) + ((1.0 - parms->urban_decimal_fraction) * ice_fraction_xinanjiang);
     impervious_runoff_m = impervious_fraction * water_input_depth_m;
 
-    // Calculate total estimated pervious runoff.
-    if ((tension_water_m/max_tension_water_m) <= (0.5 - parms->a_Xinanjiang_inflection_point_parameter)) {
-      pervious_runoff_m = (1 - impervious_fraction) * water_input_depth_m *
-						(pow((0.5 - parms->a_Xinanjiang_inflection_point_parameter),
-                             (1.0 - parms->b_Xinanjiang_shape_parameter)) *
-                         pow((1.0 - (tension_water_m/max_tension_water_m)),
-                             parms->b_Xinanjiang_shape_parameter));
+    water_input_pervious_fraction_m = water_input_depth_m - impervious_runoff_m;  // from here on just deal with
+                                                                                  // water that enters the soil
+    //edited by RLM; added logic block to handle what happens when porosity or field capacity = 0
+    //FLO changed from 0.95 to 1.0 because what happens to the other 5% ?
+    if (max_free_water_m <= 0.0 || max_tension_water_m <=0.0) {                     
+        *infiltration_excess_m = 1.0 * water_input_pervious_fraction_m + impervious_runoff_m;  
+        *infiltration_excess_m += impervious_runoff_m;             // must add impervious runoff back in
+        *infiltration_depth_m = 0.0;                               //added by FLO
+        return;          // this is an unusual situation and should only happen when one or both parameters are zero
+    } 
 
-  } else {
-    pervious_runoff_m = (1 - impervious_fraction) * water_input_depth_m * (1.0 -
-						     pow((0.5 + parms->a_Xinanjiang_inflection_point_parameter),
-                                                         (1.0 - parms->b_Xinanjiang_shape_parameter)) *
-                                                     pow((1.0 - (tension_water_m/max_tension_water_m)),
-                                                         (parms->b_Xinanjiang_shape_parameter)));
-      }
-      // Separate the surface water from the pervious runoff
-      // NOTE: If impervious runoff is added to this subroutine, impervious runoff should be added to
-      // the infiltration_excess_m.
-      *infiltration_excess_m = pervious_runoff_m * (1.0 - pow((1.0 - (free_water_m/max_free_water_m)),parms->x_Xinanjiang_shape_parameter));
-  }
+    // if code gets to here, then field capacity and soil porosity were both nonzero, so there is some space in 
+    // the soil ffor more water, AND impervious runoff has already been abstracted from precipitation as impervious_runoff_m.
 
-  // Separate the surface water from the pervious runoff
-  *infiltration_excess_m = pervious_runoff_m * (1.0 - pow((1.0 -
-				(free_water_m/max_free_water_m)),parms->x_Xinanjiang_shape_parameter)) + impervious_runoff_m;
+    // solve pervious surface runoff (m) based on Eq. 310
+    // Use notation from Knoben et al. (2019) p. 71
 
-  // The surface runoff depth is bounded by a minimum of 0 and a maximum of the water input depth.
-  // Check that the estimated surface runoff is not less than 0.0 and if so, change the value to 0.0.
-  if(*infiltration_excess_m < 0.0) *infiltration_excess_m = 0.0;
-  // Check that the estimated surface runoff does not exceed the amount of water input to the soil surface.  If it does,
-  // change the surface water runoff value to the water input depth.
-  if(*infiltration_excess_m > water_input_depth_m) *infiltration_excess_m = water_input_depth_m;
-  // Separate the infiltration from the total water input depth to the soil surface.
-  *infiltration_depth_m = water_input_depth_m - *infiltration_excess_m;
+    double a    = parms->a_Xinanjiang_inflection_point_parameter;   // contributing area curve inflection point
+    double b    = parms->b_Xinanjiang_shape_parameter;              // contributing area curve shape parameter
+    double Ex   = parms->x_Xinanjiang_shape_parameter;   // contributing area curve shape parameter ffor direct runoff
+    double W    = tension_water_m;
+    double Wmax = max_tension_water_m;
+    
+    if ( ( W / Wmax ) <= (0.5 - a)) {
+    // THIS LINE IN ORIGINAL CFE XINANJIANG CODE IS A BUG  
+    //  f_over_F = (pow((0.5 - a),(1.0 - b)) * pow((1.0 - (tension_water_m/max_tension_water_m)) , b));
 
-  return;
+    // FLO correct comparing against Eqn. 2a in Jayawardena & Zhou (2000)
+        f_over_F = (pow((0.5 - a),(1.0 - b)) * pow( W / Wmax , b));                     // Eqn. 2a in Jayawardena & Zhue
+
+    } else {  // if ( (0.5-a) < W / Wmax )
+        f_over_F = 1.0 - pow((0.5 + a), (1.0 - b)) * pow((1.0 - W / Wmax) , b); // Eqn. 2b in Jayawardena & Zhue
+    }
+
+    double R = water_input_pervious_fraction_m * f_over_F; // water moved from tension to free water storage
+
+    double S = free_water_m;
+    double Smax = max_free_water_m;
+ 
+    *infiltration_excess_m = R * (1.0 - pow((1.0 - (S/Smax)), Ex)) + impervious_runoff_m;
+
+    // Separate the infiltration from the total water input depth to the soil surface.
+  
+    *infiltration_depth_m = water_input_pervious_fraction_m - *infiltration_excess_m;
+
+    if(fabs(water_input_depth_m - (*infiltration_depth_m) - (*infiltration_excess_m)) > 1.0e-06) printf("Massball err. warning: %f\n",
+        water_input_depth_m - (*infiltration_depth_m) - (*infiltration_excess_m));
+    return;
 }
 
 
