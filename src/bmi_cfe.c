@@ -3227,6 +3227,7 @@ extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr) {
     cfe_ptr->vol_struct.vol_soil_start   = cfe_ptr->soil_reservoir.storage_m;
     cfe_ptr->vol_struct.vol_et_from_soil = 0;
     cfe_ptr->vol_struct.vol_et_from_rain = 0;
+    cfe_ptr->vol_struct.vol_et_from_retention_depth = 0;
     cfe_ptr->vol_struct.vol_et_to_atm    = 0;
 }
 
@@ -3325,11 +3326,12 @@ extern void mass_balance_check(cfe_state_struct* cfe_ptr){
     giuh_residual = cfe_ptr->vol_struct.vol_runoff - cfe_ptr->vol_struct.vol_out_surface - cfe_ptr->vol_struct.vol_end_surface -
                     cfe_ptr->vol_struct.vol_runon_infilt;
     printf("********************* SURFACE MASS BALANCE *********************\n");
-    printf(" Volume into surface  = %8.4lf m\n",cfe_ptr->vol_struct.vol_runoff);
-    printf(" Volume out surface   = %8.4lf m\n",cfe_ptr->vol_struct.vol_out_surface);
-    printf(" Volume end surface   = %8.4lf m\n",cfe_ptr->vol_struct.vol_end_surface);
-    printf(" Runon infiltration   = %8.4lf m\n",cfe_ptr->vol_struct.vol_runon_infilt);
-    printf(" Surface residual     = %6.4e m\n",giuh_residual);  // should equal zero
+    printf(" Volume into surface         = %8.4lf m\n",cfe_ptr->vol_struct.vol_runoff);
+    printf(" Volume out surface          = %8.4lf m\n",cfe_ptr->vol_struct.vol_out_surface);
+    printf(" Volume end surface          = %8.4lf m\n",cfe_ptr->vol_struct.vol_end_surface);
+    printf(" Runon infiltration          = %8.4lf m\n",cfe_ptr->vol_struct.vol_runon_infilt);
+    printf(" Vol_et_from_retention_depth = %8.4lf m\n",cfe_ptr->vol_struct.vol_et_from_retention_depth);
+    printf(" Surface residual            = %6.4e m\n", giuh_residual);  // should equal zero
     if(!is_fabs_less_than_epsilon(giuh_residual,1.0e-12))
       printf("WARNING: GIUH MASS BALANCE CHECK FAILED\n");
 
