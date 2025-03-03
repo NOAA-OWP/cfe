@@ -17,3 +17,21 @@ jobs:
         with:
           project-url: https://github.com/orgs/NOAA-OWP/projects/30 
           github-token: ${{ secrets.FORMULATION_PROJECT_ADD_TOKEN }}
+
+name: Add to Project
+
+on:
+  issues:
+    types: [opened, edited]
+  pull_request:
+    types: [opened, edited]
+
+jobs:
+  add-to-project:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add issues and PRs to formulation project
+        uses: actions/add-to-project@v0.6.1
+        with:
+          project-url: https://github.com/orgs/NOAA-OWP/projects/30
+          github-token: ${{ secrets.GITHUB_TOKEN }}
