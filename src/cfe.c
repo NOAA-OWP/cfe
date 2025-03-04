@@ -73,19 +73,24 @@ extern void cfe(
   evap_struct->reduced_potential_et_m_per_timestep = evap_struct->potential_et_m_per_s * time_step_size;
 
   evap_struct->actual_et_from_rain_m_per_timestep = 0;
-  if(timestep_rainfall_input_m > 0) {et_from_rainfall(&timestep_rainfall_input_m,evap_struct);}
+  if (timestep_rainfall_input_m > 0) {
+    et_from_rainfall(&timestep_rainfall_input_m,evap_struct);
+  }
 
   massbal_struct->vol_et_from_rain = massbal_struct->vol_et_from_rain + evap_struct->actual_et_from_rain_m_per_timestep;
-  massbal_struct->vol_et_to_atm = massbal_struct->vol_et_to_atm + evap_struct->actual_et_from_rain_m_per_timestep;
-  massbal_struct->volout=massbal_struct->volout+evap_struct->actual_et_from_rain_m_per_timestep;
+  massbal_struct->vol_et_to_atm    = massbal_struct->vol_et_to_atm + evap_struct->actual_et_from_rain_m_per_timestep;
+  massbal_struct->volout           = massbal_struct->volout + evap_struct->actual_et_from_rain_m_per_timestep;
 
-  // LKC: Change this. Now evaporation happens before runoff calculation. This was creating issues since it modifies storage_m and not storage_deficit
+  // LKC: Change this. Now evaporation happens before runoff calculation. This was creating issues since it modifies
+  // storage_m and not storage_deficit
   evap_struct->actual_et_from_soil_m_per_timestep = 0;
-  if(soil_reservoir_struct->storage_m > NWM_soil_params_struct.wilting_point_m)
-   {et_from_soil(soil_reservoir_struct, evap_struct, &NWM_soil_params_struct);}
+  if(soil_reservoir_struct->storage_m > NWM_soil_params_struct.wilting_point_m) {
+    et_from_soil(soil_reservoir_struct, evap_struct, &NWM_soil_params_struct);
+  }
+  
   massbal_struct->vol_et_from_soil = massbal_struct->vol_et_from_soil + evap_struct->actual_et_from_soil_m_per_timestep;
-  massbal_struct->vol_et_to_atm = massbal_struct->vol_et_to_atm + evap_struct->actual_et_from_soil_m_per_timestep;
-  massbal_struct->volout=massbal_struct->volout+evap_struct->actual_et_from_soil_m_per_timestep;
+  massbal_struct->vol_et_to_atm    = massbal_struct->vol_et_to_atm + evap_struct->actual_et_from_soil_m_per_timestep;
+  massbal_struct->volout           = massbal_struct->volout + evap_struct->actual_et_from_soil_m_per_timestep;
 
   evap_struct->actual_et_m_per_timestep=evap_struct->actual_et_from_rain_m_per_timestep+evap_struct->actual_et_from_soil_m_per_timestep;
   // LKC: This needs to be calcualted here after et_from_soil since soil_reservoir_struct->storage_m changes
