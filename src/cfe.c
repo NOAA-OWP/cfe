@@ -583,6 +583,25 @@ void et_from_rainfall(double *timestep_rainfall_input_m, struct evapotranspirati
 }
 
 //##############################################################
+//###########   ET FROM SURFACE RETENTION DEPTH   ##############
+//##############################################################
+void et_from_retention_depth(struct nash_cascade_parameters *nash_surface_params, struct evapotranspiration_structure *et_struct)
+{
+  if (et_struct->reduced_potential_et_m_per_timestep >= nash_surface_params->nash_storage[0]) {
+    et_struct->actual_et_from_retention_depth_m_per_timestep = nash_surface_params->nash_storage[0];
+    nash_surface_params->nash_storage[0] = 0.0;
+  }
+  else {
+    et_struct->actual_et_from_retention_depth_m_per_timestep = et_struct->reduced_potential_et_m_per_timestep;
+    //et_struct->reduced_potential_et_m_per_timestep = 0.0;
+    nash_surface_params->nash_storage[0] -= et_struct->actual_et_from_retention_depth_m_per_timestep;
+  }
+
+  et_struct->reduced_potential_et_m_per_timestep -= et_struct->actual_et_from_retention_depth_m_per_timestep;
+    
+}
+
+//##############################################################
 //####################   ET FROM SOIL   ########################
 //##############################################################
 void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspiration_structure *et_struct, struct NWM_soil_parameters *soil_parms)
