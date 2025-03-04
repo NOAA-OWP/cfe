@@ -1121,6 +1121,8 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
       // Finally, free the original string memory
       free(giuh_originates_string_val);
       
+      //NJF Be explicit that nash_storage in this case is NULL
+      model->nash_surface_params.nash_storage = NULL;
     }
     else if(model->surface_runoff_scheme == NASH_CASCADE) {
       if (is_N_nash_surface_set == FALSE) {
