@@ -83,7 +83,11 @@ extern void cfe(
 
   // AET from surface retention depth
   evap_struct->actual_et_from_retention_depth_m_per_timestep = 0;
-  if (nash_surface_params->nash_storage[0] > 0.0 && evap_struct->reduced_potential_et_m_per_timestep > 0.0) {
+  // NJF Need some way to know if nash surface is used nash_storage
+  // is properly allocated, otherwise this can segfault!
+  if (nash_surface_params->nash_storage != NULL &&
+      nash_surface_params->nash_storage[0] > 0.0 &&
+      evap_struct->reduced_potential_et_m_per_timestep > 0.0) {
     et_from_retention_depth(nash_surface_params, evap_struct);
   }
 
@@ -601,6 +605,9 @@ void et_from_rainfall(double *timestep_rainfall_input_m, struct evapotranspirati
 //##############################################################
 void et_from_retention_depth(struct nash_cascade_parameters *nash_surface_params, struct evapotranspiration_structure *et_struct)
 {
+  // NJF try not to use nash_storage if it hasn't been initialized...
+  if(nash_surface_params->nash_storage == NULL) return;
+
   if (et_struct->reduced_potential_et_m_per_timestep >= nash_surface_params->nash_storage[0]) {
     et_struct->actual_et_from_retention_depth_m_per_timestep = nash_surface_params->nash_storage[0];
     nash_surface_params->nash_storage[0] = 0.0;
