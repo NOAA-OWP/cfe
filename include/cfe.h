@@ -91,6 +91,7 @@ struct evapotranspiration_structure {
     double potential_et_m_per_timestep;
     double reduced_potential_et_m_per_timestep;
     double actual_et_from_rain_m_per_timestep;
+    double actual_et_from_retention_depth_m_per_timestep;
     double actual_et_from_soil_m_per_timestep;
     double actual_et_m_per_timestep;
 };
@@ -122,6 +123,7 @@ struct massbal
     double volin               ;
     double volout              ;
     double volend              ;
+    double vol_et_from_retention_depth;
 };
 typedef struct massbal massbal;
 
@@ -157,6 +159,9 @@ extern void Xinanjiang_partitioning_scheme(double water_input_depth_m, double fi
                                            double *infiltration_depth_m, double ice_fraction_xinanjiang);
 
 extern void et_from_rainfall(double *timestep_rainfall_input_m, struct evapotranspiration_structure *et_struct);
+
+extern void et_from_retention_depth(struct nash_cascade_parameters *nash_surface_params,
+				    struct evapotranspiration_structure *et_struct);
 
 extern void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspiration_structure *et_struct,
 			 struct NWM_soil_parameters *soil_parms);
