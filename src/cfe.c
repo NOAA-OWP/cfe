@@ -500,7 +500,8 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
   //edited by RLM; added logic block to handle what happens when porosity or field capacity = 0
   //FLO changed from 0.95 to 1.0 because what happens to the other 5% ?
   if (max_free_water_m <= 0.0 || max_tension_water_m <=0.0) {                     
-      *infiltration_excess_m = 1.0 * water_input_pervious_fraction_m + impervious_runoff_m;  
+      *infiltration_excess_m = water_input_pervious_fraction_m;  
+
       *infiltration_excess_m += impervious_runoff_m;             // must add impervious runoff back in
       *infiltration_depth_m = 0.0;                               //added by FLO
       return;          // this is an unusual situation and should only happen when one or both parameters are zero
