@@ -11,20 +11,20 @@ extern void cfe(
         struct NWM_soil_parameters NWM_soil_params_struct,
         struct conceptual_reservoir *soil_reservoir_struct,
         double timestep_h,
-        struct infiltration_excess_parameters_structure infiltration_excess_params_struct,
+        struct surface_water_partition_parameters_structure surface_water_partition_params_struct,
         double timestep_rainfall_input_m,
-        double *infiltration_excess_m_ptr,
+        double *flux_infiltration_excess_input_to_surface_routing_m_ptr,
         double *infiltration_depth_m_ptr,
-        double *flux_perc_m_ptr,
-        double *flux_lat_m_ptr,
+        double *flux_perc_from_soil_to_gw_m_ptr,
+        double *flux_from_soil_to_subsurface_nash_cascade_m_ptr,
         double *gw_reservoir_storage_deficit_m_ptr,
         struct conceptual_reservoir *gw_reservoir_struct,
         double *flux_from_deep_gw_to_chan_m_ptr,
-        double *direct_runoff_m_ptr,
+        double *direct_runoff_input_to_channel_m_ptr,
         int    num_giuh_ordinates,
         double *giuh_ordinates_arr,
         double *runoff_queue_m_per_timestep_arr,
-        double *nash_lateral_runoff_m_ptr,
+        double *subsurface_nash_lateral_runoff_m_ptr,
         int    N_nash_subsurface,
         double K_nash_subsurface,
         double *nash_storage_arr,
@@ -40,18 +40,17 @@ extern void cfe(
 // ####    COPY THE MODEL FUNCTION STATE SPACE TO LOCAL VARIABLES    ####
 // ####    Reason: so we don't have to re-write domain science code to de-reference a whole bunch of pointers
 // ####        Note: all of thes variables are storages in [m] or fluxes in [m/timestep]
-    double soil_reservoir_storage_deficit_m = *soil_reservoir_storage_deficit_m_ptr;   // storage [m]
-
-    double infiltration_excess_m          = *infiltration_excess_m_ptr;                    // Schaake/Xinanjiang partitioned excess water this timestep [m]*/
-
-    double infiltration_depth_m             = *infiltration_depth_m_ptr;               // Schaake partitioned infiltration this timestep [m]
-    double flux_perc_m                      = *flux_perc_m_ptr;                        // water moved from soil reservoir to gw reservoir this timestep [m]
-    double flux_lat_m                       = *flux_lat_m_ptr;                         // water moved from soil reservoir to lateral flow Nash cascad this timestep [m]
-    double gw_reservoir_storage_deficit_m   = *gw_reservoir_storage_deficit_m_ptr;     // deficit in gw reservoir storage [m]
-    double flux_from_deep_gw_to_chan_m      = *flux_from_deep_gw_to_chan_m_ptr;        // water moved from gw reservoir to catchment outlet nexus this timestep [m]
-    double direct_runoff_m                 = *direct_runoff_m_ptr;                   // water leaving GIUH or NASH cascade reservoir to outlet this timestep [m]
-    double nash_lateral_runoff_m            = *nash_lateral_runoff_m_ptr;              // water leaving lateral subsurface flow Nash cascade this timestep [m]
-    double Qout_m                           = *Qout_m_ptr;                             // the total runoff this timestep (Surface+Nash+GW) [m]
+  
+    double soil_reservoir_storage_deficit_m  = *soil_reservoir_storage_deficit_m_ptr; // storage [m]
+    double flux_infiltration_excess_input_to_surface_routing_m = *flux_infiltration_excess_input_to_surface_routing_m_ptr;  // Schaake/Xinanjiang partitioned excess water this timestep [m]
+    double infiltration_depth_m              = *infiltration_depth_m_ptr;             // Schaake partitioned infiltration this timestep [m]
+    double flux_perc_from_soil_to_gw_m       = *flux_perc_from_soil_to_gw_m_ptr;      // water moved from soil reservoir to gw reservoir this timestep [m]
+    double flux_from_soil_to_subsurface_nash_cascade_m = *flux_from_soil_to_subsurface_nash_cascade_m_ptr;  // water moved from soil reservoir to lateral flow Nash cascad this timestep [m]
+    double gw_reservoir_storage_deficit_m    = *gw_reservoir_storage_deficit_m_ptr;   // deficit in gw reservoir storage [m]
+    double flux_from_deep_gw_to_chan_m       = *flux_from_deep_gw_to_chan_m_ptr;      // water moved from gw reservoir to catchment outlet nexus this timestep [m]
+    double direct_runoff_input_to_channel_m  = *direct_runoff_input_to_channel_m_ptr; // water leaving GIUH or NASH cascade reservoir to outlet this timestep [m]
+    double subsurface_nash_lateral_runoff_m  = *subsurface_nash_lateral_runoff_m_ptr; // water leaving lateral subsurface flow Nash cascade this timestep [m]
+    double Qout_m                            = *Qout_m_ptr;                             // the total runoff this timestep (Surface+Nash+GW) [m]
 
     // LOCAL VARIABLES, the values of which are not important to describe the model state.  They are like notes on scrap paper.
 
@@ -118,19 +117,19 @@ extern void cfe(
   // NEW FLO
   if(0.0 < timestep_rainfall_input_m)
     {
-    if (infiltration_excess_params_struct.surface_water_partitioning_scheme == Schaake)
+    if (surface_water_partition_params_struct.surface_water_partitioning_scheme == Schaake)
       {
 	// to ensure that ice_fraction_schaake is set to 0.0 for uncoupled SFT
 	if(!soil_reservoir_struct->is_sft_coupled)
 	  soil_reservoir_struct->ice_fraction_schaake = 0.0;
 
 	Schaake_partitioning_scheme(timestep_h, soil_reservoir_struct->storage_threshold_primary_m,
-				    infiltration_excess_params_struct.Schaake_adjusted_magic_constant_by_soil_type,
+				    surface_water_partition_params_struct.Schaake_adjusted_magic_constant_by_soil_type,
 				    soil_reservoir_storage_deficit_m, timestep_rainfall_input_m, NWM_soil_params_struct.smcmax,
-				    NWM_soil_params_struct.D, &infiltration_excess_m, &infiltration_depth_m,
-				    soil_reservoir_struct->ice_fraction_schaake, infiltration_excess_params_struct.ice_content_threshold);
+				    NWM_soil_params_struct.D, &flux_infiltration_excess_input_to_surface_routing_m, &infiltration_depth_m,
+				    soil_reservoir_struct->ice_fraction_schaake, surface_water_partition_params_struct.ice_content_threshold);
       }
-    else if (infiltration_excess_params_struct.surface_water_partitioning_scheme == Xinanjiang)
+    else if (surface_water_partition_params_struct.surface_water_partitioning_scheme == Xinanjiang)
       {
 
 	// to ensure that ice_fraction_xinan is set to 0.0 for uncoupled SFT
@@ -139,7 +138,7 @@ extern void cfe(
 
 	Xinanjiang_partitioning_scheme(timestep_rainfall_input_m, soil_reservoir_struct->storage_threshold_primary_m,
 				       soil_reservoir_struct->storage_max_m, soil_reservoir_struct->storage_m,
-				       &infiltration_excess_params_struct, &infiltration_excess_m, &infiltration_depth_m,
+				       &surface_water_partition_params_struct, &flux_infiltration_excess_input_to_surface_routing_m, &infiltration_depth_m,
 				       soil_reservoir_struct->ice_fraction_xinanjiang);
       }
     else
@@ -151,7 +150,7 @@ extern void cfe(
     }
   else  // NEW FLO no need to call Schaake or Xinanjiang if it's not raining.
     {
-    infiltration_excess_m = 0.0;
+    flux_infiltration_excess_input_to_surface_routing_m = 0.0;
     infiltration_depth_m = 0.0;
     }
 
@@ -160,7 +159,7 @@ extern void cfe(
   //--------------------------------------------------------------------------------------------------
   if(soil_reservoir_storage_deficit_m<infiltration_depth_m)
     {
-    infiltration_excess_m+=(infiltration_depth_m-soil_reservoir_storage_deficit_m);  // put infiltration that won't fit back into runoff
+    flux_infiltration_excess_input_to_surface_routing_m+=(infiltration_depth_m-soil_reservoir_storage_deficit_m);  // put infiltration that won't fit back into runoff
     infiltration_depth_m=soil_reservoir_storage_deficit_m;
     soil_reservoir_struct->storage_m=soil_reservoir_struct->storage_max_m;
     // LKC: should the deficit of soil be set to zero here - if the condition is reached, soil is full
@@ -175,24 +174,24 @@ extern void cfe(
                                  timestep_rainfall_input_m,Schaake_output_runoff_m*1000.0,infiltration_depth_m*1000.0,
                                  timestep_rainfall_input_m-Schaake_output_runoff_m-infiltration_depth_m);                   */
   printf("After direct runoff function: rain:%8.5lf mm  runoff:%8.5lf mm  infiltration:%8.5lf mm  residual:%e m\n",
-                                 timestep_rainfall_input_m,infiltration_excess_m*1000.0,infiltration_depth_m*1000.0,
-                                 timestep_rainfall_input_m-infiltration_excess_m-infiltration_depth_m);
+                                 timestep_rainfall_input_m,flux_infiltration_excess_input_to_surface_routing_m*1000.0,infiltration_depth_m*1000.0,
+                                 timestep_rainfall_input_m-flux_infiltration_excess_input_to_surface_routing_m-infiltration_depth_m);
 #endif
 
-  massbal_struct->vol_runoff   += infiltration_excess_m;       // edit FLO
+  massbal_struct->vol_runoff   += flux_infiltration_excess_input_to_surface_routing_m;       // edit FLO
   massbal_struct->vol_infilt   += infiltration_depth_m;  // edit FLO
 
   // put infiltration flux into soil conceptual reservoir.  If not enough room
   // limit amount transferred to deficit
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  if(flux_perc_m>soil_reservoir_storage_deficit_m)
+  if(flux_perc_from_soil_to_gw_m > soil_reservoir_storage_deficit_m)
     {
-    diff=flux_perc_m-soil_reservoir_storage_deficit_m;  // the amount that there is not capacity ffor
-    infiltration_depth_m=soil_reservoir_storage_deficit_m;
-    massbal_struct->vol_runoff+=diff;  // send excess water back to GIUH runoff  edit FLO
-    massbal_struct->vol_infilt-=diff;  // correct overprediction of infilt.      edit FLO
-    infiltration_excess_m+=diff; // bug found by Nels.  This was missing and fixes it.
+    diff = flux_perc_from_soil_to_gw_m - soil_reservoir_storage_deficit_m;  // the amount that there is not capacity ffor
+    infiltration_depth_m = soil_reservoir_storage_deficit_m;
+    massbal_struct->vol_runoff += diff;  // send excess water back to GIUH runoff  edit FLO
+    massbal_struct->vol_infilt -= diff;  // correct overprediction of infilt.      edit FLO
+    flux_infiltration_excess_input_to_surface_routing_m      += diff; // bug found by Nels.  This was missing and fixes it.
 
     // LKC: again here
     soil_reservoir_storage_deficit_m = 0;
@@ -206,9 +205,9 @@ extern void cfe(
   //--------------------------------------------------------------------------------------------------------------
 
   conceptual_reservoir_flux_calc(soil_reservoir_struct,&percolation_flux,&lateral_flux);
-  flux_perc_m=percolation_flux;  // m/h   <<<<<<<<<<<  flux of percolation from soil to g.w. reservoir >>>>>>>>>
+  flux_perc_from_soil_to_gw_m = percolation_flux;  // m/h   <<<<<<<<<<<  flux of percolation from soil to g.w. reservoir >>>>>>>>>
 
-  flux_lat_m=lateral_flux;  // m/h        <<<<<<<<<<<  flux into the lateral flow Nash cascade >>>>>>>>
+  flux_from_soil_to_subsurface_nash_cascade_m = lateral_flux;  // m/h        <<<<<<<<<<<  flux into the lateral flow Nash cascade >>>>>>>>
 
 
   // calculate flux of base flow from deep groundwater reservoir to channel
@@ -216,22 +215,22 @@ extern void cfe(
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   gw_reservoir_storage_deficit_m= gw_reservoir_struct->storage_max_m-gw_reservoir_struct->storage_m;
   // limit amount transferred to deficit iff there is insuffienct avail. storage
-  if(flux_perc_m>gw_reservoir_storage_deficit_m) {
-    diff=flux_perc_m-gw_reservoir_storage_deficit_m;
-    flux_perc_m=gw_reservoir_storage_deficit_m;
-    massbal_struct->vol_runoff+=diff;  // send excess water back to GIUH runoff
-    massbal_struct->vol_infilt-=diff;  // correct overprediction of infilt.
+  if(flux_perc_from_soil_to_gw_m > gw_reservoir_storage_deficit_m) {
+    diff = flux_perc_from_soil_to_gw_m - gw_reservoir_storage_deficit_m;
+    flux_perc_from_soil_to_gw_m  = gw_reservoir_storage_deficit_m;
+    massbal_struct->vol_runoff  += diff;  // send excess water back to GIUH runoff
+    massbal_struct->vol_infilt  -= diff;  // correct overprediction of infilt.
   }
 
 
-  massbal_struct->vol_to_gw                +=flux_perc_m;
-  massbal_struct->vol_soil_to_gw           +=flux_perc_m;
+  massbal_struct->vol_to_gw                += flux_perc_from_soil_to_gw_m;
+  massbal_struct->vol_soil_to_gw           += flux_perc_from_soil_to_gw_m;
 
-  gw_reservoir_struct->storage_m   += flux_perc_m;
-  soil_reservoir_struct->storage_m -= flux_perc_m;
-  soil_reservoir_struct->storage_m -= flux_lat_m;
-  massbal_struct->vol_soil_to_lat_flow     += flux_lat_m;  //TODO add this to nash cascade as input
-  massbal_struct->volout=massbal_struct->volout+flux_lat_m;
+  gw_reservoir_struct->storage_m       += flux_perc_from_soil_to_gw_m;
+  soil_reservoir_struct->storage_m     -= flux_perc_from_soil_to_gw_m;
+  soil_reservoir_struct->storage_m     -= flux_from_soil_to_subsurface_nash_cascade_m;
+  massbal_struct->vol_soil_to_lat_flow += flux_from_soil_to_subsurface_nash_cascade_m;  //TODO add this to nash cascade as input
+  massbal_struct->volout                = massbal_struct->volout+flux_from_soil_to_subsurface_nash_cascade_m;
 
   // get change in storage (used in the soil moisture coupler)
   soil_reservoir_struct->storage_change_m = soil_reservoir_struct->storage_m - storage_temp_m ;
@@ -260,44 +259,44 @@ extern void cfe(
   // Solve the convolution integral ffor this time step
 
   if (surface_runoff_scheme == GIUH)
-    direct_runoff_m = giuh_convolution_integral(infiltration_excess_m,num_giuh_ordinates,
-                                                giuh_ordinates_arr,runoff_queue_m_per_timestep_arr);
+    direct_runoff_input_to_channel_m = giuh_convolution_integral(flux_infiltration_excess_input_to_surface_routing_m,num_giuh_ordinates,
+								 giuh_ordinates_arr,runoff_queue_m_per_timestep_arr);
   else if (surface_runoff_scheme == NASH_CASCADE)
   {
-    direct_runoff_m =  nash_cascade_surface(infiltration_excess_m, soil_reservoir_storage_deficit_m,
-					    nash_surface_params);
+    direct_runoff_input_to_channel_m =  nash_cascade_surface(flux_infiltration_excess_input_to_surface_routing_m, soil_reservoir_storage_deficit_m,
+							     nash_surface_params);
     soil_reservoir_struct->storage_m += nash_surface_params->runon_infiltration;  // put the runon infiltrated water in the soil.
     soil_reservoir_storage_deficit_m -= nash_surface_params->runon_infiltration; // update soil deficit
 
     massbal_struct->vol_runon_infilt += nash_surface_params->runon_infiltration;
   }
 
-  massbal_struct->vol_out_surface  += direct_runoff_m;
-  massbal_struct->volout           += direct_runoff_m;
+  massbal_struct->vol_out_surface  += direct_runoff_input_to_channel_m;
+  massbal_struct->volout           += direct_runoff_input_to_channel_m;
   massbal_struct->volout           += flux_from_deep_gw_to_chan_m;
 
   // Route lateral flow through the Nash cascade.
-  nash_lateral_runoff_m = nash_cascade_subsurface(flux_lat_m, N_nash_subsurface,
+  subsurface_nash_lateral_runoff_m = nash_cascade_subsurface(flux_from_soil_to_subsurface_nash_cascade_m, N_nash_subsurface,
 						  K_nash_subsurface, nash_storage_arr);
-  massbal_struct->vol_in_nash   += flux_lat_m;
-  massbal_struct->vol_out_nash  += nash_lateral_runoff_m;
+  massbal_struct->vol_in_nash   += flux_from_soil_to_subsurface_nash_cascade_m;
+  massbal_struct->vol_out_nash  += subsurface_nash_lateral_runoff_m;
 
 #ifdef DEBUG
-        fprintf(out_debug_fptr,"%d %lf %lf  %lf\n",tstep,flux_lat_m,nash_lateral_runoff_m,flux_from_deep_gw_to_chan_m);
+        fprintf(out_debug_fptr,"%d %lf %lf  %lf\n",tstep,flux_from_soil_to_subsurface_nash_cascade_m,subsurface_nash_lateral_runoff_m,flux_from_deep_gw_to_chan_m);
 #endif
 
-  Qout_m = direct_runoff_m + nash_lateral_runoff_m + flux_from_deep_gw_to_chan_m;
+  Qout_m = direct_runoff_input_to_channel_m + subsurface_nash_lateral_runoff_m + flux_from_deep_gw_to_chan_m;
 
     // #### COPY BACK STATE VALUES BY POINTER REFERENCE SO VISIBLE TO FRAMEWORK    ####
     *soil_reservoir_storage_deficit_m_ptr = soil_reservoir_storage_deficit_m;
-    *infiltration_excess_m_ptr            = infiltration_excess_m;
+    *flux_infiltration_excess_input_to_surface_routing_m_ptr  = flux_infiltration_excess_input_to_surface_routing_m;
     *infiltration_depth_m_ptr             = infiltration_depth_m;
-    *flux_perc_m_ptr                      = flux_perc_m;
-    *flux_lat_m_ptr                       = flux_lat_m;
+    *flux_perc_from_soil_to_gw_m_ptr      = flux_perc_from_soil_to_gw_m;
+    *flux_from_soil_to_subsurface_nash_cascade_m_ptr  = flux_from_soil_to_subsurface_nash_cascade_m;
     *gw_reservoir_storage_deficit_m_ptr   = gw_reservoir_storage_deficit_m;
     *flux_from_deep_gw_to_chan_m_ptr      = flux_from_deep_gw_to_chan_m;
-    *direct_runoff_m_ptr                  = direct_runoff_m;
-    *nash_lateral_runoff_m_ptr            = nash_lateral_runoff_m;
+    *direct_runoff_input_to_channel_m_ptr = direct_runoff_input_to_channel_m;
+    *subsurface_nash_lateral_runoff_m_ptr = subsurface_nash_lateral_runoff_m;
     *Qout_m_ptr                           = Qout_m;
 
 
@@ -312,13 +311,13 @@ extern void cfe(
 //##############################################################
 void Schaake_partitioning_scheme(double timestep_h, double field_capacity_m, double Schaake_adjusted_magic_constant_by_soil_type,
                                  double column_total_soil_moisture_deficit_m, double water_input_depth_m, double smcmax,
-                                 double soil_depth, double *infiltration_excess_m, double *infiltration_depth_m,
+                                 double soil_depth, double *flux_infiltration_excess_input_to_surface_routing_m, double *infiltration_depth_m,
                                  double ice_fraction_schaake, double ice_content_threshold)
 {
 
 
 /*! ===============================================================================
-  This subtroutine takes water_input_depth_m and partitions it into infiltration_excess_m and
+  This subtroutine takes water_input_depth_m and partitions it into flux_infiltration_excess_input_to_surface_routing_m and
   infiltration_depth_m using the scheme from Schaake et al. 1996.
 ! --------------------------------------------------------------------------------
 ! ! modified by FLO April 2020 to eliminate reference to ice processes,
@@ -333,7 +332,7 @@ void Schaake_partitioning_scheme(double timestep_h, double field_capacity_m, dou
   double water_input_depth_m  amount of water input to soil surface this time step [m]
 
 ! outputs
-  double infiltration_excess_m      amount of water partitioned to surface water this time step [m]
+  double flux_infiltration_excess_input_to_surface_routing_m      amount of water partitioned to surface water this time step [m]
 
 
 --------------------------------------------------------------------------------*/
@@ -344,7 +343,7 @@ void Schaake_partitioning_scheme(double timestep_h, double field_capacity_m, dou
 
   if(0.0 < water_input_depth_m) {
     if (0.0 > column_total_soil_moisture_deficit_m) {
-      *infiltration_excess_m=water_input_depth_m;
+      *flux_infiltration_excess_input_to_surface_routing_m=water_input_depth_m;
       *infiltration_depth_m=0.0;
     }
     else {
@@ -374,14 +373,14 @@ void Schaake_partitioning_scheme(double timestep_h, double field_capacity_m, dou
 
 
       if( 0.0 < (water_input_depth_m-(*infiltration_depth_m)) ) {
-        *infiltration_excess_m = water_input_depth_m - (*infiltration_depth_m);
+        *flux_infiltration_excess_input_to_surface_routing_m = water_input_depth_m - (*infiltration_depth_m);
       }
-      else  *infiltration_excess_m=0.0;
-      *infiltration_depth_m =  water_input_depth_m - (*infiltration_excess_m);
+      else  *flux_infiltration_excess_input_to_surface_routing_m=0.0;
+      *infiltration_depth_m =  water_input_depth_m - (*flux_infiltration_excess_input_to_surface_routing_m);
     }
   }
   else {
-    *infiltration_excess_m = 0.0;
+    *flux_infiltration_excess_input_to_surface_routing_m = 0.0;
     *infiltration_depth_m = 0.0;
   }
 
@@ -414,7 +413,7 @@ void Schaake_partitioning_scheme(double timestep_h, double field_capacity_m, dou
 
  *infiltration_depth_m = factor * (*infiltration_depth_m);
 
- *infiltration_excess_m = water_input_depth_m - (*infiltration_depth_m);
+ *flux_infiltration_excess_input_to_surface_routing_m = water_input_depth_m - (*infiltration_depth_m);
 
  return;
 }
@@ -426,12 +425,12 @@ void Schaake_partitioning_scheme(double timestep_h, double field_capacity_m, dou
 
 void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_capacity_m,
                                     double max_soil_moisture_storage_m, double column_total_soil_water_m,
-                                    struct infiltration_excess_parameters_structure *parms, 
-                                    double *infiltration_excess_m, double *infiltration_depth_m,
+                                    struct surface_water_partition_parameters_structure *parms, 
+                                    double *flux_infiltration_excess_input_to_surface_routing_m, double *infiltration_depth_m,
                                     double ice_fraction_xinanjiang)
 {
   //------------------------------------------------------------------------
-  //  This module takes the water_input_depth_m and separates it into infiltration_excess_m
+  //  This module takes the water_input_depth_m and separates it into flux_infiltration_excess_input_to_surface_routing_m
   //  and infiltration_depth_m by calculating the saturated area and runoff based on a scheme developed
   //  for the Xinanjiang model by Jaywardena and Zhou (2000). According to Knoben et al.
   //  (2019) "the model uses a variable contributing area to simulate runoff.  [It] uses
@@ -463,7 +462,7 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
   //   double  ice_fraction_xinanjiang       fraction of top soil layer that is frozen [unitless decimal]
   //
   // Outputs
-  //   double  infiltration_excess_m         amount of water partitioned to surface water this time step [m]
+  //   double  flux_infiltration_excess_input_to_surface_routing_m         amount of water partitioned to surface water this time step [m]
   //   double  infiltration_depth_m          amount of water partitioned as infiltration (soil water input) this time step [m]
   //-------------------------------------------------------------------------
 
@@ -474,7 +473,7 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
 
   // first thing, check whether we can just rreturn without calculating anything to save compute
   //----------------------                  NWM variable name
-  *infiltration_excess_m   = 0.0;          // RUNSRF
+  *flux_infiltration_excess_input_to_surface_routing_m   = 0.0;          // RUNSRF
   *infiltration_depth_m    = 0.0;          // PDDUM
 
   if(water_input_depth_m < 1.0e-08)   {  // zero or really close to zero so calculations not needed
@@ -523,9 +522,9 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
   //edited by RLM; added logic block to handle what happens when porosity or field capacity = 0
   //FLO changed from 0.95 to 1.0 because what happens to the other 5% ?
   if (max_free_water_m <= 0.0 || max_tension_water_m <=0.0) {                     
-      *infiltration_excess_m = water_input_pervious_fraction_m;  
+      *flux_infiltration_excess_input_to_surface_routing_m = water_input_pervious_fraction_m;  
 
-      *infiltration_excess_m += impervious_runoff_m;             // must add impervious runoff back in
+      *flux_infiltration_excess_input_to_surface_routing_m += impervious_runoff_m;             // must add impervious runoff back in
       *infiltration_depth_m = 0.0;                               //added by FLO
       return;          // this is an unusual situation and should only happen when one or both parameters are zero
   } 
@@ -558,15 +557,17 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
   double S = free_water_m;
   double Smax = max_free_water_m;
 
-  *infiltration_excess_m = R * (1.0 - pow((1.0 - (S/Smax)), Ex)) + impervious_runoff_m;
+  *flux_infiltration_excess_input_to_surface_routing_m = R * (1.0 - pow((1.0 - (S/Smax)), Ex)) + impervious_runoff_m;
 
   // Separate the infiltration from the total water input depth to the soil surface.
 
-  *infiltration_depth_m = water_input_pervious_fraction_m - *infiltration_excess_m;
+  *infiltration_depth_m = water_input_pervious_fraction_m - *flux_infiltration_excess_input_to_surface_routing_m;
     
 #ifdef DEBUG
-    if(fabs(water_input_depth_m - (*infiltration_depth_m) - (*infiltration_excess_m)) > 1.0e-06) printf("Massball err. warning: %f\n",
-        water_input_depth_m - (*infiltration_depth_m) - (*infiltration_excess_m));
+  if(fabs(water_input_depth_m - (*infiltration_depth_m) - (*flux_infiltration_excess_input_to_surface_routing_m)) > 1.0e-06) {
+    double mass_bal_error = water_input_depth_m - (*infiltration_depth_m) - (*flux_infiltration_excess_input_to_surface_routing_m);
+    printf("Massball err. warning: %f\n", mass_bal_error);
+  }
 #endif
     return;
 }

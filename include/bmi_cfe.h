@@ -50,7 +50,7 @@ struct cfe_state_struct {
     double timestep_rainfall_input_m;
     double soil_reservoir_storage_deficit_m;
     double infiltration_depth_m;
-    double* infiltration_excess_m;
+    double* flux_infiltration_excess_input_to_surface_routing_m;
     double gw_reservoir_storage_deficit_m;
 
     double timestep_h;
@@ -65,7 +65,7 @@ struct cfe_state_struct {
     struct massbal vol_struct;
 
     /* xinanjiang_dev */
-    struct infiltration_excess_parameters_structure infiltration_excess_params_struct;
+    struct surface_water_partition_parameters_structure surface_water_partition_params_struct;
 
     // Epoch-based start time (BMI start time is considered 0.0)
     long epoch_start_time;
@@ -102,11 +102,11 @@ struct cfe_state_struct {
 
     struct nash_cascade_parameters nash_surface_params;
 
-    double* flux_direct_runoff_m;
-    double* flux_nash_lateral_runoff_m;
+    double* flux_direct_runoff_input_to_channel_m;
+    double* flux_subsurface_nash_lateral_runoff_m;
     double* flux_from_deep_gw_to_chan_m;
-    double* flux_perc_m;
-    double* flux_lat_m;
+    double* flux_perc_from_soil_to_gw_m;
+    double* flux_from_soil_to_subsurface_nash_cascade_m;
     double* flux_Qout_m;
 
     int verbosity;

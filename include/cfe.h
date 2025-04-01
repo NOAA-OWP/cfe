@@ -134,7 +134,7 @@ typedef enum {Schaake=1, Xinanjiang=2} surface_water_partition_type;
 typedef enum {GIUH=1, NASH_CASCADE=2} surface_runoff_scheme;
 
 /* xinanjiang_dev*/
-struct infiltration_excess_parameters_structure {
+struct surface_water_partition_parameters_structure {
     surface_water_partition_type surface_water_partitioning_scheme;
     double Schaake_adjusted_magic_constant_by_soil_type;
     double a_Xinanjiang_inflection_point_parameter;
@@ -143,7 +143,7 @@ struct infiltration_excess_parameters_structure {
     double urban_decimal_fraction;
     double ice_content_threshold; // ice content above which soil is impermeable
 };
-typedef struct infiltration_excess_parameters_structure infiltration_excess_parameters_structure;
+typedef struct surface_water_partition_parameters_structure surface_water_partition_parameters_structure;
 
 
 // function prototypes
@@ -155,7 +155,7 @@ extern void Schaake_partitioning_scheme(double dt, double field_capacity_m, doub
 // xinanjiang_dev: XinJiang function written by Rachel adapted by Jmframe and FLO,
 extern void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_capacity_m,
                                            double max_soil_moisture_storage_m, double column_total_soil_water_m,
-                                           struct infiltration_excess_parameters_structure *parms, double *infiltration_excess_m,
+                                           struct surface_water_partition_parameters_structure *parms, double *flux_infiltration_excess_input_to_surface_routing_m,
                                            double *infiltration_depth_m, double ice_fraction_xinanjiang);
 
 extern void et_from_rainfall(double *timestep_rainfall_input_m, struct evapotranspiration_structure *et_struct);
@@ -177,12 +177,12 @@ extern void cfe(
                            instead of passing in the constants
                            pass in a structure with the constants for both subroutines.
         //double Schaake_adjusted_magic_constant_by_soil_type,*/
-        struct infiltration_excess_parameters_structure infiltration_excess_params_struct,
+        struct surface_water_partition_parameters_structure surface_water_partition_params_struct,
         double timestep_rainfall_input_m,
-        double *infiltration_excess_m_ptr,
+        double *flux_infiltration_excess_input_to_surface_routing_m_ptr,
         double *infiltration_depth_m_ptr,
-        double *flux_perc_m_ptr,
-        double *flux_lat_m_ptr,
+        double *flux_perc_from_soil_to_gw_m_ptr,
+        double *flux_from_soil_to_subsurface_nash_cascade_m_ptr,
         double *gw_reservoir_storage_deficit_m_ptr,
         struct conceptual_reservoir *gw_reservoir_struct,
         double *flux_from_deep_gw_to_chan_m_ptr,
@@ -190,7 +190,7 @@ extern void cfe(
         int num_giuh_ordinates,
         double *giuh_ordinates_arr,
         double *runoff_queue_m_per_timestep_arr,
-        double *nash_lateral_runoff_m_ptr,
+        double *subsurface_nash_lateral_runoff_m_ptr,
         int num_lateral_flow_nash_reservoirs,
         double K_nash,
         double *nash_storage_arr,
