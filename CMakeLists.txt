@@ -105,7 +105,7 @@ target_include_directories(cfebmi PRIVATE include)
 
 set_target_properties(cfebmi PROPERTIES VERSION ${PROJECT_VERSION})
 
-set_target_properties(cfebmi PROPERTIES PUBLIC_HEADER ./include/bmi_cfe.hxx)
+set_target_properties(cfebmi PROPERTIES PUBLIC_HEADER ./include/bmi_cfe.h)
 
 include(GNUInstallDirs)
 
