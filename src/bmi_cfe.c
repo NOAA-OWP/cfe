@@ -1288,6 +1288,8 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     else {
       model->soil_reservoir.is_aet_rootzone = FALSE;
       model->soil_reservoir.n_soil_layers   = 1;
+      model->soil_reservoir.soil_layer_depths_m = NULL;
+      model->soil_reservoir.delta_soil_layer_depth_m = NULL;
     }
 
     /*--------------------END OF ROOT ZONE ADJUSTED AET DEVELOPMENT -rlm ------------------------------*/
@@ -1484,6 +1486,11 @@ static int Initialize (Bmi *self, const char *file)
     cfe_bmi_data_ptr->gw_reservoir.coeff_secondary = 0.0;                // 0.0 means that secondary outlet is not applied
     cfe_bmi_data_ptr->gw_reservoir.exponent_secondary = 1.0;             // linear
 
+    // Not used in gw reservoir
+    cfe_bmi_data_ptr->gw_reservoir.smc_profile = NULL;
+    cfe_bmi_data_ptr->gw_reservoir.soil_layer_depths_m = NULL;
+    cfe_bmi_data_ptr->gw_reservoir.delta_soil_layer_depth_m = NULL;
+
     // Initialize soil conceptual reservoirs
     //LKC Remove alpha_fc
     init_soil_reservoir(cfe_bmi_data_ptr);
@@ -1626,6 +1633,9 @@ static int Finalize (Bmi *self)
             free(model->forcing_data_precip_kg_per_m2);
         if( model->forcing_data_time != NULL )
             free(model->forcing_data_time);
+        if( model->forcing_file != NULL ){
+            free(model->forcing_file);
+        }
 
         if( model->giuh_ordinates != NULL )
             free(model->giuh_ordinates);
@@ -1635,6 +1645,9 @@ static int Finalize (Bmi *self)
             free(model->runoff_queue_m_per_timestep);
         if( model->flux_Qout_m != NULL )
             free(model->flux_Qout_m);
+
+        if( model->soil_reservoir.smc_profile != NULL )
+            free(model->soil_reservoir.smc_profile);
 
         /* xinanjiang_dev: changing name to the more general "direct runoff"
         if( model->flux_Schaake_output_runoff_m != NULL )
@@ -3026,6 +3039,15 @@ cfe_state_struct *new_bmi_cfe(void)
     data = (cfe_state_struct *) malloc(sizeof(cfe_state_struct));
     data->time_step_size                = 3600;
     data->time_step_fraction            = 1.0;
+    // NJF Ensure that all "optional" pointers are initialized to NULL
+    // Should probabably ensure that *all* pointers are initialized to NULL
+    // but that would require some more significant refactoring...
+    data->soil_reservoir.smc_profile = NULL;
+    data->soil_reservoir.soil_layer_depths_m = NULL;
+    data->soil_reservoir.delta_soil_layer_depth_m = NULL;
+    data->nash_surface_params.nash_storage = NULL;
+    data->forcing_file = NULL;
+    
     data->forcing_data_precip_kg_per_m2 = NULL;
     data->forcing_data_time             = NULL;
     data->giuh_ordinates                = NULL;
