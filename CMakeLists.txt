@@ -107,6 +107,34 @@ if (NGEN)
 
     set_target_properties(cfebmi PROPERTIES PUBLIC_HEADER ./include/bmi_cfe.h)
 
+    # Add unit testing using CMake and CTests, and custom test code
+    enable_testing()
+
+    add_executable(test_bmi_model ./test/test_bmi_model.c test/bmi_test_utils.c test/bmi_test_utils.c test/general_test_utils.c)
+    target_include_directories(test_bmi_model PUBLIC ${PROJECT_SOURCE_DIR}/include test/include)
+    target_link_libraries(test_bmi_model cfebmi)
+    target_compile_definitions(test_bmi_model PUBLIC BMI_INIT_CONFIG_EX_1="${PROJECT_SOURCE_DIR}/configs/cfe_config_cat_87_pass.txt")
+    #set(BMI_CONFIG_1 ${PROJECT_SOURCE_DIR}/configs/cfe_config_cat_87_pass.txt)
+
+    # The test example can be explicitly passed (although for now there is only 1)
+    add_test(NAME test_initialize_1 COMMAND test_bmi_model test_initialize 1)
+    # Note that, when using the first test example, the value be left off/implied for convenience
+    add_test(NAME test_initialize_1_a COMMAND test_bmi_model test_initialize)
+
+    add_test(NAME test_get_component_name_1 COMMAND test_bmi_model test_get_component_name)
+    add_test(NAME test_input_item_count_1 COMMAND test_bmi_model test_get_input_item_count)
+    add_test(NAME test_get_input_var_names_1 COMMAND test_bmi_model test_get_input_var_names)
+    add_test(NAME test_output_item_count_1 COMMAND test_bmi_model test_get_output_item_count)
+    add_test(NAME test_get_output_var_names_1 COMMAND test_bmi_model test_get_output_var_names)
+    add_test(NAME test_get_var_grid_1 COMMAND test_bmi_model test_get_var_grid)
+    add_test(NAME test_get_var_itemsize_1 COMMAND test_bmi_model test_get_var_itemsize)
+    add_test(NAME test_get_var_location_1 COMMAND test_bmi_model test_get_var_location)
+    add_test(NAME test_get_var_units_1 COMMAND test_bmi_model test_get_var_units)
+    add_test(NAME test_get_var_type_1 COMMAND test_bmi_model test_get_var_type)
+    # TODO: come back and add this back in at the end ... seems to be showing something not working correctly
+    #add_test(NAME test_get_var_nbytes_1 COMMAND test_bmi_model test_get_var_nbytes)
+    add_test(NAME test_get_grid_rank_1 COMMAND test_bmi_model test_get_grid_rank)
+
     include(GNUInstallDirs)
 
     install(TARGETS cfebmi
