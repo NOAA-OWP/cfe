@@ -6,6 +6,43 @@ TestFixture* setup(const char* cfg_file)
     TestFixture* fixture = malloc(sizeof(TestFixture));
     fixture->bmi_model = (Bmi *) malloc(sizeof(Bmi));
     fixture->cfg_file = cfg_file;
+
+    char* var_names[EXPECTED_TOTAL_VAR_COUNT] = {
+        "RAIN_RATE",
+        "GIUH_RUNOFF",
+        "INFILTRATION_EXCESS",
+        "DIRECT_RUNOFF",
+        "NASH_LATERAL_RUNOFF",
+        "DEEP_GW_TO_CHANNEL_FLUX",
+        "SOIL_TO_GW_FLUX",
+        "Q_OUT",
+        "POTENTIAL_ET",
+        "ACTUAL_ET",
+        "GW_STORAGE",
+        "SOIL_STORAGE",
+        "SOIL_STORAGE_CHANGE",
+        "SURF_RUNOFF_SCHEME",
+        "NWM_PONDED_DEPTH",
+        "atmosphere_water__liquid_equivalent_precipitation_rate",
+        "water_potential_evaporation_flux",
+        "ice_fraction_schaake",
+        "ice_fraction_xinanjiang",
+        "soil_moisture_profile"
+    };
+
+    fixture->expected_output_and_input_var_names = allocate_array_of_strings(EXPECTED_TOTAL_VAR_COUNT, BMI_MAX_VAR_NAME);
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        strcpy(fixture->expected_output_and_input_var_names[i], var_names[i]);
+    }
+
+    fixture->expected_output_var_names = fixture->expected_output_and_input_var_names;
+    fixture->expected_input_var_names = fixture->expected_output_and_input_var_names + EXPECTED_OUTPUT_VAR_COUNT;
+
+    // Note that for now, grid id for all variables is 0
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        fixture->expected_grid_ids[i] = 0;
+    }
+
     register_bmi_cfe(fixture->bmi_model);
 
     return fixture;
@@ -13,6 +50,7 @@ TestFixture* setup(const char* cfg_file)
 
 void teardown(TestFixture* fixture)
 {
+    free_array_of_strings(fixture->expected_output_and_input_var_names, EXPECTED_TOTAL_VAR_COUNT);
     free(fixture->bmi_model);
 }
 
@@ -84,10 +122,10 @@ char** get_all_bmi_variable_names(Bmi* bmi_model, int* output_var_count, int* in
  * @param grid_id_array Address to start of array in which to save grid ids, going in the same order as variable names
  *                      returned by BMI getters, with all output variable names first followed by input names.
  */
-void setup_expected_grid_ids(int* grid_id_array)
-{
-    // Note that for now, grid id for all variables is 0
-    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
-        grid_id_array[i] = 0;
-    }
-}
+//void setup_expected_grid_ids(int* grid_id_array)
+//{
+//    // Note that for now, grid id for all variables is 0
+//    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+//        grid_id_array[i] = 0;
+//    }
+//}

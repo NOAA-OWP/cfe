@@ -18,52 +18,22 @@ int test_get_component_name(TestFixture* fixture)
 
 int test_get_grid_rank(TestFixture* fixture)
 {
-    // Can rely on expected id values and assume if they are off it's caught by test_get_var_grid
-    int ordered_grid_ids[EXPECTED_TOTAL_VAR_COUNT];
-    // This assumes the passed array will be of size EXPECTED_TOTAL_VAR_COUNT
-    setup_expected_grid_ids(&ordered_grid_ids);
-
-    // However, still set this up for more clear messaging when there are errors
-    int output_count, input_count, actual_rank, status = 1;
-
-    char** all_var_names = get_all_bmi_variable_names(fixture->bmi_model, &output_count, &input_count);
-    if (all_var_names == NULL) {
-        printf("\nFailed getting variable names to test get_grid_rank");
-        return TEST_RETURN_CODE_FAIL;
-    }
-    // *** IMPORTANT *** - IFF get_all_bmi_variable_names was successful (i.e., we get this far), memory will be
-    // allocated in all_var_names that later needs to be freed (via free_array_of_strings)
-    int total_var_count = output_count + input_count;
-
-    // Sanity check this here
-    if (total_var_count != EXPECTED_TOTAL_VAR_COUNT) {
-        printf("\nUnexpected total variable count (%i, but expected %i) getting variable names to test get_grid_rank",
-               total_var_count, EXPECTED_TOTAL_VAR_COUNT);
-        free_array_of_strings(all_var_names, total_var_count);
-        return TEST_RETURN_CODE_FAIL;
-    }
+    int status, actual_rank;
 
     for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
-        status = fixture->bmi_model->get_grid_rank(fixture->bmi_model, ordered_grid_ids[i], &actual_rank);
+        status = fixture->bmi_model->get_grid_rank(fixture->bmi_model, fixture->expected_grid_ids[i], &actual_rank);
         if (status != BMI_SUCCESS) {
-            printf("\nReturned BMI_FAILURE status code getting grid rank for '%s'", all_var_names[i]);
-            free_array_of_strings(all_var_names, total_var_count);
+            printf("\nReturned BMI_FAILURE status code getting grid rank for '%s'", fixture->expected_output_and_input_var_names[i]);
             return TEST_RETURN_CODE_FAIL;
         }
 
         // For now, all grids are of rank 1
         if (!confirm_matches_expected_ints(1, actual_rank)) {
-            printf("\nGrid rank for '%s' did not match expected", all_var_names[i]);
-            status = TEST_RETURN_CODE_FAIL;
-            break;
+            printf("\nGrid rank for '%s' did not match expected", fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
         }
-        status = TEST_RETURN_CODE_PASS;
     }
-    free_array_of_strings(all_var_names, total_var_count);
-    return status;
-
-
-
+    return TEST_RETURN_CODE_PASS;
 }
 
 int test_get_input_item_count(TestFixture* fixture)
@@ -90,20 +60,12 @@ int test_get_input_var_names(TestFixture* fixture)
 
     char** actual_var_names = allocate_array_of_strings(var_count, BMI_MAX_VAR_NAME);
 
-    const char* expected_var_names[EXPECTED_INPUT_VAR_COUNT] = {
-        "atmosphere_water__liquid_equivalent_precipitation_rate",
-        "water_potential_evaporation_flux",
-        "ice_fraction_schaake",
-        "ice_fraction_xinanjiang",
-        "soil_moisture_profile"
-    };
-
     bmi_status = fixture->bmi_model->get_input_var_names(fixture->bmi_model, actual_var_names);
     if (bmi_status == BMI_FAILURE) {
         printf("\nReturned BMI_FAILURE status code getting input variable names");
         result = TEST_RETURN_CODE_FAIL;
     }
-    else if (confirm_matches_expected_str_arrays(expected_var_names, actual_var_names, var_count)) {
+    else if (confirm_matches_expected_str_arrays(fixture->expected_input_var_names, actual_var_names, var_count)) {
         result = TEST_RETURN_CODE_PASS;
     }
     else {
@@ -137,30 +99,12 @@ int test_get_output_var_names(TestFixture* fixture)
 
     char** actual_var_names = allocate_array_of_strings(var_count, BMI_MAX_VAR_NAME);
 
-    const char* expected_var_names[EXPECTED_OUTPUT_VAR_COUNT] = {
-        "RAIN_RATE",
-        "GIUH_RUNOFF",
-        "INFILTRATION_EXCESS",
-        "DIRECT_RUNOFF",
-        "NASH_LATERAL_RUNOFF",
-        "DEEP_GW_TO_CHANNEL_FLUX",
-        "SOIL_TO_GW_FLUX",
-        "Q_OUT",
-        "POTENTIAL_ET",
-        "ACTUAL_ET",
-        "GW_STORAGE",
-        "SOIL_STORAGE",
-        "SOIL_STORAGE_CHANGE",
-        "SURF_RUNOFF_SCHEME",
-        "NWM_PONDED_DEPTH"
-    };
-
     bmi_status = fixture->bmi_model->get_output_var_names(fixture->bmi_model, actual_var_names);
     if (bmi_status == BMI_FAILURE) {
         printf("\nReturned BMI_FAILURE status code getting output variable names");
         result = TEST_RETURN_CODE_FAIL;
     }
-    else if (confirm_matches_expected_str_arrays(expected_var_names, actual_var_names, var_count)) {
+    else if (confirm_matches_expected_str_arrays(fixture->expected_output_var_names, actual_var_names, var_count)) {
         result = TEST_RETURN_CODE_PASS;
     }
     else {
@@ -172,135 +116,76 @@ int test_get_output_var_names(TestFixture* fixture)
 
 int test_get_var_grid(TestFixture* fixture)
 {
-    int output_count, input_count, grid_value, status;
-    char** all_var_names = get_all_bmi_variable_names(fixture->bmi_model, &output_count, &input_count);
-    if (all_var_names == NULL) {
-        printf("\nFailed getting variable names to test get_var_grid");
-        return TEST_RETURN_CODE_FAIL;
-    }
-    // *** IMPORTANT *** - IFF get_all_bmi_variable_names was successful (i.e., we get this far), memory will be
-    // allocated in all_var_names that later needs to be freed
-    int total_var_count = output_count + input_count;
+    int grid_value, status;
 
-    // Sanity check this here
-    if (total_var_count != EXPECTED_TOTAL_VAR_COUNT) {
-        printf("\nUnexpected total variable count (%i, but expected %i) getting variable names to test get_var_grid",
-               total_var_count, EXPECTED_TOTAL_VAR_COUNT);
-        return TEST_RETURN_CODE_FAIL;
-    }
-
-    // Note that all grid values are 0, but we'll do this to stick to the pattern
-    int ordered_grid_expected_values[EXPECTED_TOTAL_VAR_COUNT];
-    // This assumes the passed array will be of size EXPECTED_TOTAL_VAR_COUNT
-    setup_expected_grid_ids(&ordered_grid_expected_values);
-
-    for (int i = 0; i < total_var_count; i++) {
-        status = fixture->bmi_model->get_var_grid(fixture->bmi_model, all_var_names[i], &grid_value);
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        status = fixture->bmi_model->get_var_grid(fixture->bmi_model, fixture->expected_output_and_input_var_names[i], &grid_value);
         if (status == BMI_FAILURE) {
-            printf("\nReturned BMI_FAILURE status code getting grid for '%s'", all_var_names[i]);
-            status = TEST_RETURN_CODE_FAIL;
-            break;
+            printf("\nReturned BMI_FAILURE status code getting grid for '%s'", fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
         }
-        if (!confirm_matches_expected_ints(ordered_grid_expected_values[i], grid_value)) {
-            status = TEST_RETURN_CODE_FAIL;
-            printf("\nGrid value for are different for %s", all_var_names[i]);
-            break;
+        if (!confirm_matches_expected_ints(fixture->expected_grid_ids[i], grid_value)) {
+            printf("\nGrid value for are different for %s", fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
         }
-        status = TEST_RETURN_CODE_PASS;
     }
-    free_array_of_strings(all_var_names, total_var_count);
-    return status;
+    return TEST_RETURN_CODE_PASS;
 }
 
 int test_get_var_itemsize(TestFixture* fixture)
 {
-    int output_count, input_count, item_size, expected_size, status = 1;
-    char** all_var_names = get_all_bmi_variable_names(fixture->bmi_model, &output_count, &input_count);
-    if (all_var_names == NULL) {
-        printf("\nFailed getting variable names to test get_var_itemsize");
-        return TEST_RETURN_CODE_FAIL;
-    }
-    // *** IMPORTANT *** - IFF get_all_bmi_variable_names was successful (i.e., we get this far), memory will be
-    // allocated in all_var_names that later needs to be freed
-    int total_var_count = output_count + input_count;
+    int item_size, expected_size, status;
 
-    for (int i = 0; i < total_var_count; i++) {
-        status = fixture->bmi_model->get_var_itemsize(fixture->bmi_model, all_var_names[i], &item_size);
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        status = fixture->bmi_model->get_var_itemsize(fixture->bmi_model, fixture->expected_output_and_input_var_names[i], &item_size);
         if (status != BMI_SUCCESS) {
-            printf("\nReturned BMI_FAILURE status code getting item size for '%s'", all_var_names[i]);
-            status = TEST_RETURN_CODE_FAIL;
-            break;
+            printf("\nReturned BMI_FAILURE status code getting item size for '%s'", fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
         }
 
         // Only SURF_RUNOFF_SCHEME is int, and the rest (output and input) are doubles
-        expected_size = strcmp(all_var_names[i], "SURF_RUNOFF_SCHEME") == 0 ? sizeof(int) : sizeof(double);
+        expected_size = strcmp(fixture->expected_output_and_input_var_names[i], "SURF_RUNOFF_SCHEME") == 0 ? sizeof(int) : sizeof(double);
 
         if (!confirm_matches_expected_ints(expected_size, item_size)) {
-            printf("\nSize for '%s' did not match expected", all_var_names[i]);
-            status = TEST_RETURN_CODE_FAIL;
-            break;
+            printf("\nSize for '%s' did not match expected", fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
         }
-        // Otherwise ...
-        status = TEST_RETURN_CODE_PASS;
     }
-    free_array_of_strings(all_var_names, total_var_count);
-    return status;
+    return TEST_RETURN_CODE_PASS;
 }
 
 int test_get_var_location(TestFixture* fixture)
 {
-    int output_count, input_count, status = 1;
+    int status;
     char actual_value[BMI_MAX_VAR_NAME];
-    char** all_var_names = get_all_bmi_variable_names(fixture->bmi_model, &output_count, &input_count);
-    if (all_var_names == NULL) {
-        printf("\nFailed getting variable names to test get_var_location");
-        return TEST_RETURN_CODE_FAIL;
-    }
-    // *** IMPORTANT *** - IFF get_all_bmi_variable_names was successful (i.e., we get this far), memory will be
-    // allocated in all_var_names that later needs to be freed
-    int total_var_count = output_count + input_count;
+    char* expected;
 
-    for (int i = 0; i < total_var_count; i++) {
-        status = fixture->bmi_model->get_var_location(fixture->bmi_model, all_var_names[i], &actual_value);
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        status = fixture->bmi_model->get_var_location(fixture->bmi_model, fixture->expected_output_and_input_var_names[i], &actual_value);
         if (status != BMI_SUCCESS) {
-            printf("\nReturned BMI_FAILURE status code getting location for '%s'", all_var_names[i]);
-            status = TEST_RETURN_CODE_FAIL;
-            break;
+            printf("\nReturned BMI_FAILURE status code getting location for '%s'", fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
         }
 
         // Only SURF_RUNOFF_SCHEME is "none", and the rest (output and input) are "node"
-        bool is_runoff_scheme_var = strcmp(all_var_names[i], "SURF_RUNOFF_SCHEME") == 0;
-
-        if (is_runoff_scheme_var && confirm_matches_expected_strs("none", actual_value))
-            status = TEST_RETURN_CODE_PASS;
-        else if (!is_runoff_scheme_var && confirm_matches_expected_strs("node", actual_value))
-            status = TEST_RETURN_CODE_PASS;
+        if (strcmp(fixture->expected_output_and_input_var_names[i], "SURF_RUNOFF_SCHEME") == 0)
+            expected = "none";
         else
-            status = TEST_RETURN_CODE_FAIL;
+            expected = "node";
 
-        if (status != TEST_RETURN_CODE_PASS) {
-            printf("\nLocation for '%s' did not match expected", all_var_names[i]);
-            break;
+        if (!confirm_matches_expected_strs(expected, actual_value)) {
+            printf("\nLocation for '%s' did not match expected", fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
         }
     }
-
-    free_array_of_strings(all_var_names, total_var_count);
-    return status;
+    return TEST_RETURN_CODE_PASS;
 }
 
 
 int test_get_var_units(TestFixture* fixture)
 {
-    int output_count, input_count, status = 1;
+    int status;
     char actual_value[BMI_MAX_VAR_NAME];
-    char** all_var_names = get_all_bmi_variable_names(fixture->bmi_model, &output_count, &input_count);
-    if (all_var_names == NULL) {
-        printf("\nFailed getting variable names to test get_var_units");
-        return TEST_RETURN_CODE_FAIL;
-    }
-    // *** IMPORTANT *** - IFF get_all_bmi_variable_names was successful (i.e., we get this far), memory will be
-    // allocated in all_var_names that later needs to be freed
-    int total_var_count = output_count + input_count;
 
     char* expected_unit_values[EXPECTED_TOTAL_VAR_COUNT] = {
         "m",        // RAIN_RATE
@@ -325,97 +210,71 @@ int test_get_var_units(TestFixture* fixture)
         "none"      // soil moisture profile is in decimal fraction -rlm
     };
 
-    for (int i = 0; i < total_var_count; i++) {
-        status = fixture->bmi_model->get_var_units(fixture->bmi_model, all_var_names[i], &actual_value);
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        status = fixture->bmi_model->get_var_units(fixture->bmi_model, fixture->expected_output_and_input_var_names[i], &actual_value);
         if (status != BMI_SUCCESS) {
-            printf("\nReturned BMI_FAILURE status code getting units for '%s'", all_var_names[i]);
-            status = TEST_RETURN_CODE_FAIL;
-            break;
+            printf("\nReturned BMI_FAILURE status code getting units for '%s'", fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
         }
         if (!confirm_matches_expected_strs(expected_unit_values[i], actual_value)) {
-            printf("\nUnits for '%s' did not match expected", all_var_names[i]);
-            status = TEST_RETURN_CODE_FAIL;
-            break;
+            printf("\nUnits for '%s' did not match expected", fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
         }
-        status = TEST_RETURN_CODE_PASS;
     }
-
-    free_array_of_strings(all_var_names, total_var_count);
-    return status;
+    return TEST_RETURN_CODE_PASS;
 }
 
 int test_get_var_type(TestFixture* fixture)
 {
-    int output_count, input_count, status = 1;
+    int status;
     char actual_value[BMI_MAX_TYPE_NAME];
-    char** all_var_names = get_all_bmi_variable_names(fixture->bmi_model, &output_count, &input_count);
-    if (all_var_names == NULL) {
-        printf("\nFailed getting variable names to test get_var_type");
-        return TEST_RETURN_CODE_FAIL;
-    }
-    // *** IMPORTANT *** - IFF get_all_bmi_variable_names was successful (i.e., we get this far), memory will be
-    // allocated in all_var_names that later needs to be freed
-    int total_var_count = output_count + input_count;
+    char* expected_type;
 
-    for (int i = 0; i < total_var_count; i++) {
-        status = fixture->bmi_model->get_var_type(fixture->bmi_model, all_var_names[i], &actual_value);
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        status = fixture->bmi_model->get_var_type(fixture->bmi_model, fixture->expected_output_and_input_var_names[i], &actual_value);
         if (status != BMI_SUCCESS) {
-            printf("\nReturned BMI_FAILURE status code getting type for '%s'", all_var_names[i]);
-            status = TEST_RETURN_CODE_FAIL;
-            break;
+            printf("\nReturned BMI_FAILURE status code getting type for '%s'", fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
         }
 
         // Only SURF_RUNOFF_SCHEME is int, and the rest (output and input) are doubles
-        bool is_runoff_scheme_var = strcmp(all_var_names[i], "SURF_RUNOFF_SCHEME") == 0;
+        if (strcmp(fixture->expected_output_and_input_var_names[i], "SURF_RUNOFF_SCHEME") == 0)
+            expected_type = "int";
+        else
+            expected_type = "double";
 
-        if (is_runoff_scheme_var && confirm_matches_expected_strs("int", actual_value))
-            status = TEST_RETURN_CODE_PASS;
-        else if (!is_runoff_scheme_var && confirm_matches_expected_strs("double", actual_value))
-            status = TEST_RETURN_CODE_PASS;
-        else {
-            printf("\nType for '%s' did not match expected", all_var_names[i]);
-            status = TEST_RETURN_CODE_FAIL;
-            break;
+        if (!confirm_matches_expected_strs(expected_type, actual_value)) {
+            printf("\nType for '%s' did not match expected", fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
         }
     }
-
-    free_array_of_strings(all_var_names, total_var_count);
-    return status;
+    return TEST_RETURN_CODE_PASS;
 }
 
 int test_get_var_nbytes(TestFixture* fixture)
 {
-    int output_count, input_count, item_nbytes, expected_nbytes, status = 1;
-    char** all_var_names = get_all_bmi_variable_names(fixture->bmi_model, &output_count, &input_count);
-    if (all_var_names == NULL) {
-        printf("\nFailed getting variable names to test get_var_nbytes");
-        return TEST_RETURN_CODE_FAIL;
-    }
-    // *** IMPORTANT *** - IFF get_all_bmi_variable_names was successful (i.e., we get this far), memory will be
-    // allocated in all_var_names that later needs to be freed
-    int total_var_count = output_count + input_count;
+    int item_nbytes, expected_nbytes, status;
 
-    for (int i = 0; i < total_var_count; i++) {
-        status = fixture->bmi_model->get_var_nbytes(fixture->bmi_model, all_var_names[i], &item_nbytes);
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        status = fixture->bmi_model->get_var_nbytes(fixture->bmi_model, fixture->expected_output_and_input_var_names[i], &item_nbytes);
         if (status != BMI_SUCCESS) {
-            printf("\nReturned BMI_FAILURE status code getting nbytes for '%s'", all_var_names[i]);
-            status = TEST_RETURN_CODE_FAIL;
-            break;
+            printf("\nReturned BMI_FAILURE status code getting nbytes for '%s'", fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
         }
 
         // Only SURF_RUNOFF_SCHEME is int, and the rest (output and input) are doubles
         // And everything should be of single element, so just the size
-        expected_nbytes = strcmp(all_var_names[i], "SURF_RUNOFF_SCHEME") == 0 ? sizeof(int) : sizeof(double);
+        if (strcmp(fixture->expected_output_and_input_var_names[i], "SURF_RUNOFF_SCHEME") == 0)
+            expected_nbytes = sizeof(int);
+        else
+            expected_nbytes = sizeof(double);
 
         if (!confirm_matches_expected_ints(expected_nbytes, item_nbytes)){
-            printf("\nnbytes for '%s' did not match expected", all_var_names[i]);
-            status = TEST_RETURN_CODE_FAIL;
-            break;
+            printf("\nnbytes for '%s' did not match expected", fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
         }
-        status = TEST_RETURN_CODE_PASS;
     }
-    free_array_of_strings(all_var_names, total_var_count);
-    return status;
+    return TEST_RETURN_CODE_PASS;
 }
 
 int test_initialize(TestFixture* fixture)

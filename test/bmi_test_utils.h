@@ -13,6 +13,23 @@ typedef struct TestFixture
 {
     Bmi *bmi_model;
     const char* cfg_file;
+    /**
+     * Array of strings of the expected output and input BMI variable names.
+     *
+     * Note that the order should be outputs first, then inputs.  With each group, strings should be ordered in the same
+     * order as used by the standard BMI ``get_output_var_names`` and ``get_input_var_names``.
+     */
+    const char** expected_output_and_input_var_names;
+
+    // For convenience
+    const char** expected_output_var_names;
+    const char** expected_input_var_names;
+
+    /**
+     * Expected grid ids for each variable, with ordering analogous to ``expected_output_and_input_var_names``.
+     */
+    int expected_grid_ids[EXPECTED_TOTAL_VAR_COUNT];
+
 
 } TestFixture;
 
@@ -49,6 +66,6 @@ char** get_all_bmi_variable_names(Bmi* bmi_model, int* output_var_count, int* in
  * @param grid_id_array Address to start of array in which to save grid ids, going in the same order as variable names
  *                      returned by BMI getters, with all output variable names first followed by input names.
  */
-void setup_expected_grid_ids(int* grid_id_array);
+//void setup_expected_grid_ids(int* grid_id_array);
 
 #endif
