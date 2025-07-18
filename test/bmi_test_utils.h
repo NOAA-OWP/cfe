@@ -2,6 +2,7 @@
 #define BMI_TEST_UTILS
 
 #include "bmi_cfe.h"
+#include "stdbool.h"
 
 /* Define some expected constants */
 #define EXPECTED_COMPONENT_NAME "The CFE Model"
@@ -76,5 +77,15 @@ void get_arbitrary_input_var_values(int example_case, double current_model_time,
  *                      returned by BMI getters, with all output variable names first followed by input names.
  */
 //void setup_expected_grid_ids(int* grid_id_array);
+
+/**
+ * Set all necessary module BMI input variables to reasonable values, as needed prior to advancing the model.
+ *
+ * @param fixture The test fixture, which contains the module.
+ * @param example_case The specific example test case, which could affect which values are used.
+ * @param current_model_time The current model time, which could affect which values are used
+ * @return Whether the set operation was successful.
+ */
+bool set_module_input_variables_before_update(const TestFixture* fixture, int example_case, double current_model_time);
 
 #endif

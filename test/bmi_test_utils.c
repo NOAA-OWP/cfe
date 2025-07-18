@@ -144,3 +144,39 @@ void get_arbitrary_input_var_values(int example_case, double current_model_time,
 //        grid_id_array[i] = 0;
 //    }
 //}
+
+/**
+ * Set all necessary module BMI input variables to reasonable values, as needed prior to advancing the model.
+ *
+ * @param fixture The test fixture, which contains the module.
+ * @param example_case The specific example test case, which could affect which values are used.
+ * @param current_model_time The current model time, which could affect which values are used.
+ * @return Whether the set operation was successful.
+ */
+bool set_module_input_variables_before_update(const TestFixture* fixture, const int example_case, const double current_model_time) {
+    int bmi_status;
+    char var_type[BMI_MAX_TYPE_NAME];
+
+    double arbitrary_input_var_values[EXPECTED_INPUT_VAR_COUNT];
+    get_arbitrary_input_var_values(example_case, current_model_time, arbitrary_input_var_values);
+
+    for (int i = 0; i < EXPECTED_INPUT_VAR_COUNT; i++) {
+        // Sanity check
+        bmi_status = fixture->bmi_model->get_var_type(fixture->bmi_model, fixture->expected_input_var_names[i], var_type);
+        if (bmi_status == BMI_FAILURE) {
+            printf("\nCan't set module inputs to advance; test helper function encountered BMI_FAILURE getting type of variable '%s' for sanity check", fixture->expected_input_var_names[i]);
+            return false;
+        }
+        if (!confirm_matches_expected_strs("double", var_type)) {
+            printf("\nCan't set module inputs to advance; test helper function has type mismatch for variable %s", fixture->expected_input_var_names[i]);
+            return false;
+        }
+        // Assuming the sanity check of the type is good, set the above-prepared arbitrary value for this
+        bmi_status = fixture->bmi_model->set_value(fixture->bmi_model, fixture->expected_input_var_names[i], arbitrary_input_var_values + i);
+        if (bmi_status == BMI_FAILURE) {
+            printf("\nCan't set module inputs to advance; test helper function encountered BMI_FAILURE attempting to set variable '%s'", fixture->expected_input_var_names[i]);
+            return false;
+        }
+    }
+    return true;
+}
