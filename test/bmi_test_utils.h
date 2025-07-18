@@ -30,7 +30,6 @@ typedef struct TestFixture
      */
     int expected_grid_ids[EXPECTED_TOTAL_VAR_COUNT];
 
-
 } TestFixture;
 
 TestFixture* setup(const char* cfg_file);
@@ -54,6 +53,16 @@ void teardown(TestFixture* fixture);
  * @return Allocate pointer(s) containing an array of strings with variable names (output variables first), or NULL on failure
  */
 char** get_all_bmi_variable_names(Bmi* bmi_model, int* output_var_count, int* input_var_count);
+
+
+/**
+ * Get an array of arbitrary but valid values to use to set for module inputs, and save them to a provided array.
+ *
+ * @param example_case The specific example test case, which could affect which values are used.
+ * @param current_model_time The current model time, which could affect which values are used.
+ * @param value_array Pointer to the array in which to save the values (which must be of size EXPECTED_INPUT_VAR_COUNT).
+ */
+void get_arbitrary_input_var_values(int example_case, double current_model_time, double* value_array);
 
 /**
  * Setup expected values for grid ids for all the output and input (in that order) BMI variables.

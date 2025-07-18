@@ -112,6 +112,21 @@ char** get_all_bmi_variable_names(Bmi* bmi_model, int* output_var_count, int* in
 }
 
 /**
+ * Get an array of arbitrary but valid values to use to set for module inputs, and save them to a provided array.
+ *
+ * @param example_case The specific example test case, which could affect which values are used.
+ * @param current_model_time The current model time, which could affect which values are used.
+ * @param value_array Pointer to the array in which to save the values (which must be of size EXPECTED_INPUT_VAR_COUNT).
+ */
+void get_arbitrary_input_var_values(int example_case, double current_model_time, double* value_array) {
+    // For now, use the same simple group of values for everything
+    // TODO: might need to confirm the validity (or the ideal-ness) of these values further
+    double arbitrary_input_var_values[EXPECTED_INPUT_VAR_COUNT] = {0.55, 0.27, 0.1, 0.1, 0.2};
+    for (int i = 0; i < EXPECTED_INPUT_VAR_COUNT; i++)
+        value_array[i] = arbitrary_input_var_values[i];
+}
+
+/*
  * Setup expected values for grid ids for all the output and input (in that order) BMI variables.
  *
  * The array is assumed to be of a hardcoded size (``EXPECTED_TOTAL_VAR_COUNT``).
