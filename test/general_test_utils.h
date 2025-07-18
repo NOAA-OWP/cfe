@@ -24,6 +24,15 @@ char** allocate_array_of_strings(int str_count, int max_str_length);
 void free_array_of_strings(char** array_of_strings, int str_count);
 
 /**
+ * Reusable convenience method for checking that ``double`` results of a BMI function call were as expected.
+ *
+ * @param expected The expected value.
+ * @param actual The actual value set by the function call.
+ * @return
+ */
+bool confirm_matches_expected_doubles(const double expected, const double actual);
+
+/**
  * Confirm the actual matches the expected for arrays of strings, ignoring the order within the outer array.
  *
  * @param expected
