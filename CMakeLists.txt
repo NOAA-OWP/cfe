@@ -131,9 +131,19 @@ if (NGEN)
     add_test(NAME test_get_var_location_1 COMMAND test_bmi_model test_get_var_location)
     add_test(NAME test_get_var_units_1 COMMAND test_bmi_model test_get_var_units)
     add_test(NAME test_get_var_type_1 COMMAND test_bmi_model test_get_var_type)
+
     # TODO: come back and add this back in at the end ... seems to be showing something not working correctly
+
     #add_test(NAME test_get_var_nbytes_1 COMMAND test_bmi_model test_get_var_nbytes)
     add_test(NAME test_get_grid_rank_1 COMMAND test_bmi_model test_get_grid_rank)
+    add_test(NAME test_get_grid_size_1 COMMAND test_bmi_model test_get_grid_size)
+    add_test(NAME test_get_grid_type_1 COMMAND test_bmi_model test_get_grid_type)
+    add_test(NAME test_get_start_time_1 COMMAND test_bmi_model test_get_start_time)
+    # TODO: (later) get_end_time probably needs another test scenario when the module is handling it's own forcings
+    add_test(NAME test_get_end_time_1 COMMAND test_bmi_model test_get_end_time)
+    add_test(NAME test_get_time_step_1 COMMAND test_bmi_model test_get_time_step)
+    add_test(NAME test_get_time_units_1 COMMAND test_bmi_model test_get_time_units)
+    add_test(NAME test_get_current_time_1 COMMAND test_bmi_model test_get_current_time)
 
     include(GNUInstallDirs)
 
