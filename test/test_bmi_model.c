@@ -305,6 +305,266 @@ int test_get_time_units(TestFixture* fixture)
     return TEST_RETURN_CODE_PASS;
 }
 
+int test_get_value(TestFixture* fixture)
+{
+    // For this, we need to be able to initialize first
+    int bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test get_value)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    char var_type[BMI_MAX_TYPE_NAME];
+    double uninit_value, var_value;
+
+    double arbitrary_values[EXPECTED_INPUT_VAR_COUNT];
+    get_arbitrary_input_var_values(1, 0, arbitrary_values);
+
+    for (int i = 0; i < EXPECTED_INPUT_VAR_COUNT; i++) {
+        // Have local var for these just for readability
+        const char* var_name = fixture->expected_input_var_names[i];
+        double* current_arb_val = arbitrary_values + i;
+
+        // Sanity check the test's validity
+        bmi_status = fixture->bmi_model->get_var_type(fixture->bmi_model, var_name, var_type);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status code checking type for '%s' (while testing get_value)", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        if (!confirm_matches_expected_strs("double", var_type)) {
+            printf("\nUnexpected variable type for '%s' (while testing get_value)", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+
+        // Confirm that uninitialized values are not the same thing we will be setting and then getting for the tests
+        bmi_status = fixture->bmi_model->get_value(fixture->bmi_model, var_name, &uninit_value);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status getting uninitialized value for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        // The odds of this are very low, but we are better off knowing if this happens (though wait until then to
+        // do anything about it)
+        if (*current_arb_val == uninit_value) {
+            printf("\nUninitialized value for '%s' matches test value for get_value and invalidates test", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+
+        // Then set the arbitrary value and test getting it
+        bmi_status = fixture->bmi_model->set_value(fixture->bmi_model, var_name, current_arb_val);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status setting arbitrary value (for get_value) for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        bmi_status = fixture->bmi_model->get_value(fixture->bmi_model, var_name, &var_value);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status getting arbitrary value for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        if (!confirm_matches_expected_doubles(*current_arb_val, var_value)) {
+            printf("\nArbitrary value retrieved with get_value was not as expected for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+
+    // Now do some checking of the output variables
+
+    // All doubles except one int, which we will cast for storage purpose
+    double output_double_vars[EXPECTED_OUTPUT_VAR_COUNT];
+    if (!get_output_var_values(fixture, output_double_vars)) {
+        printf("\nFailed to get output var values for testing get_value");
+        return TEST_RETURN_CODE_FAIL;
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
+int test_get_value_at_indices(TestFixture* fixture)
+{
+    // This should basically work the same as the test for get_value, just setting only at indices 0
+
+    // For this, we need to be able to initialize first
+    int bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test get_value_at_indices)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    char var_type[BMI_MAX_TYPE_NAME];
+    double uninit_value, var_value;
+    int indices[1] = {0};
+
+    double arbitrary_values[EXPECTED_INPUT_VAR_COUNT];
+    get_arbitrary_input_var_values(1, 0, arbitrary_values);
+
+    for (int i = 0; i < EXPECTED_INPUT_VAR_COUNT; i++) {
+        // Have local var for these just for readability
+        const char* var_name = fixture->expected_input_var_names[i];
+        double* current_arb_val = arbitrary_values + i;
+
+        // Sanity check the test's validity
+        bmi_status = fixture->bmi_model->get_var_type(fixture->bmi_model, var_name, var_type);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nBMI_FAILURE status checking type for '%s' (while testing set_value_at_indices)", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        if (!confirm_matches_expected_strs("double", var_type)) {
+            printf("\nUnexpected variable type for '%s' (while testing get_value_at_indices)", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+
+        // Confirm that uninitialized values are not the same thing we will be setting and then getting for the tests
+        bmi_status = fixture->bmi_model->get_value_at_indices(fixture->bmi_model, var_name, &uninit_value, indices, 1);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status getting uninitialized value at index 0 for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        // The odds of this are very low, but we are better off knowing if this happens (though wait until then to
+        // do anything about it)
+        if (*current_arb_val == uninit_value) {
+            printf("\nUninitialized value for '%s' matches test value for get_value_at_indices and invalidates test",
+                   var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+
+        // Then set the arbitrary value for an index and test getting it
+        bmi_status = fixture->bmi_model->set_value_at_indices(fixture->bmi_model, var_name, indices, 1, current_arb_val);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE setting arbitrary value (for get_value_at_indices) at index 0 for '%s'",
+                   var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        bmi_status = fixture->bmi_model->get_value_at_indices(fixture->bmi_model, var_name, &var_value, indices, 1);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status getting arbitrary value at index 0 for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        if (!confirm_matches_expected_doubles(*current_arb_val, var_value)) {
+            printf("\nArbitrary value retrieved with get_value_at_indices for index 0 was not as expected for '%s'",
+                   var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
+int test_get_value_ptr(TestFixture* fixture)
+{
+    // For this, we need to be able to initialize first
+    int bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test set_value)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    char var_type[BMI_MAX_TYPE_NAME];
+    double uninit_value, var_value, initial_ptr_set_value;
+    double arbitrary_values[EXPECTED_INPUT_VAR_COUNT];
+    get_arbitrary_input_var_values(1, 0, arbitrary_values);
+
+    for (int i = 0; i < EXPECTED_INPUT_VAR_COUNT; i++) {
+        // Have local var for these just for readability
+        const char* var_name = fixture->expected_input_var_names[i];
+        double* current_arb_val = arbitrary_values + i;
+        double* var_ptr;
+        void** var_ptr_ptr = (void**) &var_ptr;
+
+        // Sanity check the test's validity
+        bmi_status = fixture->bmi_model->get_var_type(fixture->bmi_model, var_name, var_type);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status code checking type for '%s' (while testing get_value_ptr)", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        if (!confirm_matches_expected_strs("double", var_type)) {
+            printf("\nUnexpected variable type for '%s' (while testing get_value_ptr)", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+
+        // Get the pointer
+        bmi_status = fixture->bmi_model->get_value_ptr(fixture->bmi_model, var_name, var_ptr_ptr);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status getting pointer for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+
+        bmi_status = fixture->bmi_model->get_value(fixture->bmi_model, var_name, &uninit_value);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status getting uninitialized value for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        // The odds of this are low, but we are better off knowing if this happens (though wait until then to
+        // do anything about it)
+        if (0.0 == uninit_value) {
+            printf("\nWARN: uninitialized value for '%s' was 0.0; using 0.1 in first set testing pointer", var_name);
+            initial_ptr_set_value = 0.1;
+        }
+        else
+            initial_ptr_set_value = 0.0;
+
+        // Now use the pointer to set, setting zero value, and then confirm via get_value things were set right
+        *var_ptr = initial_ptr_set_value;
+        bmi_status = fixture->bmi_model->get_value(fixture->bmi_model, var_name, &var_value);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status getting zero value (for get_value_ptr) for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        if (!confirm_matches_expected_doubles(initial_ptr_set_value, var_value)) {
+            printf("\nZero value was not set as expected via pointer for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+
+        // Finally, set the arbitrary value and make sure it is reflected in the pointer
+        bmi_status = fixture->bmi_model->set_value(fixture->bmi_model, var_name, current_arb_val);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status from set_value (in test for get_value_ptr) for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        if (!confirm_matches_expected_doubles(*current_arb_val, *var_ptr)) {
+            printf("\nArbitrary value retrieved via pointer was not as expected for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+
+    for (int i = 0; i < EXPECTED_OUTPUT_VAR_COUNT; i++) {
+        int* int_ptr;
+        double* double_ptr;
+
+        void** ptr = (i == 13) ? &int_ptr : &double_ptr;
+
+        const char* var_name = fixture->expected_output_var_names[i];
+
+        // Sanity check the test's validity
+        bmi_status = fixture->bmi_model->get_var_type(fixture->bmi_model, var_name, var_type);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status code checking type for output '%s' (while testing get_value_ptr)",
+                   var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+
+        bmi_status = fixture->bmi_model->get_value_ptr(fixture->bmi_model, var_name, ptr);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE getting pointer for output '%s' (while testing get_value_ptr)", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        int int_var_val;
+        double double_var_val;
+        void* var_val = (i == 13) ? &int_var_val : &double_var_val;
+        bmi_status = fixture->bmi_model->get_value(fixture->bmi_model, var_name, var_val);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE getting value for output '%s' (while testing get_value_ptr)", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        if (i == 13 && !confirm_matches_expected_ints(int_var_val, *int_ptr)) {
+            printf("\nOutput value retrieved via int pointer was not as expected for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        if (i != 13 && !confirm_matches_expected_doubles(double_var_val, *double_ptr)) {
+            printf("\nOutput value retrieved via double pointer was not as expected for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+
+    return TEST_RETURN_CODE_PASS;
+}
+
 int test_get_var_grid(TestFixture* fixture)
 {
     int grid_value, status;
@@ -467,6 +727,143 @@ int test_get_var_nbytes(TestFixture* fixture)
     return TEST_RETURN_CODE_PASS;
 }
 
+int test_set_value(TestFixture* fixture)
+{
+    // For this, we need to be able to initialize first
+    int bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test set_value)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    char var_type[BMI_MAX_TYPE_NAME];
+    double var_value, zero_value = 0.0;
+
+    double arbitrary_values[EXPECTED_INPUT_VAR_COUNT];
+    get_arbitrary_input_var_values(1, 0, arbitrary_values);
+
+    for (int i = 0; i < EXPECTED_INPUT_VAR_COUNT; i++) {
+        // Have local var for this just for readability
+        const char* var_name = fixture->expected_input_var_names[i];
+        // Sanity check the test's validity
+        bmi_status = fixture->bmi_model->get_var_type(fixture->bmi_model, var_name, var_type);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status code checking type for '%s' (while testing set_value)", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        if (!confirm_matches_expected_strs("double", var_type)) {
+            printf("\nUnexpected variable type for '%s' (while testing set_value)", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+
+        // First, test setting input var to 0
+        bmi_status = fixture->bmi_model->set_value(fixture->bmi_model, var_name, &zero_value);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status setting zero value for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        // And confirm
+        bmi_status = fixture->bmi_model->get_value(fixture->bmi_model, var_name, &var_value);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status confirming zero value was set for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        if (!confirm_matches_expected_doubles(zero_value, var_value)) {
+            printf("\nZero value was not set as expected for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+
+        // Now, set to the arbitrary value
+        double* current_arb_val = arbitrary_values + i;
+        bmi_status = fixture->bmi_model->set_value(fixture->bmi_model, var_name, current_arb_val);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status setting arbitrary value for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        // And confirm
+        bmi_status = fixture->bmi_model->get_value(fixture->bmi_model, var_name, &var_value);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status confirming arbitrary value was set for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        if (!confirm_matches_expected_doubles(*current_arb_val, var_value)) {
+            printf("\nArbitrary value was not set as expected for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
+int test_set_value_at_indices(TestFixture* fixture)
+{
+    // This should basically work the same as the test for set_value, just setting only at indices 0
+
+    // For this, we need to be able to initialize first
+    int bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test set_value)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    char var_type[BMI_MAX_TYPE_NAME];
+    double var_value, zero_value = 0.0;
+    int indices[1] = {0};
+
+    double arbitrary_values[EXPECTED_INPUT_VAR_COUNT];
+    get_arbitrary_input_var_values(1, 0, arbitrary_values);
+
+    for (int i = 0; i < EXPECTED_INPUT_VAR_COUNT; i++) {
+        // Have local var for this just for readability
+        const char* var_name = fixture->expected_input_var_names[i];
+        // Sanity check the test's validity
+        bmi_status = fixture->bmi_model->get_var_type(fixture->bmi_model, var_name, var_type);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nBMI_FAILURE status checking type for '%s' (while testing set_value_at_indices)", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        if (!confirm_matches_expected_strs("double", var_type)) {
+            printf("\nUnexpected variable type for '%s' (while testing set_value_at_indices)", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+
+        // First, test setting input var to 0
+        bmi_status = fixture->bmi_model->set_value_at_indices(fixture->bmi_model, var_name, indices, 1, &zero_value);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status setting zero value at index 0 for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        // And confirm
+        bmi_status = fixture->bmi_model->get_value_at_indices(fixture->bmi_model, var_name, &var_value, indices, 1);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status confirming zero value was set at index 0 for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        if (!confirm_matches_expected_doubles(zero_value, var_value)) {
+            printf("\nZero value was not set as expected for at index 0 '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+
+        // Now, set to the arbitrary value
+        double* current_arb_val = arbitrary_values + i;
+        bmi_status = fixture->bmi_model->set_value_at_indices(fixture->bmi_model, var_name, indices, 1, current_arb_val);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status setting arbitrary value at index 0 for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        // And confirm
+        bmi_status = fixture->bmi_model->get_value_at_indices(fixture->bmi_model, var_name, &var_value, indices, 1);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status confirming arbitrary value at index 0 was set for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        if (!confirm_matches_expected_doubles(*current_arb_val, var_value)) {
+            printf("\nArbitrary value was not set as expected at index 0 for '%s'", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
 int test_initialize(TestFixture* fixture)
 {
     if (fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file) == BMI_SUCCESS)
@@ -523,6 +920,12 @@ int main(int argc, const char* argv[])
         result = test_get_time_step(fixture);
     else if (strcmp(argv[1], "test_get_time_units") == 0)
         result = test_get_time_units(fixture);
+    else if (strcmp(argv[1], "test_get_value") == 0)
+        result = test_get_value(fixture);
+    else if (strcmp(argv[1], "test_get_value_at_indices") == 0)
+        result = test_get_value_at_indices(fixture);
+    else if (strcmp(argv[1], "test_get_value_ptr") == 0)
+        result = test_get_value_ptr(fixture);
     else if (strcmp(argv[1], "test_get_var_grid") == 0)
         result = test_get_var_grid(fixture);
     else if (strcmp(argv[1], "test_get_var_itemsize") == 0)
@@ -535,6 +938,10 @@ int main(int argc, const char* argv[])
         result = test_get_var_type(fixture);
     else if (strcmp(argv[1], "test_get_var_nbytes") == 0)
         result = test_get_var_nbytes(fixture);
+    else if (strcmp(argv[1], "test_set_value") == 0)
+        result = test_set_value(fixture);
+    else if (strcmp(argv[1], "test_set_value_at_indices") == 0)
+        result = test_set_value_at_indices(fixture);
     else
         printf("\nUnexpected test function %s\n", argv[1]);
 

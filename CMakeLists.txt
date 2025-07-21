@@ -144,6 +144,11 @@ if (NGEN)
     add_test(NAME test_get_time_step_1 COMMAND test_bmi_model test_get_time_step)
     add_test(NAME test_get_time_units_1 COMMAND test_bmi_model test_get_time_units)
     add_test(NAME test_get_current_time_1 COMMAND test_bmi_model test_get_current_time)
+    add_test(NAME test_set_value_1 COMMAND test_bmi_model test_set_value)
+    add_test(NAME test_set_value_at_indices_1 COMMAND test_bmi_model test_set_value_at_indices)
+    add_test(NAME test_get_value_1 COMMAND test_bmi_model test_get_value)
+    add_test(NAME test_get_value_at_indices_1 COMMAND test_bmi_model test_get_value_at_indices)
+    add_test(NAME test_get_value_ptr_1 COMMAND test_bmi_model test_get_value_ptr)
 
     include(GNUInstallDirs)
 

@@ -66,6 +66,15 @@ char** get_all_bmi_variable_names(Bmi* bmi_model, int* output_var_count, int* in
 void get_arbitrary_input_var_values(int example_case, double current_model_time, double* value_array);
 
 /**
+ * Get values of output variables, capturing them in a provided double array (casting when needed).
+ *
+ * @param fixture The test fixture, with the module and array of output variable names.
+ * @param value_array The array of doubles in which to place values.
+ * @return Whether the operation executed successfully.
+ */
+bool get_output_var_values(TestFixture* fixture, double* value_array);
+
+/**
  * Setup expected values for grid ids for all the output and input (in that order) BMI variables.
  *
  * The array is assumed to be of a hardcoded size (``EXPECTED_TOTAL_VAR_COUNT``).

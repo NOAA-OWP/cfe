@@ -126,6 +126,49 @@ void get_arbitrary_input_var_values(int example_case, double current_model_time,
         value_array[i] = arbitrary_input_var_values[i];
 }
 
+/**
+ * Get values of output variables, capturing them in a provided double array (casting when needed).
+ *
+ * @param fixture The test fixture, with the module and array of output variable names.
+ * @param value_array The array of doubles in which to place values.
+ * @return Whether the operation executed successfully.
+ */
+bool get_output_var_values(TestFixture* fixture, double* value_array)
+{
+    char var_type[BMI_MAX_VAR_NAME];
+    int bmi_status, int_var_val;
+    double double_var_val;
+
+    for (int i = 0; i < EXPECTED_OUTPUT_VAR_COUNT; i++) {
+        // Have local var for these just for readability
+        const char* var_name = fixture->expected_output_var_names[i];
+        // Also have this defined here for clarity over which type the current variable should be
+        bool is_int = i == 13;
+        bool is_double = !is_int;
+
+        bmi_status = fixture->bmi_model->get_var_type(fixture->bmi_model, var_name, var_type);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nBMI_FAILURE status code checking type for output '%s' when getting all outputs", var_name);
+            return false;
+        }
+
+        char* expected_type = is_int ? "int" : "double";
+        if (!confirm_matches_expected_strs(expected_type, var_type)) {
+            printf("\nUnexpected variable type for output '%s' (%i) while getting all outputs", var_name, i);
+            return false;
+        }
+
+        void* val_ptr = is_double ? &double_var_val : &int_var_val;
+        bmi_status = fixture->bmi_model->get_value(fixture->bmi_model, var_name, val_ptr);
+        if (bmi_status != BMI_SUCCESS) {
+            printf("\nReturned BMI_FAILURE status getting uninitialized value for output '%s'", var_name);
+            return false;
+        }
+        value_array[i] = is_int ? (double)int_var_val : double_var_val;
+    }
+    return true;
+}
+
 /*
  * Setup expected values for grid ids for all the output and input (in that order) BMI variables.
  *
