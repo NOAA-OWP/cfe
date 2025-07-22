@@ -875,6 +875,14 @@ int main(int argc, const char* argv[])
     int result = -1;
     unsigned int example_case;
 
+    // Do this sanity check also
+    if (EXPECTED_INPUT_VAR_COUNT + EXPECTED_OUTPUT_VAR_COUNT != EXPECTED_TOTAL_VAR_COUNT) {
+        printf("\nExpected number of input and output BMI variable constants not consistent with expected total\n");
+        printf("\nThose constants are set at %i, %i, and %i respectively",
+               EXPECTED_INPUT_VAR_COUNT, EXPECTED_OUTPUT_VAR_COUNT, EXPECTED_TOTAL_VAR_COUNT);
+        return TEST_RETURN_CODE_FAIL;
+    }
+
     // Test function is always argv[1]
     // Example test instance is argv[2] (or assumed to be "1" if not given)
 
