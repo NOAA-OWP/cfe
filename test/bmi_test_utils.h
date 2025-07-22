@@ -14,6 +14,7 @@ typedef struct TestFixture
 {
     Bmi *bmi_model;
     const char* cfg_file;
+    unsigned int current_test_example;
     /**
      * Array of strings of the expected output and input BMI variable names.
      *
@@ -33,7 +34,7 @@ typedef struct TestFixture
 
 } TestFixture;
 
-TestFixture* setup(const char* cfg_file);
+TestFixture* setup(const unsigned int example_case, const char* cfg_file);
 
 void teardown(TestFixture* fixture);
 
@@ -63,7 +64,7 @@ char** get_all_bmi_variable_names(Bmi* bmi_model, int* output_var_count, int* in
  * @param current_model_time The current model time, which could affect which values are used.
  * @param value_array Pointer to the array in which to save the values (which must be of size EXPECTED_INPUT_VAR_COUNT).
  */
-void get_arbitrary_input_var_values(int example_case, double current_model_time, double* value_array);
+void get_arbitrary_input_var_values(const unsigned int example_case, double current_model_time, double* value_array);
 
 /**
  * Get values of output variables, capturing them in a provided double array (casting when needed).
@@ -91,10 +92,9 @@ bool get_output_var_values(TestFixture* fixture, double* value_array);
  * Set all necessary module BMI input variables to reasonable values, as needed prior to advancing the model.
  *
  * @param fixture The test fixture, which contains the module.
- * @param example_case The specific example test case, which could affect which values are used.
  * @param current_model_time The current model time, which could affect which values are used
  * @return Whether the set operation was successful.
  */
-bool set_module_input_variables_before_update(const TestFixture* fixture, int example_case, double current_model_time);
+bool set_module_input_variables_before_update(const TestFixture* fixture, double current_model_time);
 
 #endif

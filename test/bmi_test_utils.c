@@ -1,10 +1,11 @@
 #include "bmi_test_utils.h"
 #include "general_test_utils.h"
 
-TestFixture* setup(const char* cfg_file)
+TestFixture* setup(const unsigned int example_case, const char* cfg_file)
 {
     TestFixture* fixture = malloc(sizeof(TestFixture));
     fixture->bmi_model = (Bmi *) malloc(sizeof(Bmi));
+    fixture->current_test_example = example_case;
     fixture->cfg_file = cfg_file;
 
     char* var_names[EXPECTED_TOTAL_VAR_COUNT] = {
@@ -118,7 +119,7 @@ char** get_all_bmi_variable_names(Bmi* bmi_model, int* output_var_count, int* in
  * @param current_model_time The current model time, which could affect which values are used.
  * @param value_array Pointer to the array in which to save the values (which must be of size EXPECTED_INPUT_VAR_COUNT).
  */
-void get_arbitrary_input_var_values(int example_case, double current_model_time, double* value_array) {
+void get_arbitrary_input_var_values(const unsigned int example_case, double current_model_time, double* value_array) {
     // For now, use the same simple group of values for everything
     // TODO: might need to confirm the validity (or the ideal-ness) of these values further
     double arbitrary_input_var_values[EXPECTED_INPUT_VAR_COUNT] = {0.55, 0.27, 0.1, 0.1, 0.2};
@@ -192,16 +193,15 @@ bool get_output_var_values(TestFixture* fixture, double* value_array)
  * Set all necessary module BMI input variables to reasonable values, as needed prior to advancing the model.
  *
  * @param fixture The test fixture, which contains the module.
- * @param example_case The specific example test case, which could affect which values are used.
  * @param current_model_time The current model time, which could affect which values are used.
  * @return Whether the set operation was successful.
  */
-bool set_module_input_variables_before_update(const TestFixture* fixture, const int example_case, const double current_model_time) {
+bool set_module_input_variables_before_update(const TestFixture* fixture, const double current_model_time) {
     int bmi_status;
     char var_type[BMI_MAX_TYPE_NAME];
 
     double arbitrary_input_var_values[EXPECTED_INPUT_VAR_COUNT];
-    get_arbitrary_input_var_values(example_case, current_model_time, arbitrary_input_var_values);
+    get_arbitrary_input_var_values(fixture->current_test_example, current_model_time, arbitrary_input_var_values);
 
     for (int i = 0; i < EXPECTED_INPUT_VAR_COUNT; i++) {
         // Sanity check

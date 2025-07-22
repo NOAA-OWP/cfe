@@ -40,7 +40,7 @@ int test_get_current_time(TestFixture* fixture)
     }
 
     // Next, update the model one time step (failing if we couldn't set the variables properly)
-    if (!set_module_input_variables_before_update(fixture, 1, current_time)) {
+    if (!set_module_input_variables_before_update(fixture, current_time)) {
         printf("\nCouldn't set module input variables before running first update (while testing getting current time");
         return TEST_RETURN_CODE_FAIL;
     }
@@ -318,7 +318,7 @@ int test_get_value(TestFixture* fixture)
     double uninit_value, var_value;
 
     double arbitrary_values[EXPECTED_INPUT_VAR_COUNT];
-    get_arbitrary_input_var_values(1, 0, arbitrary_values);
+    get_arbitrary_input_var_values(fixture->current_test_example, 0, arbitrary_values);
 
     for (int i = 0; i < EXPECTED_INPUT_VAR_COUNT; i++) {
         // Have local var for these just for readability
@@ -393,7 +393,7 @@ int test_get_value_at_indices(TestFixture* fixture)
     int indices[1] = {0};
 
     double arbitrary_values[EXPECTED_INPUT_VAR_COUNT];
-    get_arbitrary_input_var_values(1, 0, arbitrary_values);
+    get_arbitrary_input_var_values(fixture->current_test_example, 0, arbitrary_values);
 
     for (int i = 0; i < EXPECTED_INPUT_VAR_COUNT; i++) {
         // Have local var for these just for readability
@@ -458,7 +458,7 @@ int test_get_value_ptr(TestFixture* fixture)
     char var_type[BMI_MAX_TYPE_NAME];
     double uninit_value, var_value, initial_ptr_set_value;
     double arbitrary_values[EXPECTED_INPUT_VAR_COUNT];
-    get_arbitrary_input_var_values(1, 0, arbitrary_values);
+    get_arbitrary_input_var_values(fixture->current_test_example, 0, arbitrary_values);
 
     for (int i = 0; i < EXPECTED_INPUT_VAR_COUNT; i++) {
         // Have local var for these just for readability
@@ -740,7 +740,7 @@ int test_set_value(TestFixture* fixture)
     double var_value, zero_value = 0.0;
 
     double arbitrary_values[EXPECTED_INPUT_VAR_COUNT];
-    get_arbitrary_input_var_values(1, 0, arbitrary_values);
+    get_arbitrary_input_var_values(fixture->current_test_example, 0, arbitrary_values);
 
     for (int i = 0; i < EXPECTED_INPUT_VAR_COUNT; i++) {
         // Have local var for this just for readability
@@ -810,7 +810,7 @@ int test_set_value_at_indices(TestFixture* fixture)
     int indices[1] = {0};
 
     double arbitrary_values[EXPECTED_INPUT_VAR_COUNT];
-    get_arbitrary_input_var_values(1, 0, arbitrary_values);
+    get_arbitrary_input_var_values(fixture->current_test_example, 0, arbitrary_values);
 
     for (int i = 0; i < EXPECTED_INPUT_VAR_COUNT; i++) {
         // Have local var for this just for readability
@@ -875,19 +875,21 @@ int main(int argc, const char* argv[])
 {
     char* config_file;
     int result = -1;
+    unsigned int example_case;
 
     // Test function is always argv[1]
     // Example test instance is argv[2] (or assumed to be "1" if not given)
 
     if (argc < 3 || strcmp(argv[2], "1") == 0) {
         config_file = BMI_INIT_CONFIG_EX_1;
+        example_case = 1;
     }
     else {
         printf("\nUnexpected test case %s\n", argv[2]);
         return 1;
     }
 
-    TestFixture* fixture = setup(config_file);
+    TestFixture* fixture = setup(example_case, config_file);
 
     if (strcmp(argv[1], "test_initialize") == 0)
         result = test_initialize(fixture);
