@@ -196,12 +196,25 @@ bool get_output_var_values(TestFixture* fixture, double* value_array)
  * @param current_model_time The current model time, which could affect which values are used.
  * @return Whether the set operation was successful.
  */
-bool set_module_input_variables_before_update(const TestFixture* fixture, const double current_model_time) {
-    int bmi_status;
-    char var_type[BMI_MAX_TYPE_NAME];
-
+bool set_arbitrary_input_variables_before_update(const TestFixture* fixture, const double current_model_time)
+{
     double arbitrary_input_var_values[EXPECTED_INPUT_VAR_COUNT];
     get_arbitrary_input_var_values(fixture->current_test_example, current_model_time, arbitrary_input_var_values);
+    return set_specified_input_variables_before_update(fixture, current_model_time, arbitrary_input_var_values);
+}
+
+/**
+ * Set all necessary module BMI input variables to specified values, as needed prior to advancing the model.
+ *
+ * @param fixture The test fixture, which contains the module.
+ * @param current_model_time The current model time, which could affect which values are used
+ * @param input_var_values The values to use to set BMI input variables, ordered in the same way as the variable names
+ * when retrieved.
+ * @return Whether the set operation was successful.
+ */
+bool set_specified_input_variables_before_update(const TestFixture* fixture, double current_model_time, double* input_var_values) {
+    int bmi_status;
+    char var_type[BMI_MAX_TYPE_NAME];
 
     for (int i = 0; i < EXPECTED_INPUT_VAR_COUNT; i++) {
         // Sanity check
@@ -215,7 +228,7 @@ bool set_module_input_variables_before_update(const TestFixture* fixture, const 
             return false;
         }
         // Assuming the sanity check of the type is good, set the above-prepared arbitrary value for this
-        bmi_status = fixture->bmi_model->set_value(fixture->bmi_model, fixture->expected_input_var_names[i], arbitrary_input_var_values + i);
+        bmi_status = fixture->bmi_model->set_value(fixture->bmi_model, fixture->expected_input_var_names[i], input_var_values + i);
         if (bmi_status == BMI_FAILURE) {
             printf("\nCan't set module inputs to advance; test helper function encountered BMI_FAILURE attempting to set variable '%s'", fixture->expected_input_var_names[i]);
             return false;

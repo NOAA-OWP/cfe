@@ -40,7 +40,7 @@ int test_get_current_time(TestFixture* fixture)
     }
 
     // Next, update the model one time step (failing if we couldn't set the variables properly)
-    if (!set_module_input_variables_before_update(fixture, current_time)) {
+    if (!set_arbitrary_input_variables_before_update(fixture, current_time)) {
         printf("\nCouldn't set module input variables before running first update (while testing getting current time");
         return TEST_RETURN_CODE_FAIL;
     }
@@ -263,8 +263,7 @@ int test_get_start_time(TestFixture* fixture)
         printf("\nReturned BMI_FAILURE status code attempting to get start time");
         return TEST_RETURN_CODE_FAIL;
     }
-    // Assume expected start time is 0.0
-    if (!confirm_matches_expected_doubles(0.0, start_time)) {
+    if (!confirm_matches_expected_doubles(EXPECTED_MODULE_START_TIME, start_time)) {
         printf("\nDid not match expected module start time");
         return TEST_RETURN_CODE_FAIL;
     }
@@ -280,8 +279,7 @@ int test_get_time_step(TestFixture* fixture)
         printf("\nReturned BMI_FAILURE status code attempting to get time step");
         return TEST_RETURN_CODE_FAIL;
     }
-    // Assume expected time step is 1 hour, in seconds
-    if (!confirm_matches_expected_doubles(3600.0, time_step)) {
+    if (!confirm_matches_expected_doubles(EXPECTED_TIME_STEP_SIZE, time_step)) {
         printf("\nDid not match expected module time step");
         return TEST_RETURN_CODE_FAIL;
     }

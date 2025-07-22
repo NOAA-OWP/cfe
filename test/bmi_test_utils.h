@@ -9,6 +9,8 @@
 #define EXPECTED_INPUT_VAR_COUNT 5
 #define EXPECTED_OUTPUT_VAR_COUNT 15
 #define EXPECTED_TOTAL_VAR_COUNT 20  // This should equal the sum of the input and output counts
+#define EXPECTED_MODULE_START_TIME 0.0  // Assume the standard here
+#define EXPECTED_TIME_STEP_SIZE 3600.0   // Assume expected time step is 1 hour, in seconds
 
 typedef struct TestFixture
 {
@@ -95,6 +97,17 @@ bool get_output_var_values(TestFixture* fixture, double* value_array);
  * @param current_model_time The current model time, which could affect which values are used
  * @return Whether the set operation was successful.
  */
-bool set_module_input_variables_before_update(const TestFixture* fixture, double current_model_time);
+bool set_arbitrary_input_variables_before_update(const TestFixture* fixture, double current_model_time);
+
+/**
+ * Set all necessary module BMI input variables to specified values, as needed prior to advancing the model.
+ *
+ * @param fixture The test fixture, which contains the module.
+ * @param current_model_time The current model time, which could affect which values are used
+ * @param input_var_values The values to use to set BMI input variables, ordered in the same way as the variable names
+ * when retrieved.
+ * @return Whether the set operation was successful.
+ */
+bool set_specified_input_variables_before_update(const TestFixture* fixture, double current_model_time, double* input_var_values);
 
 #endif
