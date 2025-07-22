@@ -727,6 +727,13 @@ int test_get_var_nbytes(TestFixture* fixture)
     return TEST_RETURN_CODE_PASS;
 }
 
+int test_initialize(TestFixture* fixture)
+{
+    if (fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file) == BMI_SUCCESS)
+        return TEST_RETURN_CODE_PASS;
+    return TEST_RETURN_CODE_FAIL;
+}
+
 int test_set_value(TestFixture* fixture)
 {
     // For this, we need to be able to initialize first
@@ -862,13 +869,6 @@ int test_set_value_at_indices(TestFixture* fixture)
         }
     }
     return TEST_RETURN_CODE_PASS;
-}
-
-int test_initialize(TestFixture* fixture)
-{
-    if (fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file) == BMI_SUCCESS)
-        return TEST_RETURN_CODE_PASS;
-    return TEST_RETURN_CODE_FAIL;
 }
 
 int main(int argc, const char* argv[])
