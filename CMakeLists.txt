@@ -120,6 +120,9 @@ if (NGEN)
     add_test(NAME test_initialize_1 COMMAND test_bmi_model test_initialize 1)
     # Note that, when using the first test example, the value be left off/implied for convenience
     add_test(NAME test_initialize_1_a COMMAND test_bmi_model test_initialize)
+    add_test(NAME test_update_1 COMMAND test_bmi_model test_update)
+    add_test(NAME test_update_until_1 COMMAND test_bmi_model test_update_until)
+    add_test(NAME test_finalize_1 COMMAND test_bmi_model test_finalize)
 
     add_test(NAME test_get_component_name_1 COMMAND test_bmi_model test_get_component_name)
     add_test(NAME test_get_input_item_count_1 COMMAND test_bmi_model test_get_input_item_count)

@@ -3,6 +3,49 @@
 #include "bmi_cfe.h"
 #include "cfe.h"
 
+int test_finalize(TestFixture* fixture)
+{
+    int bmi_status;
+    void* bmi_var_ptrs[EXPECTED_TOTAL_VAR_COUNT];
+
+    // For this, we need to be able to initialize first
+    bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test finalize)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    // Get all the pointers and make sure none are NULL now that we've initialized
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        const char* var_name = fixture->expected_output_and_input_var_names[i];
+        bmi_status = fixture->bmi_model->get_value_ptr(fixture->bmi_model, var_name, bmi_var_ptrs + i);
+        if (bmi_status == BMI_FAILURE) {
+            printf("\nReturned BMI_FAILURE getting pointer for variable '%s' (in order to test finalize)", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+        if (bmi_var_ptrs[i] == NULL) {
+            printf("\nGot NULL pointer for variable '%s' after initialization (while testing finalize)", var_name);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+
+    // Call finalize
+    bmi_status = fixture->bmi_model->finalize(fixture->bmi_model);
+    if (bmi_status == BMI_FAILURE) {
+        printf("\nReturned BMI_FAILURE executing finalize");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    // After finalize, check if pointers are now equal to NULL (for now, just warn if not)
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        if (bmi_var_ptrs[i] != NULL) {
+            printf("\nWARN: Pointer to '%s' not set to NULL after finalize; this may be required in the future",
+                   fixture->expected_output_and_input_var_names[i]);
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
 int test_get_component_name(TestFixture* fixture)
 {
     char name[BMI_MAX_COMPONENT_NAME];
@@ -869,6 +912,57 @@ int test_set_value_at_indices(TestFixture* fixture)
     return TEST_RETURN_CODE_PASS;
 }
 
+int test_update(TestFixture* fixture)
+{
+    // For this, we need to be able to initialize first
+    int bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test update)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    if (!set_arbitrary_input_variables_before_update(fixture, 0)) {
+        printf("\nFailed to set arbitrary BMI input variable values (in order to test update)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    bmi_status = fixture->bmi_model->update(fixture->bmi_model);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to run update");
+        return TEST_RETURN_CODE_FAIL;
+    }
+    // We don't have any platform-independent guarantees at this point about what values will be, so for now just
+    // assume we are good if the call to update itself returns a successful BMI status code
+    return TEST_RETURN_CODE_PASS;
+}
+
+int test_update_until(TestFixture* fixture)
+{
+    double module_time = EXPECTED_MODULE_START_TIME;
+    // For this, we need to be able to initialize first
+    int bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test update)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    if (!set_arbitrary_input_variables_before_update(fixture, module_time)) {
+        printf("\nFailed to set arbitrary BMI input variable values (in order to test update)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    // Now advance one time step
+    module_time += EXPECTED_TIME_STEP_SIZE;
+    bmi_status = fixture->bmi_model->update_until(fixture->bmi_model, module_time);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to run update");
+        return TEST_RETURN_CODE_FAIL;
+    }
+    // We don't have any platform-independent guarantees at this point about what values will be, so for now just
+    // assume we are good if the call to update itself returns a successful BMI status code
+    return TEST_RETURN_CODE_PASS;
+}
+
 int main(int argc, const char* argv[])
 {
     char* config_file;
@@ -899,9 +993,12 @@ int main(int argc, const char* argv[])
 
     if (strcmp(argv[1], "test_initialize") == 0)
         result = test_initialize(fixture);
-    // TODO: update test
-    // TODO: update_until test
-    // TODO: finalize test
+    else if (strcmp(argv[1], "test_update") == 0)
+        result = test_update(fixture);
+    else if (strcmp(argv[1], "test_update_until") == 0)
+        result = test_update_until(fixture);
+    else if (strcmp(argv[1], "test_finalize") == 0)
+        result = test_finalize(fixture);
     else if (strcmp(argv[1], "test_get_component_name") == 0)
         result = test_get_component_name(fixture);
     else if (strcmp(argv[1], "test_get_current_time") == 0)
