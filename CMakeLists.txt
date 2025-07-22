@@ -136,8 +136,8 @@ if (NGEN)
     add_test(NAME test_get_var_type_1 COMMAND test_bmi_model test_get_var_type)
 
     # TODO: come back and add this back in at the end ... seems to be showing something not working correctly
-
     #add_test(NAME test_get_var_nbytes_1 COMMAND test_bmi_model test_get_var_nbytes)
+
     add_test(NAME test_get_grid_rank_1 COMMAND test_bmi_model test_get_grid_rank)
     add_test(NAME test_get_grid_size_1 COMMAND test_bmi_model test_get_grid_size)
     add_test(NAME test_get_grid_type_1 COMMAND test_bmi_model test_get_grid_type)
@@ -152,6 +152,21 @@ if (NGEN)
     add_test(NAME test_get_value_1 COMMAND test_bmi_model test_get_value)
     add_test(NAME test_get_value_at_indices_1 COMMAND test_bmi_model test_get_value_at_indices)
     add_test(NAME test_get_value_ptr_1 COMMAND test_bmi_model test_get_value_ptr)
+
+    # These are effectively not implemented, but they should strictly speaking be implemented and return a failure code
+    add_test(NAME test_get_grid_edge_count_1 COMMAND test_bmi_model test_get_grid_edge_count)
+    add_test(NAME test_get_grid_edge_nodes_1 COMMAND test_bmi_model test_get_grid_edge_nodes)
+    add_test(NAME test_get_grid_face_count_1 COMMAND test_bmi_model test_get_grid_face_count)
+    add_test(NAME test_get_grid_face_edges_1 COMMAND test_bmi_model test_get_grid_face_edges)
+    add_test(NAME test_get_grid_face_nodes_1 COMMAND test_bmi_model test_get_grid_face_nodes)
+    add_test(NAME test_get_grid_node_count_1 COMMAND test_bmi_model test_get_grid_node_count)
+    add_test(NAME test_get_grid_nodes_per_face_1 COMMAND test_bmi_model test_get_grid_nodes_per_face)
+    add_test(NAME test_get_grid_origin_1 COMMAND test_bmi_model test_get_grid_origin)
+    add_test(NAME test_get_grid_shape_1 COMMAND test_bmi_model test_get_grid_shape)
+    add_test(NAME test_get_grid_spacing_1 COMMAND test_bmi_model test_get_grid_spacing)
+    add_test(NAME test_get_grid_x_1 COMMAND test_bmi_model test_get_grid_x)
+    add_test(NAME test_get_grid_y_1 COMMAND test_bmi_model test_get_grid_y)
+    add_test(NAME test_get_grid_z_1 COMMAND test_bmi_model test_get_grid_z)
 
     include(GNUInstallDirs)
 

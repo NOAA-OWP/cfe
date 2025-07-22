@@ -157,6 +157,191 @@ int test_get_end_time(TestFixture* fixture)
     return TEST_RETURN_CODE_PASS;
 }
 
+int test_get_grid_edge_count(TestFixture* fixture)
+{
+    int bmi_status, edge_count;
+
+    // Just to be safe, we will initialize first
+    bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test get_grid_edge_count)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    // Here, make sure all these do indeed return the BMI_FAILURE as expected
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        bmi_status = fixture->bmi_model->get_grid_edge_count(fixture->bmi_model, fixture->expected_grid_ids[i], &edge_count);
+        if (bmi_status != BMI_FAILURE) {
+            printf("\nDid not return BMI_FAILURE with grid for variable '%s' in call to get_grid_edge_count",
+                   fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
+int test_get_grid_edge_nodes(TestFixture* fixture)
+{
+    int bmi_status, edge_nodes;
+
+    // Just to be safe, we will initialize first
+    bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test get_grid_edge_nodes)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    // Here, make sure all these do indeed return the BMI_FAILURE as expected
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        bmi_status = fixture->bmi_model->get_grid_edge_nodes(fixture->bmi_model, fixture->expected_grid_ids[i], &edge_nodes);
+        if (bmi_status != BMI_FAILURE) {
+            printf("\nDid not return BMI_FAILURE with grid for variable '%s' in call to get_grid_edge_nodes",
+                   fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
+int test_get_grid_face_count(TestFixture* fixture)
+{
+    int bmi_status, face_count;
+
+    // Just to be safe, we will initialize first
+    bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test get_grid_face_count)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    // Here, make sure all these do indeed return the BMI_FAILURE as expected
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        bmi_status = fixture->bmi_model->get_grid_face_count(fixture->bmi_model, fixture->expected_grid_ids[i], &face_count);
+        if (bmi_status != BMI_FAILURE) {
+            printf("\nDid not return BMI_FAILURE with grid for variable '%s' in call to get_grid_face_count",
+                   fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
+int test_get_grid_face_edges(TestFixture* fixture)
+{
+    int bmi_status, face_edges;
+
+    // Just to be safe, we will initialize first
+    bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test get_grid_face_edges)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    // Here, make sure all these do indeed return the BMI_FAILURE as expected
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        bmi_status = fixture->bmi_model->get_grid_face_edges(fixture->bmi_model, fixture->expected_grid_ids[i], &face_edges);
+        if (bmi_status != BMI_FAILURE) {
+            printf("\nDid not return BMI_FAILURE with grid for variable '%s' in call to get_grid_face_edges",
+                   fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
+int test_get_grid_face_nodes(TestFixture* fixture)
+{
+    int bmi_status, face_nodes;
+
+    // Just to be safe, we will initialize first
+    bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test get_grid_face_nodes)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    // Here, make sure all these do indeed return the BMI_FAILURE as expected
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        bmi_status = fixture->bmi_model->get_grid_face_nodes(fixture->bmi_model, fixture->expected_grid_ids[i], &face_nodes);
+        if (bmi_status != BMI_FAILURE) {
+            printf("\nDid not return BMI_FAILURE with grid for variable '%s' in call to get_grid_face_nodes",
+                   fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
+int test_get_grid_node_count(TestFixture* fixture)
+{
+    int bmi_status, node_count;
+
+    // Just to be safe, we will initialize first
+    bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test get_grid_node_count)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    // Here, make sure all these do indeed return the BMI_FAILURE as expected
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        bmi_status = fixture->bmi_model->get_grid_node_count(fixture->bmi_model, fixture->expected_grid_ids[i], &node_count);
+        if (bmi_status != BMI_FAILURE) {
+            printf("\nDid not return BMI_FAILURE with grid for variable '%s' in call to get_grid_node_count",
+                   fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
+int test_get_grid_nodes_per_face(TestFixture* fixture)
+{
+    int bmi_status, nodes_per_face;
+
+    // Just to be safe, we will initialize first
+    bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test get_grid_nodes_per_face)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    // Here, make sure all these do indeed return the BMI_FAILURE as expected
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        bmi_status = fixture->bmi_model->get_grid_nodes_per_face(fixture->bmi_model, fixture->expected_grid_ids[i], &nodes_per_face);
+        if (bmi_status != BMI_FAILURE) {
+            printf("\nDid not return BMI_FAILURE with grid for variable '%s' in call to get_grid_nodes_per_face",
+                   fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
+int test_get_grid_origin(TestFixture* fixture)
+{
+    int bmi_status;
+    double origin;
+
+    // Just to be safe, we will initialize first
+    bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test get_grid_origin)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    // Here, make sure all these do indeed return the BMI_FAILURE as expected
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        bmi_status = fixture->bmi_model->get_grid_origin(fixture->bmi_model, fixture->expected_grid_ids[i], &origin);
+        if (bmi_status != BMI_FAILURE) {
+            printf("\nDid not return BMI_FAILURE with grid for variable '%s' in call to get_grid_origin",
+                   fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
 int test_get_grid_rank(TestFixture* fixture)
 {
     int status, actual_rank;
@@ -171,6 +356,125 @@ int test_get_grid_rank(TestFixture* fixture)
         // For now, all grids are of rank 1
         if (!confirm_matches_expected_ints(1, actual_rank)) {
             printf("\nGrid rank for '%s' did not match expected", fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
+int test_get_grid_shape(TestFixture* fixture)
+{
+    int bmi_status, shape;
+
+    // Just to be safe, we will initialize first
+    bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test get_grid_shape)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    // Here, make sure all these do indeed return the BMI_FAILURE as expected
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        bmi_status = fixture->bmi_model->get_grid_shape(fixture->bmi_model, fixture->expected_grid_ids[i], &shape);
+        if (bmi_status != BMI_FAILURE) {
+            printf("\nDid not return BMI_FAILURE with grid for variable '%s' in call to get_grid_shape",
+                   fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
+int test_get_grid_spacing(TestFixture* fixture)
+{
+    int bmi_status;
+    double spacing;
+
+    // Just to be safe, we will initialize first
+    bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test get_grid_spacing)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    // Here, make sure all these do indeed return the BMI_FAILURE as expected
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        bmi_status = fixture->bmi_model->get_grid_spacing(fixture->bmi_model, fixture->expected_grid_ids[i], &spacing);
+        if (bmi_status != BMI_FAILURE) {
+            printf("\nDid not return BMI_FAILURE with grid for variable '%s' in call to get_grid_spacing",
+                   fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
+int test_get_grid_x(TestFixture* fixture)
+{
+    int bmi_status;
+    double grid_x;
+
+    // Just to be safe, we will initialize first
+    bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test get_grid_x)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    // Here, make sure all these do indeed return the BMI_FAILURE as expected
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        bmi_status = fixture->bmi_model->get_grid_x(fixture->bmi_model, fixture->expected_grid_ids[i], &grid_x);
+        if (bmi_status != BMI_FAILURE) {
+            printf("\nDid not return BMI_FAILURE with grid for variable '%s' in call to get_grid_x",
+                   fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
+int test_get_grid_y(TestFixture* fixture)
+{
+    int bmi_status;
+    double grid_y;
+
+    // Just to be safe, we will initialize first
+    bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test get_grid_y)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    // Here, make sure all these do indeed return the BMI_FAILURE as expected
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        bmi_status = fixture->bmi_model->get_grid_y(fixture->bmi_model, fixture->expected_grid_ids[i], &grid_y);
+        if (bmi_status != BMI_FAILURE) {
+            printf("\nDid not return BMI_FAILURE with grid for variable '%s' in call to get_grid_y",
+                   fixture->expected_output_and_input_var_names[i]);
+            return TEST_RETURN_CODE_FAIL;
+        }
+    }
+    return TEST_RETURN_CODE_PASS;
+}
+
+int test_get_grid_z(TestFixture* fixture)
+{
+    int bmi_status;
+    double grid_z;
+
+    // Just to be safe, we will initialize first
+    bmi_status = fixture->bmi_model->initialize(fixture->bmi_model, fixture->cfg_file);
+    if (bmi_status != BMI_SUCCESS) {
+        printf("\nReturned BMI_FAILURE status code attempting to initialize (in order to test get_grid_z)");
+        return TEST_RETURN_CODE_FAIL;
+    }
+
+    // Here, make sure all these do indeed return the BMI_FAILURE as expected
+    for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
+        bmi_status = fixture->bmi_model->get_grid_z(fixture->bmi_model, fixture->expected_grid_ids[i], &grid_z);
+        if (bmi_status != BMI_FAILURE) {
+            printf("\nDid not return BMI_FAILURE with grid for variable '%s' in call to get_grid_z",
+                   fixture->expected_output_and_input_var_names[i]);
             return TEST_RETURN_CODE_FAIL;
         }
     }
@@ -1005,12 +1309,38 @@ int main(int argc, const char* argv[])
         result = test_get_current_time(fixture);
     else if (strcmp(argv[1], "test_get_end_time") == 0)
         result = test_get_end_time(fixture);
+    else if (strcmp(argv[1], "test_get_grid_edge_count") == 0)
+        result = test_get_grid_edge_count(fixture);
+    else if (strcmp(argv[1], "test_get_grid_edge_nodes") == 0)
+        result = test_get_grid_edge_nodes(fixture);
+    else if (strcmp(argv[1], "test_get_grid_face_count") == 0)
+        result = test_get_grid_face_count(fixture);
+    else if (strcmp(argv[1], "test_get_grid_face_edges") == 0)
+        result = test_get_grid_face_edges(fixture);
+    else if (strcmp(argv[1], "test_get_grid_face_nodes") == 0)
+        result = test_get_grid_face_nodes(fixture);
+    else if (strcmp(argv[1], "test_get_grid_node_count") == 0)
+        result = test_get_grid_node_count(fixture);
+    else if (strcmp(argv[1], "test_get_grid_nodes_per_face") == 0)
+        result = test_get_grid_nodes_per_face(fixture);
+    else if (strcmp(argv[1], "test_get_grid_origin") == 0)
+        result = test_get_grid_origin(fixture);
     else if (strcmp(argv[1], "test_get_grid_rank") == 0)
         result = test_get_grid_rank(fixture);
+    else if (strcmp(argv[1], "test_get_grid_shape") == 0)
+        result = test_get_grid_shape(fixture);
     else if (strcmp(argv[1], "test_get_grid_size") == 0)
         result = test_get_grid_size(fixture);
+    else if (strcmp(argv[1], "test_get_grid_spacing") == 0)
+        result = test_get_grid_spacing(fixture);
     else if (strcmp(argv[1], "test_get_grid_type") == 0)
         result = test_get_grid_type(fixture);
+    else if (strcmp(argv[1], "test_get_grid_x") == 0)
+        result = test_get_grid_x(fixture);
+    else if (strcmp(argv[1], "test_get_grid_y") == 0)
+        result = test_get_grid_y(fixture);
+    else if (strcmp(argv[1], "test_get_grid_z") == 0)
+        result = test_get_grid_z(fixture);
     else if (strcmp(argv[1], "test_get_input_item_count") == 0)
         result = test_get_input_item_count(fixture);
     else if (strcmp(argv[1], "test_get_input_var_names") == 0)
