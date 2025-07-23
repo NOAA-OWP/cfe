@@ -134,10 +134,9 @@ if (NGEN)
     add_test(NAME test_get_var_location_1 COMMAND test_bmi_model test_get_var_location)
     add_test(NAME test_get_var_units_1 COMMAND test_bmi_model test_get_var_units)
     add_test(NAME test_get_var_type_1 COMMAND test_bmi_model test_get_var_type)
-
-    # TODO: come back and add this back in at the end ... seems to be showing something not working correctly
-    #add_test(NAME test_get_var_nbytes_1 COMMAND test_bmi_model test_get_var_nbytes)
-
+    # TODO: While others could also benefit, get_var_nbytes in particular needs a second test example that covers the
+    # TODO:     other case for the "soil_moisture_profile" variable (see comments in test_get_var_nbytes function)
+    add_test(NAME test_get_var_nbytes_1 COMMAND test_bmi_model test_get_var_nbytes)
     add_test(NAME test_get_grid_rank_1 COMMAND test_bmi_model test_get_grid_rank)
     add_test(NAME test_get_grid_size_1 COMMAND test_bmi_model test_get_grid_size)
     add_test(NAME test_get_grid_type_1 COMMAND test_bmi_model test_get_grid_type)

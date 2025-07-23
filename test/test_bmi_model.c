@@ -1051,18 +1051,36 @@ int test_get_var_nbytes(TestFixture* fixture)
     int item_nbytes, expected_nbytes, status;
 
     for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
-        status = fixture->bmi_model->get_var_nbytes(fixture->bmi_model, fixture->expected_output_and_input_var_names[i], &item_nbytes);
+        const char* var_name = fixture->expected_output_and_input_var_names[i];
+        status = fixture->bmi_model->get_var_nbytes(fixture->bmi_model, var_name, &item_nbytes);
         if (status != BMI_SUCCESS) {
             printf("\nReturned BMI_FAILURE status code getting nbytes for '%s'", fixture->expected_output_and_input_var_names[i]);
             return TEST_RETURN_CODE_FAIL;
         }
 
-        // Only SURF_RUNOFF_SCHEME is int, and the rest (output and input) are doubles
-        // And everything should be of single element, so just the size
-        if (strcmp(fixture->expected_output_and_input_var_names[i], "SURF_RUNOFF_SCHEME") == 0)
+        /*** Figure out what the expected size should be ***/
+        // Only SURF_RUNOFF_SCHEME is of type int; all the rest (output and input) are doubles
+        if (strcmp(fixture->expected_output_and_input_var_names[i], "soil_moisture_profile") == 0) {
+            // TODO: the first (currently only) test example doesn't cover when Rootzone-based AET is configured, so another test example is needed
+            // "soil_moisture_profile" is a bit special: only fully used when module configured for Rootzone-based AET
+            // (see https://github.com/NOAA-OWP/cfe/blob/master/configs/README.md#rootzone-based-actual-evapotranspiration-aet)
+            cfe_state_struct* module_state = fixture->bmi_model->data;
+            if (!module_state->soil_reservoir.is_aet_rootzone)
+                continue;
+
+            // If it shouldn't be skipped, "soil_moisture_profile"'s number of elements is state-based also
+            // TODO: (later) consider if num_elements is something that should be hard-coded for a testing example
+            int num_elements = module_state->soil_reservoir.n_soil_layers;
+            expected_nbytes = sizeof(double) * num_elements;
+        }
+        // Everything except "soil_moisture_profile" should be of single element, so for everything else expected is
+        // just the size of the appropriate type
+        else if (strcmp(fixture->expected_output_and_input_var_names[i], "SURF_RUNOFF_SCHEME") == 0) {
             expected_nbytes = sizeof(int);
-        else
+        }
+        else {
             expected_nbytes = sizeof(double);
+        }
 
         if (!confirm_matches_expected_ints(expected_nbytes, item_nbytes)){
             printf("\nnbytes for '%s' did not match expected", fixture->expected_output_and_input_var_names[i]);
