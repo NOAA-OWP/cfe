@@ -76,7 +76,7 @@ elseif (BASE)
     add_executable(${exe_name} ./src/main.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./src/conceptual_reservoir.c
             ./src/nash_cascade.c)
 elseif (UNITTEST)
-    add_executable(${exe_name} ./test/main_unit_test.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./src/conceptual_reservoir.c
+    add_executable(${exe_name} test/combined_bmi_funcs_test.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./src/conceptual_reservoir.c
             ./src/nash_cascade.c)
 endif ()
 
@@ -110,13 +110,27 @@ if (NGEN)
     # Add unit testing using CMake and CTests, and custom test code
     enable_testing()
 
+    ####################################################################################################################
+    ####################################################################################################################
+    # Include executable and (single) test for the legacy batch test file
+    add_executable(combined_bmi_funcs_test test/combined_bmi_funcs_test.c)
+    target_include_directories(combined_bmi_funcs_test PUBLIC ${PROJECT_SOURCE_DIR}/include test/include)
+    target_link_libraries(combined_bmi_funcs_test cfebmi)
+    add_test(NAME combined_bmi_funcs_test_1 COMMAND combined_bmi_funcs_test ${PROJECT_SOURCE_DIR}/configs/cfe_config_cat_87_pass.txt)
+    # End combined_bmi_funcs_test tests
+    ####################################################################################################################
+
+    ####################################################################################################################
+    ####################################################################################################################
+    # Include executable and individual, isolated unit tests for BMI related functions
+    # Control which test is run via custom implemented arg parsing within the executable
     add_executable(test_bmi_model ./test/test_bmi_model.c test/bmi_test_utils.c test/bmi_test_utils.c test/general_test_utils.c)
     target_include_directories(test_bmi_model PUBLIC ${PROJECT_SOURCE_DIR}/include test/include)
     target_link_libraries(test_bmi_model cfebmi)
     target_compile_definitions(test_bmi_model PUBLIC BMI_INIT_CONFIG_EX_1="${PROJECT_SOURCE_DIR}/configs/cfe_config_cat_87_pass.txt")
     #set(BMI_CONFIG_1 ${PROJECT_SOURCE_DIR}/configs/cfe_config_cat_87_pass.txt)
 
-    # The test example can be explicitly passed (although for now there is only 1)
+    # For the 'test_bmi_model' executable, the test example can be explicitly passed (although for now there is only 1)
     add_test(NAME test_initialize_1 COMMAND test_bmi_model test_initialize 1)
     # Note that, when using the first test example, the value be left off/implied for convenience
     add_test(NAME test_initialize_1_a COMMAND test_bmi_model test_initialize)
@@ -166,6 +180,8 @@ if (NGEN)
     add_test(NAME test_get_grid_x_1 COMMAND test_bmi_model test_get_grid_x)
     add_test(NAME test_get_grid_y_1 COMMAND test_bmi_model test_get_grid_y)
     add_test(NAME test_get_grid_z_1 COMMAND test_bmi_model test_get_grid_z)
+    # End test_bmi_model tests
+    ####################################################################################################################
 
     include(GNUInstallDirs)
 
