@@ -14,10 +14,9 @@ option(FORCING "FORCING" OFF)
 option(FORCINGPET "FORCINGPET" OFF)
 option(AETROOTZONE "AETROOTZONE" OFF)
 option(NGEN "NGEN" OFF)
-option(UNITTEST "UNITTEST" OFF)
 
-if ((NOT BASE) AND (NOT FORCING) AND (NOT FORCINGPET) AND (NOT AETROOTZONE) AND (NOT NGEN) AND (NOT UNITTEST))
-    message("${Red}Options: BASE, FORCING, FORCINGPET, AETROOTZONE, NGEN, UNITTEST" ${ColourReset})
+if ((NOT BASE) AND (NOT FORCING) AND (NOT FORCINGPET) AND (NOT AETROOTZONE) AND (NOT NGEN))
+    message("${Red}Options: BASE, FORCING, FORCINGPET, AETROOTZONE, NGEN" ${ColourReset})
     message(FATAL_ERROR "Invalid option is provided, CMake will exit.")
 endif ()
 
@@ -35,9 +34,6 @@ elseif (AETROOTZONE)
     set(exe_name "cfe_aet_rootzone")
 elseif (NGEN)
     message("${Red} CFE BUILD NGEN CASE!${ColourReset}")
-elseif (UNITTEST)
-    message("${Red} CFE BUILD UNITTEST CASE!${ColourReset}")
-    set(exe_name "cfe_unittest")
 endif ()
 
 # set the project name
@@ -74,9 +70,6 @@ elseif (FORCINGPET)
             ./extern/evapotranspiration/src/pet.c ./extern/evapotranspiration/src/bmi_pet.c)
 elseif (BASE)
     add_executable(${exe_name} ./src/main.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./src/conceptual_reservoir.c
-            ./src/nash_cascade.c)
-elseif (UNITTEST)
-    add_executable(${exe_name} test/combined_bmi_funcs_test.c ./src/cfe.c ./src/bmi_cfe.c ./src/giuh.c ./src/conceptual_reservoir.c
             ./src/nash_cascade.c)
 endif ()
 
