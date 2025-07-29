@@ -95,7 +95,8 @@ if (NGEN)
     endif ()
 
     # On some platforms, the linker needs to be explicitly told to search for defs for standard C math functions
-    target_link_options(cfebmi PRIVATE -lm)
+    #target_link_options(cfebmi PRIVATE -lm)
+    target_link_libraries(cfebmi PRIVATE m)
 
     target_include_directories(cfebmi PRIVATE include)
 
