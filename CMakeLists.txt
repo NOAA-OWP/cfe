@@ -94,6 +94,9 @@ if (NGEN)
         add_library(cfebmi SHARED ./src/bmi_cfe.c ./src/cfe.c ./src/giuh.c ./src/conceptual_reservoir.c ./src/nash_cascade.c)
     endif ()
 
+    # On some platforms, the linker needs to be explicitly told to search for defs for standard C math functions
+    target_link_options(cfebmi PRIVATE -lm)
+
     target_include_directories(cfebmi PRIVATE include)
 
     set_target_properties(cfebmi PROPERTIES VERSION ${PROJECT_VERSION})
