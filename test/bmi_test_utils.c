@@ -159,7 +159,7 @@ bool get_output_var_values(TestFixture* fixture, double* value_array)
             return false;
         }
 
-        void* val_ptr = is_double ? &double_var_val : &int_var_val;
+        void* val_ptr = is_double ? (void*) &double_var_val : (void*) &int_var_val;
         bmi_status = fixture->bmi_model->get_value(fixture->bmi_model, var_name, val_ptr);
         if (bmi_status != BMI_SUCCESS) {
             printf("\nReturned BMI_FAILURE status getting uninitialized value for output '%s'", var_name);

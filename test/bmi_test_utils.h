@@ -23,11 +23,11 @@ typedef struct TestFixture
      * Note that the order should be outputs first, then inputs.  With each group, strings should be ordered in the same
      * order as used by the standard BMI ``get_output_var_names`` and ``get_input_var_names``.
      */
-    const char** expected_output_and_input_var_names;
+    char** expected_output_and_input_var_names;
 
     // For convenience
-    const char** expected_output_var_names;
-    const char** expected_input_var_names;
+    char** expected_output_var_names;
+    char** expected_input_var_names;
 
     /**
      * Expected grid ids for each variable, with ordering analogous to ``expected_output_and_input_var_names``.

@@ -40,7 +40,7 @@ bool confirm_matches_expected_doubles(const double expected, const double actual
  * @param array_size
  * @return
  */
-bool confirm_matches_expected_str_arrays(const char** expected, const char** actual, const int array_size);
+bool confirm_matches_expected_str_arrays(char** expected, char** actual, const int array_size);
 
 /**
  * Reusable convenience method for checking that ``char*`` results of a BMI function call were as expected.
@@ -77,6 +77,6 @@ bool confirm_matches_expected_ints_parse_str(const char* expected, const int act
  * @param array_size The size of the array to search.
  * @return The index with the array to search where the sought string can be found, or -1 if it is not found.
  */
-int find_in_array(const char* str, const char** array_of_strings, const int array_size);
+int find_in_array(const char* str, char** array_of_strings, const int array_size);
 
 #endif

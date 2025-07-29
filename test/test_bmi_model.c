@@ -872,7 +872,7 @@ int test_get_value_ptr(TestFixture* fixture)
         int* int_ptr;
         double* double_ptr;
 
-        void** ptr = (i == 13) ? &int_ptr : &double_ptr;
+        void** ptr = (i == 13) ? (void*) &int_ptr : (void*) &double_ptr;
 
         const char* var_name = fixture->expected_output_var_names[i];
 
@@ -891,7 +891,7 @@ int test_get_value_ptr(TestFixture* fixture)
         }
         int int_var_val;
         double double_var_val;
-        void* var_val = (i == 13) ? &int_var_val : &double_var_val;
+        void* var_val = (i == 13) ? (void*) &int_var_val : (void*) &double_var_val;
         bmi_status = fixture->bmi_model->get_value(fixture->bmi_model, var_name, var_val);
         if (bmi_status != BMI_SUCCESS) {
             printf("\nReturned BMI_FAILURE getting value for output '%s' (while testing get_value_ptr)", var_name);
@@ -957,7 +957,7 @@ int test_get_var_location(TestFixture* fixture)
     char* expected;
 
     for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
-        status = fixture->bmi_model->get_var_location(fixture->bmi_model, fixture->expected_output_and_input_var_names[i], &actual_value);
+        status = fixture->bmi_model->get_var_location(fixture->bmi_model, fixture->expected_output_and_input_var_names[i], actual_value);
         if (status != BMI_SUCCESS) {
             printf("\nReturned BMI_FAILURE status code getting location for '%s'", fixture->expected_output_and_input_var_names[i]);
             return TEST_RETURN_CODE_FAIL;
@@ -1006,7 +1006,7 @@ int test_get_var_units(TestFixture* fixture)
     };
 
     for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
-        status = fixture->bmi_model->get_var_units(fixture->bmi_model, fixture->expected_output_and_input_var_names[i], &actual_value);
+        status = fixture->bmi_model->get_var_units(fixture->bmi_model, fixture->expected_output_and_input_var_names[i], actual_value);
         if (status != BMI_SUCCESS) {
             printf("\nReturned BMI_FAILURE status code getting units for '%s'", fixture->expected_output_and_input_var_names[i]);
             return TEST_RETURN_CODE_FAIL;
@@ -1026,7 +1026,7 @@ int test_get_var_type(TestFixture* fixture)
     char* expected_type;
 
     for (int i = 0; i < EXPECTED_TOTAL_VAR_COUNT; i++) {
-        status = fixture->bmi_model->get_var_type(fixture->bmi_model, fixture->expected_output_and_input_var_names[i], &actual_value);
+        status = fixture->bmi_model->get_var_type(fixture->bmi_model, fixture->expected_output_and_input_var_names[i], actual_value);
         if (status != BMI_SUCCESS) {
             printf("\nReturned BMI_FAILURE status code getting type for '%s'", fixture->expected_output_and_input_var_names[i]);
             return TEST_RETURN_CODE_FAIL;
