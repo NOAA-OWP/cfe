@@ -3211,6 +3211,7 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr)
 }*/
 
 extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr) {
+    cfe_ptr->vol_struct.volstart         = 0.0;
     cfe_ptr->vol_struct.volin            = 0;
     cfe_ptr->vol_struct.vol_runoff       = 0;
     cfe_ptr->vol_struct.vol_infilt       = 0;
