@@ -67,12 +67,15 @@ jobs:
         cd ..
         ./run_cfe.sh AETROOTZONE
 
-    - name: Build and Run BMI Unit Test
+    - name: Build and Run Unit Tests
       run: |
-        cd build
-        cmake ../ -DUNITTEST=ON
-        make
-        cd ..
-        cd test
-        ./run_unittest.sh
+        cmake -B cmake_build -DNGEN=ON -S .
+        cmake --build cmake_build
+        ctest --test-dir cmake_build -I 2,
+
+    - name: Build and Run Combined BMI Test
+      run: |
+        cmake -B cmake_build -DNGEN=ON -S .
+        cmake --build cmake_build
+        ctest --test-dir cmake_build -I 1,1
 
