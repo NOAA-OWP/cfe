@@ -13,7 +13,7 @@ LFLAGS =
 LIBS = -lm
 
 # define the C source files
-SRCS = main.c cfe.c bmi_cfe.c
+SRCS = main.c cfe.c bmi_cfe.c conceptual_reservoir.c giuh.c nash_cascade.c
 
 # define the C object files 
 OBJS = $(SRCS:.c=.o)
@@ -24,7 +24,7 @@ MAIN = run_cfe_bmi
 .PHONY: depend clean
 
 all:    $(MAIN)
-	@echo  Simple compiler named mycc has been compiled
+	@echo  CFE Main compiled
 	@mv run_cfe_bmi ..
 
 $(MAIN): $(OBJS) 
