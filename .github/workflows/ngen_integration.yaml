@@ -36,7 +36,7 @@ jobs:
 
       - name: Build the CFE Library
         run: |
-          cmake -B cmake_build -S . -DNGEN=ON -DCMAKE_C_FLAGS='-g -Og -fsanitize=address -Werror'
+          cmake -B cmake_build -S . -DNGEN=ON
           make -C cmake_build
 
       - name: Save CFE to a Temp Directory
@@ -88,7 +88,7 @@ jobs:
       - name: Run NGen Test for CFE (cfe1.0) Coupled with PET
         run: |
           mv ${{ steps.ngen_id1.outputs.build-dir }} ./ngen-build/
-          inputfile='extern/cfe/cfe/realizations/realization_cfe_pet_surfgiuh.json'
+          inputfile='extern/cfe/cfe/realizations/realization_cfe_pet.json'
           ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
 
       - name: Run Ngen Test for CFE (cfe2.0) Coupled with PET

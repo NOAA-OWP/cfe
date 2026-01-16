@@ -12,6 +12,7 @@
 #include "../extern/evapotranspiration/include/pet.h"
 #include "../extern/evapotranspiration/include/bmi_pet.h"
 
+#include "../bmi/bmi.hxx"
 #include "../extern/SoilMoistureProfiles/include/bmi_soil_moisture_profile.hxx"
 #include "../extern/SoilMoistureProfiles/include/soil_moisture_profile.hxx"
 
