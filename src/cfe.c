@@ -479,8 +479,6 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
   //   double  infiltration_depth_m          amount of water partitioned as infiltration (soil water input) this time step [m]
   //------------------------------------------------------------------------- 
 
-  //-------------------------------------------------------------------------
-
   // local variables
   double tension_water_m, free_water_m, max_tension_water_m, max_free_water_m, pervious_runoff_m,water_input_pervious_fraction_m;
   double impervious_fraction, impervious_runoff_m;
