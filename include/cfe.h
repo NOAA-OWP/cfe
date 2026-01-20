@@ -17,7 +17,7 @@
 
 // t-shirt approximation of the hydrologic routing funtionality of the National Water Model v 1.2, 2.0, and 2.1
 // This code was developed to test the hypothesis that the National Water Model runoff generation, vadose zone
-// dynamics, and conceptual groundwater model can be greatly simplified by acknowledging that it is truly a
+// dynamics, and conceptual groundwater model can be greatly simplified by acknowledging that it is truly a 
 // conceptual model.  The hypothesis is supported by a number of observations made during a 2017-2018 deep dive
 // into the NWM code.  Thesed are:
 //
@@ -26,7 +26,7 @@
 //    function by Moore, 1985.   The Schaake function is a single valued function of soil moisture deficit,
 //    predicts 100% runoff when the soil is saturated, like the curve-number method, and is fundamentally simple.
 // 2. Run-on infiltration is strictly not calculated.  Overland flow routing applies the Schaake function repeatedly
-//    to predict this phenomenon, which violates the underlying assumption of the PDM method that only rainfall
+//    to predict this phenomenon, which violates the underlying assumption of the PDM method that only rainfall 
 //    inputs affect soil moisture.
 // 3. The water-content based Richards' equation, applied using a coarse-discretization, can be replaced with a simple
 //    conceptual reservoir because it never allows saturation or infiltration-excess runoff unless deactivated by
@@ -118,8 +118,8 @@ struct massbal
     double vol_soil_to_gw      ;  // this should equal vol_to_gw
     double vol_soil_end        ;
     double vol_et_from_soil    ;
-    double vol_et_from_rain    ;
-    double vol_et_to_atm       ;
+    double vol_et_from_rain    ; 
+    double vol_et_to_atm       ;   
     double volin               ;
     double volout              ;
     double volend              ;

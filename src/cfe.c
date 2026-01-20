@@ -1,7 +1,11 @@
 #include "cfe.h"
+#include "logger.h"
+#include <stdbool.h>
 
 #define max(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b);  _a > _b ? _a : _b; })
 #define min(a,b) ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b);  _a < _b ? _a : _b; })
+
+static bool groundwaterFluxIssueLogged = false;
 
 // CFE STATE SPACE FUNCTION // #######################################################################
 // Adapted version of Conceptual Functional Equivalent model re-written in state-space form July, 2021
@@ -49,12 +53,12 @@ extern void cfe(
     double flux_lat_m                       = *flux_lat_m_ptr;                         // water moved from soil reservoir to lateral flow Nash cascad this timestep [m]
     double gw_reservoir_storage_deficit_m   = *gw_reservoir_storage_deficit_m_ptr;     // deficit in gw reservoir storage [m]
     double flux_from_deep_gw_to_chan_m      = *flux_from_deep_gw_to_chan_m_ptr;        // water moved from gw reservoir to catchment outlet nexus this timestep [m]
-    double direct_runoff_m                 = *direct_runoff_m_ptr;                   // water leaving GIUH or NASH cascade reservoir to outlet this timestep [m]
+    double direct_runoff_m                 = *direct_runoff_m_ptr;                     // water leaving GIUH or NASH cascade reservoir to outlet this timestep [m]
     double nash_lateral_runoff_m            = *nash_lateral_runoff_m_ptr;              // water leaving lateral subsurface flow Nash cascade this timestep [m]
     double Qout_m                           = *Qout_m_ptr;                             // the total runoff this timestep (Surface+Nash+GW) [m]
 
     // LOCAL VARIABLES, the values of which are not important to describe the model state.  They are like notes on scrap paper.
-
+ 
     double diff=0.0;
     double primary_flux=0.0;      // pointers to these variables passed to conceptual nonlinear reservoir which has two outlets, primary & secondary
     double secondary_flux=0.0;    // pointers to these variables passed to conceptual nonlinear reservoir which has two outlets, primary & secondary
@@ -64,14 +68,14 @@ extern void cfe(
 
     // store current soil storage_m in a temp. variable
     double storage_temp_m = soil_reservoir_struct->storage_m;
-
+  
   //##################################################
   // partition rainfall using Schaake function
   //##################################################
 
   evap_struct->potential_et_m_per_timestep = evap_struct->potential_et_m_per_s * time_step_size;
   evap_struct->reduced_potential_et_m_per_timestep = evap_struct->potential_et_m_per_s * time_step_size;
-
+ 
   evap_struct->actual_et_from_rain_m_per_timestep = 0;
   if (timestep_rainfall_input_m > 0) {
     et_from_rainfall(&timestep_rainfall_input_m,evap_struct);
@@ -114,16 +118,16 @@ extern void cfe(
   // LKC: This needs to be calcualted here after et_from_soil since soil_reservoir_struct->storage_m changes
   soil_reservoir_storage_deficit_m=(NWM_soil_params_struct.smcmax*NWM_soil_params_struct.D-soil_reservoir_struct->storage_m);
 
-
+ 
   // NEW FLO
-  if(0.0 < timestep_rainfall_input_m)
+  if(0.0 < timestep_rainfall_input_m) 
     {
     if (infiltration_excess_params_struct.surface_water_partitioning_scheme == Schaake)
       {
 	// to ensure that ice_fraction_schaake is set to 0.0 for uncoupled SFT
 	if(!soil_reservoir_struct->is_sft_coupled)
 	  soil_reservoir_struct->ice_fraction_schaake = 0.0;
-
+	
 	Schaake_partitioning_scheme(timestep_h, soil_reservoir_struct->storage_threshold_primary_m,
 				    infiltration_excess_params_struct.Schaake_adjusted_magic_constant_by_soil_type,
 				    soil_reservoir_storage_deficit_m, timestep_rainfall_input_m, NWM_soil_params_struct.smcmax,
@@ -136,7 +140,7 @@ extern void cfe(
 	// to ensure that ice_fraction_xinan is set to 0.0 for uncoupled SFT
 	if(!soil_reservoir_struct->is_sft_coupled)
 	  soil_reservoir_struct->ice_fraction_xinanjiang = 0.0;
-
+	
 	Xinanjiang_partitioning_scheme(timestep_rainfall_input_m, soil_reservoir_struct->storage_threshold_primary_m,
 				       soil_reservoir_struct->storage_max_m, soil_reservoir_struct->storage_m,
 				       &infiltration_excess_params_struct, &infiltration_excess_m, &infiltration_depth_m,
@@ -144,8 +148,8 @@ extern void cfe(
       }
     else
       {
-      fprintf(stderr,"Problem, must specify one of Schaake of Xinanjiang partitioning scheme.\n");
-      fprintf(stderr,"Program terminating.\n");
+      Log(FATAL, "Problem, must specify one of Schaake of Xinanjiang partitioning scheme.\n");
+      Log(FATAL, "Program terminating.\n");
       exit(-1);   // note -1 is arbitrary   #############BOMB################ NEW FLO
       }
     }
@@ -166,30 +170,30 @@ extern void cfe(
     // LKC: should the deficit of soil be set to zero here - if the condition is reached, soil is full
     soil_reservoir_storage_deficit_m = 0;
     }
-
-
-
+    
+   
+    
 #ifdef DEBUG
   /* xinanjiang_dev
-  printf("After Schaake function: rain:%8.5lf mm  runoff:%8.5lf mm  infiltration:%8.5lf mm  residual:%e m\n",
+  Log(DEBUG, "After Schaake function: rain:%8.5lf mm  runoff:%8.5lf mm  infiltration:%8.5lf mm  residual:%e m\n",
                                  timestep_rainfall_input_m,Schaake_output_runoff_m*1000.0,infiltration_depth_m*1000.0,
                                  timestep_rainfall_input_m-Schaake_output_runoff_m-infiltration_depth_m);                   */
-  printf("After direct runoff function: rain:%8.5lf mm  runoff:%8.5lf mm  infiltration:%8.5lf mm  residual:%e m\n",
+  Log(DEBUG, "After direct runoff function: rain:%8.5lf mm  runoff:%8.5lf mm  infiltration:%8.5lf mm  residual:%e m\n",
                                  timestep_rainfall_input_m,infiltration_excess_m*1000.0,infiltration_depth_m*1000.0,
                                  timestep_rainfall_input_m-infiltration_excess_m-infiltration_depth_m);
 #endif
 
   massbal_struct->vol_runoff   += infiltration_excess_m;       // edit FLO
   massbal_struct->vol_infilt   += infiltration_depth_m;  // edit FLO
-
+  
   // put infiltration flux into soil conceptual reservoir.  If not enough room
   // limit amount transferred to deficit
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+  
   if(flux_perc_m>soil_reservoir_storage_deficit_m)
     {
     diff=flux_perc_m-soil_reservoir_storage_deficit_m;  // the amount that there is not capacity ffor
-    infiltration_depth_m=soil_reservoir_storage_deficit_m;
+    infiltration_depth_m=soil_reservoir_storage_deficit_m;  
     massbal_struct->vol_runoff+=diff;  // send excess water back to GIUH runoff  edit FLO
     massbal_struct->vol_infilt-=diff;  // correct overprediction of infilt.      edit FLO
     infiltration_excess_m+=diff; // bug found by Nels.  This was missing and fixes it.
@@ -198,25 +202,25 @@ extern void cfe(
     soil_reservoir_storage_deficit_m = 0;
     }
 
-  massbal_struct->vol_to_soil              += infiltration_depth_m;
+  massbal_struct->vol_to_soil              += infiltration_depth_m; 
   soil_reservoir_struct->storage_m += infiltration_depth_m;  // put the infiltrated water in the soil.
 
-
+  
   // calculate fluxes from the soil storage into the deep groundwater (percolation) and to lateral subsurface flow
   //--------------------------------------------------------------------------------------------------------------
-
+  
   conceptual_reservoir_flux_calc(soil_reservoir_struct,&percolation_flux,&lateral_flux);
   flux_perc_m=percolation_flux;  // m/h   <<<<<<<<<<<  flux of percolation from soil to g.w. reservoir >>>>>>>>>
-
+  
   flux_lat_m=lateral_flux;  // m/h        <<<<<<<<<<<  flux into the lateral flow Nash cascade >>>>>>>>
-
+  
 
   // calculate flux of base flow from deep groundwater reservoir to channel
   //--------------------------------------------------------------------------
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   gw_reservoir_storage_deficit_m= gw_reservoir_struct->storage_max_m-gw_reservoir_struct->storage_m;
   // limit amount transferred to deficit iff there is insuffienct avail. storage
-  if(flux_perc_m>gw_reservoir_storage_deficit_m) {
+  if (flux_perc_m>gw_reservoir_storage_deficit_m) {
     diff=flux_perc_m-gw_reservoir_storage_deficit_m;
     flux_perc_m=gw_reservoir_storage_deficit_m;
     massbal_struct->vol_runoff+=diff;  // send excess water back to GIUH runoff
@@ -226,7 +230,7 @@ extern void cfe(
 
   massbal_struct->vol_to_gw                +=flux_perc_m;
   massbal_struct->vol_soil_to_gw           +=flux_perc_m;
-
+  
   gw_reservoir_struct->storage_m   += flux_perc_m;
   soil_reservoir_struct->storage_m -= flux_perc_m;
   soil_reservoir_struct->storage_m -= flux_lat_m;
@@ -235,26 +239,34 @@ extern void cfe(
 
   // get change in storage (used in the soil moisture coupler)
   soil_reservoir_struct->storage_change_m = soil_reservoir_struct->storage_m - storage_temp_m ;
-
+  
   conceptual_reservoir_flux_calc(gw_reservoir_struct,&primary_flux,&secondary_flux);
-
-
+  
+  
   flux_from_deep_gw_to_chan_m=primary_flux;  // m/h   <<<<<<<<<< BASE FLOW FLUX >>>>>>>>>
   if(flux_from_deep_gw_to_chan_m >  gw_reservoir_struct->storage_m)  {
     flux_from_deep_gw_to_chan_m=gw_reservoir_struct->storage_m;
     // TODO: set a flag when flux larger than storage
-    printf("WARNING: Groundwater flux larger than storage \n");
+    // Adding specific warning message requested by OWP (9/11/2025)
+    if (!groundwaterFluxIssueLogged) {
+        Log(WARNING,
+            "Groundwater flux larger than storage. "
+            "While this will not cause a run failure, "
+            "parameter combinations may not be realistic "
+            "and a mass balance error will occur.\n");
+        groundwaterFluxIssueLogged = true;
+    }
   }
-
+ 
   massbal_struct->vol_from_gw+=flux_from_deep_gw_to_chan_m;
-
+  
   // in the instance of calling the gw reservoir the secondary flux should be zero- verify
-  if(is_fabs_less_than_epsilon(secondary_flux,1.0e-09)==FALSE) printf("problem with nonzero flux point 1\n");
+  if(is_fabs_less_than_epsilon(secondary_flux,1.0e-09)==FALSE) Log(WARNING, "problem with nonzero flux point 1\n");
 
-
+  
   // adjust state of deep groundwater conceptual nonlinear reservoir
   //-----------------------------------------------------------------
-
+ 
   gw_reservoir_struct->storage_m -= flux_from_deep_gw_to_chan_m;
 
   // Solve the convolution integral ffor this time step
@@ -283,7 +295,7 @@ extern void cfe(
   massbal_struct->vol_out_nash  += nash_lateral_runoff_m;
 
 #ifdef DEBUG
-        fprintf(out_debug_fptr,"%d %lf %lf  %lf\n",tstep,flux_lat_m,nash_lateral_runoff_m,flux_from_deep_gw_to_chan_m);
+        Log(DEBUG,"%d %lf %lf  %lf\n",tstep,flux_lat_m,nash_lateral_runoff_m,flux_from_deep_gw_to_chan_m);
 #endif
 
   Qout_m = direct_runoff_m + nash_lateral_runoff_m + flux_from_deep_gw_to_chan_m;
@@ -321,7 +333,7 @@ void Schaake_partitioning_scheme(double timestep_h, double field_capacity_m, dou
   This subtroutine takes water_input_depth_m and partitions it into infiltration_excess_m and
   infiltration_depth_m using the scheme from Schaake et al. 1996.
 ! --------------------------------------------------------------------------------
-! ! modified by FLO April 2020 to eliminate reference to ice processes,
+! ! modified by FLO April 2020 to eliminate reference to ice processes, 
 ! ! and to de-obfuscate and use descriptive and dimensionally consistent variable names.
 ! --------------------------------------------------------------------------------
     IMPLICIT NONE
@@ -386,32 +398,32 @@ void Schaake_partitioning_scheme(double timestep_h, double field_capacity_m, dou
   }
 
 
-  // impermeable fraction due to frozen soil
-  double factor = 1.0;
-  //field_capacity_m = SMCREF in NOAH_MP
-  // ice_content_threshold = frzk in NOAH_MP
-  //double frzk = 0.15; // Ice content above which soil is impermeable
+ // impermeable fraction due to frozen soil
+ double factor = 1.0;
+ //field_capacity_m = SMCREF in NOAH_MP
+ // ice_content_threshold = frzk in NOAH_MP
+ //double frzk = 0.15; // Ice content above which soil is impermeable 
+ 
+ if (ice_fraction_schaake > 1.0E-2) {
+   int cv_frz = 3; // should this be moved to config file as well, probably not.
+   double field_capacity = field_capacity_m/soil_depth; // divide by the reservior depth to get SMCREF [m/m] (unitless)
+   double frz_fact = smcmax/field_capacity * (0.412 / 0.468); 
+   double frzx = ice_content_threshold * frz_fact;
 
-  if (ice_fraction_schaake > 1.0E-2) {
-    int cv_frz = 3; // should this be moved to config file as well, probably not.
-    double field_capacity = field_capacity_m/soil_depth; // divide by the reservior depth to get SMCREF [m/m] (unitless)
-    double frz_fact = smcmax/field_capacity * (0.412 / 0.468);
-    double frzx = ice_content_threshold * frz_fact;
-
-    double acrt = cv_frz * frzx / ice_fraction_schaake;
-    double sum1 =1;
-
-    for (int i1=1; i1 < cv_frz; i1++) {
-      int k = 1;
-      for (int i2=i1+1; i2<cv_frz; i2++)
-        k *= i2;
-
-      sum1 += pow(acrt,(cv_frz - i1)) / (double)k;
-    }
-
+   double acrt = cv_frz * frzx / ice_fraction_schaake;
+   double sum1 =1;
+   
+   for (int i1=1; i1 < cv_frz; i1++) {
+     int k = 1;
+     for (int i2=i1+1; i2<cv_frz; i2++)
+       k *= i2;
+     
+     sum1 += pow(acrt,(cv_frz - i1)) / (double)k;
+   }
+   
    factor = 1. - exp(-acrt) * sum1;
  }
-
+ 
  *infiltration_depth_m = factor * (*infiltration_depth_m);
 
  *infiltration_excess_m = water_input_depth_m - (*infiltration_depth_m);
@@ -435,15 +447,15 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
   //  and infiltration_depth_m by calculating the saturated area and runoff based on a scheme developed
   //  for the Xinanjiang model by Jaywardena and Zhou (2000). According to Knoben et al.
   //  (2019) "the model uses a variable contributing area to simulate runoff.  [It] uses
-  //  a double parabolic curve to simulate tension water capacities within the catchment,
-  //  instead of the original single parabolic curve" which is also used as the standard
+  //  a double parabolic curve to simulate tension water capacities within the catchment, 
+  //  instead of the original single parabolic curve" which is also used as the standard 
   //  VIC fomulation.  This runoff scheme was selected for implementation into NWM v3.0.
   //  REFERENCES:
-  //  1. Jaywardena, A.W. and M.C. Zhou, 2000. A modified spatial soil moisture storage
+  //  1. Jaywardena, A.W. and M.C. Zhou, 2000. A modified spatial soil moisture storage 
   //     capacity distribution curve for the Xinanjiang model. Journal of Hydrology 227: 93-113
   //  2. Knoben, W.J.M. et al., 2019. Supplement of Modular Assessment of Rainfall-Runoff Models
   //     Toolbox (MARRMoT) v1.2: an open-source, extendable framework providing implementations
-  //     of 46 conceptual hydrologic models as continuous state-space formulations. Supplement of
+  //     of 46 conceptual hydrologic models as continuous state-space formulations. Supplement of 
   //     Geosci. Model Dev. 12: 2463-2480.
   //-------------------------------------------------------------------------
   //  Written by RLM May 2021
@@ -465,7 +477,7 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
   // Outputs
   //   double  infiltration_excess_m         amount of water partitioned to surface water this time step [m]
   //   double  infiltration_depth_m          amount of water partitioned as infiltration (soil water input) this time step [m]
-  //-------------------------------------------------------------------------
+  //------------------------------------------------------------------------- 
 
   // local variables
   double tension_water_m, free_water_m, max_tension_water_m, max_free_water_m, pervious_runoff_m,water_input_pervious_fraction_m;
@@ -563,11 +575,10 @@ void Xinanjiang_partitioning_scheme(double water_input_depth_m, double field_cap
   // Separate the infiltration from the total water input depth to the soil surface.
 
   *infiltration_depth_m = water_input_pervious_fraction_m - *infiltration_excess_m;
-    
-#ifdef DEBUG
-    if(fabs(water_input_depth_m - (*infiltration_depth_m) - (*infiltration_excess_m)) > 1.0e-06) printf("Massball err. warning: %f\n",
+
+    if(fabs(water_input_depth_m - (*infiltration_depth_m) - (*infiltration_excess_m)) > 1.0e-06) Log(DEBUG, "Massball err. warning: %f\n",
         water_input_depth_m - (*infiltration_depth_m) - (*infiltration_excess_m));
-#endif
+
     return;
 }
 
@@ -582,17 +593,17 @@ void et_from_rainfall(double *timestep_rainfall_input_m, struct evapotranspirati
         iff it is raining, take PET from rainfall first.  Wet veg. is efficient evaporator.
     */
 
-    if (*timestep_rainfall_input_m >0.0) {
+    if (*timestep_rainfall_input_m >0.0){
 
-        if (*timestep_rainfall_input_m > et_struct->potential_et_m_per_timestep) {
-
+        if (*timestep_rainfall_input_m > et_struct->potential_et_m_per_timestep){
+    
             et_struct->actual_et_from_rain_m_per_timestep = et_struct->potential_et_m_per_timestep;
             *timestep_rainfall_input_m -= et_struct->actual_et_from_rain_m_per_timestep;
         }
 
-        else {
+        else{
             // LKC: This was incorrectly set to potential instead of actual
-	    et_struct->actual_et_from_rain_m_per_timestep = *timestep_rainfall_input_m;
+	    et_struct->actual_et_from_rain_m_per_timestep = *timestep_rainfall_input_m;          
             *timestep_rainfall_input_m = 0.0;
 
         }
@@ -629,15 +640,15 @@ void et_from_retention_depth(struct nash_cascade_parameters *nash_surface_params
 void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspiration_structure *et_struct, struct NWM_soil_parameters *soil_parms)
 {
     /*
-        take AET from soil moisture storage,
+        take AET from soil moisture storage, 
         using Budyko type function to limit PET if wilting<soilmoist<field_capacity
     */
     double Budyko_numerator;
     double Budyko_denominator;
     double Budyko;
-
-/*-------------------- Root zone adjusted AET development -rlm --------------------------*/
-
+    
+/*-------------------- Root zone adjusted AET development -rlm --------------------------*/ 
+    
     et_struct->actual_et_from_soil_m_per_timestep = 0;
 
     // if rootzone-based AET turned ON
@@ -651,7 +662,7 @@ void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspirati
       // wilting point, actual et from this timestep is 0 and no water is removed.
       if ( soil_res->smc_profile[soil_res->max_rootzone_layer] <= soil_parms->wltsmc ) {
         et_struct->actual_et_from_soil_m_per_timestep = 0;
-      }
+      } 
       // calculate the amount of moisture removed by evapotranspiration for the bottom layer of the root zone
       else if (soil_res->smc_profile[soil_res->max_rootzone_layer] >= soil_res->soil_water_content_field_capacity) {
         et_struct->actual_et_from_soil_m_per_timestep = min(et_struct->reduced_potential_et_m_per_timestep, layer_storage_m);
@@ -660,32 +671,32 @@ void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspirati
         Budyko_numerator = soil_res->smc_profile[soil_res->max_rootzone_layer] - soil_parms->wltsmc;
         Budyko_denominator = soil_res->soil_water_content_field_capacity - soil_parms->wltsmc;
         Budyko = Budyko_numerator / Budyko_denominator;
-
+	
         et_struct->actual_et_from_soil_m_per_timestep = min(Budyko * et_struct->reduced_potential_et_m_per_timestep, layer_storage_m);
       }
-
+      
       // Reduce remaining PET and remove moisture from soil profile equal to the calculated AET (actual_et_from_soil_m_per_timestep
-      et_struct->reduced_potential_et_m_per_timestep -= et_struct->actual_et_from_soil_m_per_timestep;
-      soil_res->smc_profile[soil_res->max_rootzone_layer] -= (et_struct->actual_et_from_soil_m_per_timestep /
+      et_struct->reduced_potential_et_m_per_timestep -= et_struct->actual_et_from_soil_m_per_timestep;   
+      soil_res->smc_profile[soil_res->max_rootzone_layer] -= (et_struct->actual_et_from_soil_m_per_timestep / 
 							       soil_res->delta_soil_layer_depth_m[soil_res->max_rootzone_layer]);
       soil_res->storage_m -= et_struct->actual_et_from_soil_m_per_timestep;
     }
 
-    else if (et_struct->reduced_potential_et_m_per_timestep > 0) {
-
-        if (soil_res->storage_m >= soil_res->storage_threshold_primary_m) {
+    else if (et_struct->reduced_potential_et_m_per_timestep > 0){
+        
+        if (soil_res->storage_m >= soil_res->storage_threshold_primary_m){        
             et_struct->actual_et_from_soil_m_per_timestep = min(et_struct->reduced_potential_et_m_per_timestep, soil_res->storage_m);
-        }
-        else if (soil_res->storage_m > soil_parms->wilting_point_m && soil_res->storage_m < soil_res->storage_threshold_primary_m) {
-
+        }                 
+        else if (soil_res->storage_m > soil_parms->wilting_point_m && soil_res->storage_m < soil_res->storage_threshold_primary_m){
+        
             Budyko_numerator = soil_res->storage_m - soil_parms->wilting_point_m;
             Budyko_denominator = soil_res->storage_threshold_primary_m - soil_parms->wilting_point_m;
             Budyko = Budyko_numerator / Budyko_denominator;
-            // LKC: Include check to guarantee EAT is not larger than soil storage
+            // LKC: Include check to guarantee EAT is not larger than soil storage               
             et_struct->actual_et_from_soil_m_per_timestep = min(Budyko * et_struct->reduced_potential_et_m_per_timestep, soil_res->storage_m);
-
+                                                   
         }
-
+        
         soil_res->storage_m -= et_struct->actual_et_from_soil_m_per_timestep;
         et_struct->reduced_potential_et_m_per_timestep = et_struct->reduced_potential_et_m_per_timestep - et_struct->actual_et_from_soil_m_per_timestep;
     }
@@ -695,6 +706,7 @@ void et_from_soil(struct conceptual_reservoir *soil_res, struct evapotranspirati
 
 extern int is_fabs_less_than_epsilon(double a,double epsilon)  // returns true if fabs(a)<epsilon
 {
-  if(fabs(a)<epsilon) return(TRUE);
-  else                return(FALSE);
+if(fabs(a)<epsilon) return(TRUE);
+else                return(FALSE);
 }
+

@@ -46,6 +46,11 @@ extern void conceptual_reservoir_flux_calc(struct conceptual_reservoir *da_reser
     
     *primary_flux_m = da_reservoir->coeff_primary * (exp_term - 1.0);
     *secondary_flux_m = 0.0;
+
+    // cap so flux never exceeds storage, but commented out here per OWP request (9/11/2025)
+    //if (*primary_flux_m > da_reservoir->storage_m) {
+    //    *primary_flux_m = da_reservoir->storage_m;
+    //}
     
     return;
   }

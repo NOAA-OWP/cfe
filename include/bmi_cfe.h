@@ -7,6 +7,7 @@ extern "C" {
 
 #include "./cfe.h"
 #include "bmi.h"
+#include <stdint.h>
 
 //--------------------------------------------------
 // Experiment to simplify BMI implementation (SDP)
@@ -110,6 +111,9 @@ struct cfe_state_struct {
     double* flux_Qout_m;
 
     int verbosity;
+
+    char* serialized;
+    uint64_t serialized_length; // needs a permanent anchor for get_value_ptr
 
 };
 typedef struct cfe_state_struct cfe_state_struct;
