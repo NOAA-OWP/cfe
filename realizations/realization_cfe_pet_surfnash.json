@@ -20,7 +20,8 @@
 			"POTENTIAL_ET",
 			"ACTUAL_ET",
 			"SOIL_STORAGE",
-			"NWM_PONDED_DEPTH"
+			"NWM_PONDED_DEPTH",
+			"atmosphere_water__liquid_equivalent_precipitation_rate_out"
 		    ],
                     "modules": [
 			{

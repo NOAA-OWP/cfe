@@ -88,6 +88,7 @@ struct cfe_state_struct {
     int surface_runoff_scheme;   // options: giuh-based runoff and nash cascade-based runoff
 
     double nwm_ponded_depth_m;
+    double sfcrnoff_accum_m;
     // ***********************************************************
     // ******************* Dynamic allocations *******************
     // ***********************************************************
@@ -106,6 +107,14 @@ struct cfe_state_struct {
     double* flux_direct_runoff_m;
     double* flux_nash_lateral_runoff_m;
     double* flux_from_deep_gw_to_chan_m;
+
+    /* BMI-facing converted qBucket value:
+     * CFE internal deep groundwater flux is m/timestep.
+     * NWM expects DEEP_GW_TO_CHANNEL_FLUX in m3/s.
+     */
+    double flux_from_deep_gw_to_chan_m3_per_s;
+    double catchment_area_m2;
+
     double* flux_perc_m;
     double* flux_lat_m;
     double* flux_Qout_m;

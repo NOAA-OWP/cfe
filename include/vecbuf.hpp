@@ -28,6 +28,9 @@ public:
     // Forwarder for std::vector::clear()
     constexpr void clear() { vector_.clear(); }
 
+    // Forwarder for std::vector::resize(size)
+    constexpr void resize(size_type size) { vector_.resize(size); }
+
     // Forwarder for std::vector::reserve
     constexpr void reserve(size_type capacity) { vector_.reserve(capacity); setp_from_vector(); }
 
@@ -35,7 +38,7 @@ public:
     constexpr void reserve_additional(size_type additional_capacity) { reserve(size() + additional_capacity); }
 
     // Forwarder for std::vector::data
-    constexpr const value_type* data() const { return vector_.data(); }
+    constexpr value_type* data() { return vector_.data(); }
 
     // Forwarder for std::vector::size
     constexpr size_type size() const { return vector_.size(); }
@@ -110,6 +113,13 @@ private:
         return written;
     }
 
+};
+
+class membuf : public std::streambuf {
+public:
+    membuf(char *begin, size_t size) {
+        this->setg(begin, begin, begin + size);
+    }
 };
 
 #endif

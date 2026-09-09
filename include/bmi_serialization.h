@@ -8,7 +8,7 @@ extern "C" {
 #include "bmi.h"
 
 int free_serialized_cfe(Bmi* bmi);
-int load_serialized_cfe(Bmi* bmi, const char* data);
+int load_serialized_cfe(Bmi* bmi, char* data);
 int new_serialized_cfe(Bmi* bmi);
 
 #ifdef __cplusplus

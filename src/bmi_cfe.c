@@ -23,7 +23,7 @@
 #define CFE_DEBUG 0
 
 #define INPUT_VAR_NAME_COUNT 5
-#define OUTPUT_VAR_NAME_COUNT 15
+#define OUTPUT_VAR_NAME_COUNT 18
 
 #define STATE_VAR_NAME_COUNT 95   // must match var_info array size
 
@@ -206,7 +206,10 @@ static const char *output_var_names[OUTPUT_VAR_NAME_COUNT] = {
         "SOIL_STORAGE",
         "SOIL_STORAGE_CHANGE",
         "SURF_RUNOFF_SCHEME",
-	    "NWM_PONDED_DEPTH"
+	"NWM_PONDED_DEPTH",
+	"atmosphere_water__liquid_equivalent_precipitation_rate_out",
+	"DEEP_GW_TO_CHANNEL_FLUX_M3_PER_S",
+	"SFCRNOFF",
 };
 
 static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
@@ -224,6 +227,9 @@ static const char *output_var_types[OUTPUT_VAR_NAME_COUNT] = {
 	    "double",
         "double",
 	    "int",
+	    "double",
+	    "double",
+	    "double",
 	    "double"
 };
 
@@ -240,6 +246,9 @@ static const int output_var_item_count[OUTPUT_VAR_NAME_COUNT] = {
         1,
         1,
         1,
+	    1,
+	    1,
+	    1,
 	    1,
 	    1,
 	    1
@@ -260,6 +269,9 @@ static const char *output_var_units[OUTPUT_VAR_NAME_COUNT] = {
 	    "m",
 	    "m",
 	    "1",
+	    "m",
+	    "mm h-1",
+	    "m3 s-1",
 	    "m"
 };
 
@@ -278,7 +290,10 @@ static const int output_var_grids[OUTPUT_VAR_NAME_COUNT] = {
         0,
         0,
         0,
-        0
+        0,
+	0,
+	0,
+	0
 };
 
 static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
@@ -296,7 +311,11 @@ static const char *output_var_locations[OUTPUT_VAR_NAME_COUNT] = {
         "node",
 	"node",
 	"none",
+	"node",
+        "node",
+	"node",
 	"node"
+
 };
 
 // Don't forget to update Get_value/Get_value_at_indices (and setter) implementation if these are adjusted
@@ -1176,6 +1195,8 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
     else {
       model->soil_reservoir.is_aet_rootzone = FALSE;
       model->soil_reservoir.n_soil_layers   = 1;
+      model->soil_reservoir.soil_layer_depths_m = NULL;
+      model->soil_reservoir.delta_soil_layer_depth_m = NULL;
     }
 
     /*--------------------END OF ROOT ZONE ADJUSTED AET DEVELOPMENT -rlm ------------------------------*/
@@ -1222,6 +1243,14 @@ int read_init_config_cfe(const char* config_file, cfe_state_struct* model)
 
 static int Initialize (Bmi *self, const char *file)
 {
+    // Initialize the Error, Warning and Trapping System
+#ifdef CFE_USE_EWTS    
+    #pragma message("cfe.bmi_cfe.Initialize: CFE_USE_EWTS ON")
+    EwtsInit(CFE_MODULE_ID, true);
+#else
+    #pragma message("cfe.bmi_cfe.Initialize: CFE_USE_EWTS OFF")
+#endif  
+
     // setup the logger
     Log(INFO, "In CFE Initialize()\n");     
 
@@ -1281,6 +1310,8 @@ static int Initialize (Bmi *self, const char *file)
     //This needs an initial value, it is used in computations in CFE and only set towards the end of the model
     //See issue #31
     *cfe_bmi_data_ptr->flux_perc_m = 0.0;
+    /* sfcrnoff_accum_m is a scalar (not a pointer), so no allocation is needed */
+    cfe_bmi_data_ptr->sfcrnoff_accum_m = 0.0;
 
 
     /*******************************************************
@@ -1367,6 +1398,11 @@ static int Initialize (Bmi *self, const char *file)
     cfe_bmi_data_ptr->gw_reservoir.coeff_secondary = 0.0;                // 0.0 means that secondary outlet is not applied
     cfe_bmi_data_ptr->gw_reservoir.exponent_secondary = 1.0;             // linear
 
+    // Not used in gw reservoir
+    cfe_bmi_data_ptr->gw_reservoir.smc_profile = NULL;
+    cfe_bmi_data_ptr->gw_reservoir.soil_layer_depths_m = NULL;
+    cfe_bmi_data_ptr->gw_reservoir.delta_soil_layer_depth_m = NULL;
+
     // Initialize soil conceptual reservoirs
     //LKC Remove alpha_fc
     init_soil_reservoir(cfe_bmi_data_ptr);
@@ -1435,7 +1471,15 @@ static int Update (Bmi *self)
     cfe_ptr->vol_struct.volin += cfe_ptr->timestep_rainfall_input_m;
     
     run_cfe(cfe_ptr);
-        
+
+    /* Accumulated surface runoff depth for NWM SFCRNOFF.
+     * Using direct runoff only; not including Nash lateral flow unless confirmed.
+     */
+
+    if (cfe_ptr->flux_direct_runoff_m != NULL) {
+      cfe_ptr->sfcrnoff_accum_m += *(cfe_ptr->flux_direct_runoff_m);
+    }
+
     // Advance the model time 
     cfe_ptr->current_time_step += 1;
 
@@ -1512,7 +1556,10 @@ static int Finalize (Bmi *self)
             free(model->forcing_data_precip_kg_per_m2);
         if( model->forcing_data_time != NULL )
             free(model->forcing_data_time);
-        
+        if( model->forcing_file != NULL ){
+            free(model->forcing_file);
+        }
+
         if( model->giuh_ordinates != NULL )
             free(model->giuh_ordinates);
         if( model->nash_storage_subsurface != NULL )
@@ -1521,7 +1568,10 @@ static int Finalize (Bmi *self)
             free(model->runoff_queue_m_per_timestep);
         if( model->flux_Qout_m != NULL )
             free(model->flux_Qout_m);
-        
+
+        if( model->soil_reservoir.smc_profile != NULL )
+            free(model->soil_reservoir.smc_profile);
+
         /* xinanjiang_dev: changing name to the more general "direct runoff"
         if( model->flux_Schaake_output_runoff_m != NULL )
             free(model->flux_Schaake_output_runoff_m);*/
@@ -1637,6 +1687,9 @@ static int Get_var_type (Bmi *self, const char *name, char * type)
     } else if (strcmp(name, "serialization_free") == 0) {
         strncpy(type, "int", BMI_MAX_TYPE_NAME);
         return BMI_SUCCESS;
+    } else if (strcmp(name, "reset_time")) {
+        strncpy(type, "double", BMI_MAX_TYPE_NAME);
+        return BMI_SUCCESS;
     }
 
     // If we get here, it means the variable name wasn't recognized
@@ -1751,6 +1804,9 @@ static int Get_var_nbytes (Bmi *self, const char *name, int * nbytes)
         return BMI_SUCCESS;
     } else if (strcmp(name, "serialization_free") == 0) {
         *nbytes = sizeof(int);
+        return BMI_SUCCESS;
+    } else if (strcmp(name, "reset_time") == 0) {
+        *nbytes = sizeof(double);
         return BMI_SUCCESS;
     }
     int item_size;
@@ -1949,6 +2005,26 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
         return BMI_SUCCESS;
     }
 
+    if (strcmp (name, "DEEP_GW_TO_CHANNEL_FLUX_M3_PER_S") == 0) {
+        cfe_state_struct *cfe_ptr;
+        cfe_ptr = (cfe_state_struct *) self->data;
+
+        if (cfe_ptr->flux_from_deep_gw_to_chan_m != NULL &&
+            cfe_ptr->catchment_area_m2 > 0.0 &&
+            cfe_ptr->time_step_size > 0) {
+            cfe_ptr->flux_from_deep_gw_to_chan_m3_per_s =
+                (*(cfe_ptr->flux_from_deep_gw_to_chan_m) *
+                 cfe_ptr->catchment_area_m2) /
+                (double)cfe_ptr->time_step_size;
+        }
+        else {
+            cfe_ptr->flux_from_deep_gw_to_chan_m3_per_s = 0.0;
+        }
+
+        *dest = (void *)&cfe_ptr->flux_from_deep_gw_to_chan_m3_per_s;
+        return BMI_SUCCESS;
+    }
+
     if (strcmp (name, "SOIL_TO_GW_FLUX") == 0) {
       *dest = (void *) ((cfe_state_struct *)(self->data))->flux_perc_m;
       return BMI_SUCCESS;
@@ -2007,6 +2083,21 @@ static int Get_value_ptr (Bmi *self, const char *name, void **dest)
       *dest = (void*)&cfe_ptr->nwm_ponded_depth_m;
       return BMI_SUCCESS;
     }
+
+    if (strcmp(name, "atmosphere_water__liquid_equivalent_precipitation_rate_out") == 0) {
+      cfe_state_struct *cfe_ptr;
+      cfe_ptr = (cfe_state_struct *) self->data;
+      *dest = (void*)&cfe_ptr->aorc.precip_kg_per_m2;
+      return BMI_SUCCESS;
+    }
+
+    if (strcmp(name, "SFCRNOFF") == 0) {
+      cfe_state_struct *cfe_ptr;
+      cfe_ptr = (cfe_state_struct *) self->data;
+      *dest = (void *)&cfe_ptr->sfcrnoff_accum_m;
+      return BMI_SUCCESS;
+}
+
     /***********************************************************/
     /***********    INPUT    ***********************************/
     /***********************************************************/
@@ -2111,6 +2202,13 @@ static int Get_value (Bmi *self, const char *name, void *dest)
             return BMI_SUCCESS;
         }
         return BMI_FAILURE;
+    } else if (strcmp(name, "serialization_size") == 0) {
+        cfe_state_struct* model = (cfe_state_struct*)self->data;
+        if (model->serialized != NULL) {
+            memcpy(dest, &model->serialized_length, sizeof(uint64_t));
+            return BMI_SUCCESS;
+        }
+        return BMI_FAILURE;
     }
 
     // Use nested call to "by index" version
@@ -2158,6 +2256,11 @@ static int Set_value (Bmi *self, const char *name, void *src)
         return new_serialized_cfe(self);
     } else if (strcmp(name, "serialization_free") == 0) {
         return free_serialized_cfe(self);
+    } else if (strcmp(name, "reset_time") == 0) {
+        cfe_state_struct *model = (cfe_state_struct *)self->data;
+        // time step only used for indexing into forcing data during update
+        model->current_time_step = 0;
+        return BMI_SUCCESS;
     }
     // Avoid using set value, call instead set_value_at_index
     // Use nested call to "by index" version
@@ -2989,13 +3092,15 @@ int read_file_line_counts_cfe(const char* file_name, int* line_count, int* max_l
     return 0;
 }
 
-
 cfe_state_struct *new_bmi_cfe(void)
 {
     cfe_state_struct *data;
     data = (cfe_state_struct *) calloc(1, sizeof(cfe_state_struct));
     data->time_step_size                = 3600;
     data->time_step_fraction            = 1.0;
+    data->flux_from_deep_gw_to_chan_m3_per_s = 0.0;
+    data->sfcrnoff_accum_m               = 0.0;
+    data->catchment_area_m2             = 0.0;
 
     return data;
 }
@@ -3169,6 +3274,7 @@ extern void init_soil_reservoir(cfe_state_struct* cfe_ptr)
 }*/
 
 extern void initialize_volume_trackers(cfe_state_struct* cfe_ptr) {
+    cfe_ptr->vol_struct.volstart         = 0.0;
     cfe_ptr->vol_struct.volin            = 0;
     cfe_ptr->vol_struct.vol_runoff       = 0;
     cfe_ptr->vol_struct.vol_infilt       = 0;
