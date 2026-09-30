@@ -1,3 +1,15 @@
+/*
+ * NOAA-OWP/cfe - Version 3 of Conceptual Functional Equivalent to the stormflow/runoff
+ *                generation components of the NOAA/NWS National Water Model version 3.1 
+ *                and earlier
+ *
+ * Originally conceived and developed by: 
+ *         Fred L. Ogden, Chief Scientist, NOAA/NWS 
+ *         Office of Water Prediction, Tuscaloosa, AL
+ *
+ */
+ 
+
 #ifndef _CONCEPTUAL_RESERVOIR_H
 #define _CONCEPTUAL_RESERVOIR_H
 
@@ -8,7 +20,9 @@
 #define TRUE 1
 #define FALSE 0
 
-struct conceptual_reservoir {
+
+
+struct CONCEPTUAL_RESERVOIR_STRUCTURE {
   // this data structure describes a nonlinear reservoir having two outlets, one primary with an activation
   // threshold that may be zero, and a secondary outlet with a threshold that may be zero
   // this will also simulate a linear reservoir by setting the exponent parameter to 1.0 iff is_exponential==FALSE
@@ -32,17 +46,17 @@ struct conceptual_reservoir {
   
   //---Root zone adjusted AET development -rlm -ajk -------------
   double *smc_profile;                  //soil moisture content profile
-  int    n_soil_layers;                 // number of soil layers
-  double *soil_layer_depths_m;          // soil layer depths defined in the config file in units of [m]
+  int    n_soil_discs;                  // number of soil discretizations
+  double *soil_disc_depths_m;           // soil discrete depths defined in the config file in units of [m]
   int    is_aet_rootzone;               // boolean - true if aet_root_zone is ON otherwise OFF (default is OFF)
-  int    max_rootzone_layer;            // maximum root zone layer is used to identify the maximum layer to remove water from for AET
-  double *delta_soil_layer_depth_m;     // used to calculate the total soil moisture in each layer
+  int    max_rootzone_disc;             // largest (deepest) disc containing roots
+  double *delta_soil_disc_depth_m;      // used to calculate the total soil moisture in each discretization (disc)
   double soil_water_content_field_capacity;  // water content [m/m] at field capacity.  Used in AET routine 
   
   //---------------------------------------------------------------
 };
 
-extern void conceptual_reservoir_flux_calc(struct conceptual_reservoir *da_reservoir,
+extern void conceptual_reservoir_flux_calc(struct CONCEPTUAL_RESERVOIR_STRUCTURE *da_reservoir,
                                            double *primary_flux_m, double *secondary_flux_m);
 
 #endif

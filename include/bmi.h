@@ -1,3 +1,7 @@
+// IMPORTANT: This header MUST match the canonical CSDMS BMI-C release.
+// ABI compatibility with ngen and other BMI consumers cannot be guaranteed
+// if this file is modified or replaced with a non-standard version.
+//
 // Taken from: https://github.com/csdms/bmi-c/blob/master/bmi.h (from commit e6f9f8a)
 //
 // Copyright (c) 2014 Community Surface Dynamics Modeling System

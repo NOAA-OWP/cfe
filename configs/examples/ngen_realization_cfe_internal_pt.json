@@ -1,0 +1,100 @@
+{
+    "_comment": [
+        "CFE — internal Priestley-Taylor PET + soil evaporation.",
+        "When the CFE config enables PT (control_ET_simulate_Priestley_Taylor)",
+        "or soil evap (control_soil_simulate_soil_evaporation), CFE advertises",
+        "additional BMI inputs for AORC forcing fields.",
+        "",
+        "day_of_year: Add control_simulation_start_date=YYYY-MM-DD to the",
+        "CFE config and CFE computes day_of_year internally — no extra",
+        "module needed.",
+        "",
+        "vegetated_fraction and bare_soil_rsurf_exp: Two options:",
+        "  A) Set catchment_forested_fraction_0-1 in the CFE config — CFE uses",
+        "     the config value unless overridden by set_value.",
+        "  B) Map from SLOTH or another module via variables_names_map (shown below)."
+    ],
+    "global": {
+        "formulations": [
+            {
+                "name": "bmi_multi",
+                "params": {
+                    "model_type_name": "bmi_multi_cfe_pt",
+                    "forcing_file": "",
+                    "init_config": "",
+                    "allow_exceed_end_time": true,
+                    "main_output_variable": "discharge_m",
+                    "output_variables": [
+                        "discharge_m",
+                        "surface_runoff_m",
+                        "lateral_flow_m",
+                        "baseflow_m",
+                        "actual_et_m",
+                        "state_soil_storage_m",
+                        "state_gw_storage_m"
+                    ],
+                    "modules": [
+                        {
+                            "name": "bmi_c++",
+                            "params": {
+                                "model_type_name": "bmi_c++_sloth",
+                                "library_file": "./extern/sloth/cmake_build/libslothmodel",
+                                "init_config": "/dev/null",
+                                "allow_exceed_end_time": true,
+                                "main_output_variable": "z",
+                                "uses_forcing_file": false,
+                                "model_params": {
+                                    "sloth_ice_fraction(1,double,1,node)": 0.0,
+                                    "sloth_smp(1,double,1,node)": 0.0,
+                                    "sloth_et_potential_m(1,double,1,node)": 0.0,
+                                    "sloth_vegetated_fraction(1,double,1,node)": 0.70,
+                                    "sloth_rsurf_exp(1,double,1,node)": 5.0
+                                }
+                            }
+                        },
+                        {
+                            "name": "bmi_c",
+                            "params": {
+                                "model_type_name": "bmi_c_cfe",
+                                "library_file": "path/to/libcfebmi",
+                                "forcing_file": "",
+                                "init_config": "path/to/{{id}}_cfe_config.cf3",
+                                "allow_exceed_end_time": true,
+                                "main_output_variable": "discharge_m",
+                                "registration_function": "register_bmi_cfe",
+                                "variables_names_map": {
+                                    "rainfall_depth_m": "atmosphere_water__liquid_equivalent_precipitation_rate",
+                                    "et_potential_m": "sloth_et_potential_m",
+                                    "ice_fraction": "sloth_ice_fraction",
+                                    "soil_moisture_profile": "sloth_smp",
+                                    "TMP_2maboveground": "land_surface_air__temperature",
+                                    "DSWRF_surface": "land_surface_radiation~incoming~shortwave__energy_flux",
+                                    "DLWRF_surface": "land_surface_radiation~incoming~longwave__energy_flux",
+                                    "PRES_surface": "land_surface_air__pressure",
+                                    "SPFH_2maboveground": "atmosphere_air_water~vapor__relative_saturation",
+                                    "UGRD_10maboveground": "land_surface_wind__x_component_of_velocity",
+                                    "VGRD_10maboveground": "land_surface_wind__y_component_of_velocity",
+                                    "param_catchment_vegetated_fraction": "sloth_vegetated_fraction",
+                                    "bare_soil_rsurf_exp": "sloth_rsurf_exp"
+                                },
+                                "uses_forcing_file": false
+                            }
+                        }
+                    ],
+                    "uses_forcing_file": false
+                }
+            }
+        ],
+        "forcing": {
+            "file_pattern": ".*{{id}}.*\\.csv",
+            "path": "path/to/forcing/",
+            "provider": "CsvPerFeature"
+        }
+    },
+    "time": {
+        "start_time": "2012-10-01 00:00:00",
+        "end_time": "2021-08-31 00:00:00",
+        "output_interval": 3600
+    },
+    "output_root": "path/to/output/"
+}

@@ -1,0 +1,29 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  unit-tests:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure
+      run: cmake -B build -S . -DCMAKE_C_FLAGS='-Werror'
+
+    - name: Build
+      run: cmake --build build
+
+    - name: Run CTest suite
+      run: ctest --test-dir build --output-on-failure

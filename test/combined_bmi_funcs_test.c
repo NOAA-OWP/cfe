@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <math.h>
+#include <string.h>
 #include "cfe.h" 
 #include "bmi.h" 
 #include "bmi_cfe.h"
@@ -392,29 +394,76 @@ main(int argc, const char *argv[]){
   // Params are not standard bmi i/o vars.
   printf("\nTEST BMI MODEL PARAMETERS\n*************************\n");
   
-  //Set number of params -- UPDATE if params changed
-#define PARAM_COUNT 18
-  
-  // expected_param_names copied directly from param_var_names[PARAM_VAR_NAME_COUNT] in ../src/bmi_cfe.c
+  // v3 calibration parameter names exposed via set_value / get_value / get_value_ptr
+  // These match the param_var_names[] array in bmi_cfe.c
+#define PARAM_COUNT 16
   static const char *expected_param_names[PARAM_COUNT] = {
-    "maxsmc", "satdk", "slope", "b", "Klf",
-    "Kn", "Cgw", "expon", "max_gw_storage",
-    "satpsi","wltsmc","alpha_fc","refkdt",
-    "a_Xinanjiang_inflection_point_parameter","b_Xinanjiang_shape_parameter","x_Xinanjiang_shape_parameter",
-    "Kinf_nash_surface", "retention_depth_nash_surface"};
-  
+    "soil_effective_porosity",
+    "soil_saturated_hydraulic_conductivity",
+    "soil_percolation_rate_limiter",
+    "soil_Clapp_Hornberger_b",
+    "soil_lateral_flow_K",
+    "subsurface_nash_K",
+    "gw_discharge_coefficient",
+    "gw_discharge_exponent",
+    "gw_max_storage_m",
+    "soil_saturated_capillary_head",
+    "soil_field_capacity_fraction",
+    "Xinanjiang_inflection_a",
+    "Xinanjiang_shape_b",
+    "Xinanjiang_shape_x",
+    "Priestley_Taylor_alpha",
+    "soil_ice_imperv_threshold"
+  };
+
   double test_set_value = 4.2;
   double test_get_value = 0.0;
-  
-  // Loop through params to test get and set
+
   for( int i = 0; i < PARAM_COUNT; i++ ) {
+      int has_conversion =
+          (strcmp(expected_param_names[i], "soil_saturated_hydraulic_conductivity") == 0 ||
+           strcmp(expected_param_names[i], "soil_saturated_capillary_head") == 0);
+
+      // 1) set_value → get_value round-trip
+      test_set_value = 4.2 + i;
       status = model->set_value(model, expected_param_names[i], &test_set_value);
-      //if (status == BMI_FAILURE)return BMI_FAILURE;
       assert(status == BMI_SUCCESS);
       status = model->get_value(model, expected_param_names[i], &test_get_value);
       assert(status == BMI_SUCCESS);
-      assert(test_set_value == test_get_value);
-      printf(" get & set values match for parameter: %s \n", expected_param_names[i]);
+      if (has_conversion) {
+          assert(fabs(test_set_value - test_get_value) < 1.0e-10 * fabs(test_set_value));
+      } else {
+          assert(test_set_value == test_get_value);
+      }
+
+      // 2) get_value_ptr → verify pointer is valid
+      double *param_ptr = NULL;
+      status = model->get_value_ptr(model, expected_param_names[i], (void**)&param_ptr);
+      assert(status == BMI_SUCCESS);
+      assert(param_ptr != NULL);
+
+      if (has_conversion) {
+          // ksat/satpsi: ptr holds SI, get/set_value use user-facing units (cm/h, cm)
+          double si_val = 1.5e-5;
+          *param_ptr = si_val;
+          status = model->get_value(model, expected_param_names[i], &test_get_value);
+          assert(status == BMI_SUCCESS);
+          assert(test_get_value != si_val);  // must differ (converted)
+
+          // set_value with the converted readback should restore the SI value
+          model->set_value(model, expected_param_names[i], &test_get_value);
+          assert(fabs(*param_ptr - si_val) < 1.0e-12 * fabs(si_val));
+      } else {
+          assert(*param_ptr == test_set_value);
+
+          // 3) write through pointer → verify get_value reflects change
+          *param_ptr = 7.7 + i;
+          status = model->get_value(model, expected_param_names[i], &test_get_value);
+          assert(status == BMI_SUCCESS);
+          assert(test_get_value == 7.7 + i);
+      }
+
+      printf(" get_value, set_value, get_value_ptr all consistent for: %s \n", expected_param_names[i]);
   }
   
   // Test BMI: CONTROL FUNCTION update_until()
@@ -438,9 +487,9 @@ main(int argc, const char *argv[]){
     printf(" current time: %f\n", now);
   }
   
-  cfe_state_struct *cfe1;
-  cfe1 = (cfe_state_struct *) model->data;
-  mass_balance_check(cfe1);
+  /* v3: mass balance tracked internally by CFE_Model_Context.
+   * See test_mass_balance_protocol in test_bmi_model.c for the ngen
+   * mass balance protocol validation (mass_in = mass_out + mass_stored + mass_leaked). */
   // Test BMI: CONTROL FUNCTION finalize()
   {
     printf("\n finalizing...\n");

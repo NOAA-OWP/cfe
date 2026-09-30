@@ -8,24 +8,20 @@
                     "forcing_file": "",
                     "init_config": "",
                     "allow_exceed_end_time": true,
-                    "main_output_variable": "Q_OUT",
-		    "output_variables" : [
-			"RAIN_RATE",
-			"INFILTRATION_EXCESS",
-			"DIRECT_RUNOFF",
-			"NASH_LATERAL_RUNOFF",
-			"DEEP_GW_TO_CHANNEL_FLUX",
-			"SOIL_TO_GW_FLUX",
-			"Q_OUT",
-			"POTENTIAL_ET",
-			"ACTUAL_ET",
-			"SOIL_STORAGE",
-			"NWM_PONDED_DEPTH"
-		    ],
+                    "main_output_variable": "discharge_m",
+                    "output_variables": [
+                        "discharge_m",
+                        "surface_runoff_m",
+                        "lateral_flow_m",
+                        "baseflow_m",
+                        "actual_et_m",
+                        "state_soil_storage_m",
+                        "state_gw_storage_m"
+                    ],
                     "modules": [
-			{
-			    "name": "bmi_c++",
-			    "params": {
+                        {
+                            "name": "bmi_c++",
+                            "params": {
                                 "model_type_name": "bmi_c++_sloth",
                                 "library_file": "./extern/sloth/cmake_build/libslothmodel",
                                 "init_config": "/dev/null",
@@ -33,24 +29,25 @@
                                 "main_output_variable": "z",
                                 "uses_forcing_file": false,
                                 "model_params": {
-				    "sloth_ice_fraction_schaake(1,double,m,node)": 0.0,
-				    "sloth_ice_fraction_xinanjiang(1,double,1,node)": 0.0,
-				    "sloth_smp(1,double,1,node)": 0.0
+                                    "sloth_ice_fraction(1,double,1,node)": 0.0,
+                                    "sloth_smp(1,double,1,node)": 0.0,
+                                    "sloth_vegetated_fraction(1,double,1,node)": 0.70,
+                                    "sloth_rsurf_exp(1,double,1,node)": 5.0
                                 }
-			    }
+                            }
                         },
                         {
-			    "name": "bmi_c",
-			    "params": {
+                            "name": "bmi_c",
+                            "params": {
                                 "model_type_name": "bmi_c_pet",
                                 "library_file": "./extern/evapotranspiration/evapotranspiration/cmake_build/libpetbmi",
                                 "forcing_file": "",
                                 "init_config": "./extern/evapotranspiration/evapotranspiration/configs/pet_config_cat_87_pass.txt",
                                 "allow_exceed_end_time": true,
                                 "main_output_variable": "water_potential_evaporation_flux",
-                                "registration_function":"register_bmi_pet",
+                                "registration_function": "register_bmi_pet",
                                 "uses_forcing_file": false
-			    }
+                            }
                         },
                         {
                             "name": "bmi_c",
@@ -58,28 +55,18 @@
                                 "model_type_name": "bmi_c_cfe",
                                 "library_file": "./extern/cfe/cfe/cmake_build/libcfebmi",
                                 "forcing_file": "",
-                                "init_config": "./extern/cfe/cfe/configs/cfe_config_cat_87_pass.txt",
+                                "init_config": "./extern/cfe/cfe/configs/cfe_config_cat_87_pass.cf3",
                                 "allow_exceed_end_time": true,
-                                "main_output_variable": "Q_OUT",
+                                "main_output_variable": "discharge_m",
                                 "registration_function": "register_bmi_cfe",
                                 "variables_names_map": {
-				    "water_potential_evaporation_flux" : "water_potential_evaporation_flux",
-				    "atmosphere_water__liquid_equivalent_precipitation_rate" : "APCP_surface",
-				    "atmosphere_air_water~vapor__relative_saturation" : "SPFH_2maboveground",
-				    "land_surface_air__temperature" : "TMP_2maboveground",
-				    "land_surface_wind__x_component_of_velocity" : "UGRD_10maboveground",
-				    "land_surface_wind__y_component_of_velocity" : "VGRD_10maboveground",
-				    "land_surface_radiation~incoming~longwave__energy_flux" : "DLWRF_surface",
-				    "land_surface_radiation~incoming~shortwave__energy_flux" : "DSWRF_surface",
-				    "land_surface_air__pressure" : "PRES_surface",
-				    "ice_fraction_schaake" : "sloth_ice_fraction_schaake",
-				    "ice_fraction_xinanjiang" : "sloth_ice_fraction_xinanjiang",
-				    "soil_moisture_profile" : "sloth_smp"
+                                    "et_potential_m": "water_potential_evaporation_flux",
+                                    "rainfall_depth_m": "APCP_surface",
+                                    "ice_fraction": "sloth_ice_fraction",
+                                    "soil_moisture_profile": "sloth_smp",
+                                    "param_catchment_vegetated_fraction": "sloth_vegetated_fraction",
+                                    "bare_soil_rsurf_exp": "sloth_rsurf_exp"
                                 },
-				"model_params": {
-				    "Kinf_nash_surface": 0.04,
-				    "retention_depth_nash_surface": 0.1043
-				},
                                 "uses_forcing_file": false
                             }
                         }
@@ -89,11 +76,11 @@
             }
         ],
         "forcing": {
-	    "path" : "./extern/cfe/cfe/forcings/cat87_01Dec2015_ngen.csv"
+            "path": "./extern/cfe/cfe/forcings/cat87_01Dec2015_ngen.csv"
         }
     },
     "time": {
-	"start_time": "2015-12-01 00:00:00",
+        "start_time": "2015-12-01 00:00:00",
         "end_time": "2015-12-30 23:00:00",
         "output_interval": 3600
     }

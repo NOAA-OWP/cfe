@@ -22,6 +22,7 @@ N_nash_surface=2
 K_nash_surface=0.83089
 nsubsteps_nash_surface=10
 nash_storage_surface=0.0,0.0
+giuh_ordinates=0.1,0.2,0.35,0.25,0.1
 surface_water_partitioning_scheme=Schaake
 #surface_water_partitioning_scheme=Xinanjiang
 #a_Xinanjiang_inflection_point_parameter=1

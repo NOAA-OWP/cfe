@@ -1,0 +1,36 @@
+# Test config: PT + soil evap enabled, no internal day_of_year
+# Used by unit tests to verify conditional BMI input advertisement
+cfe_config_version=3.0[]
+control_model_timestep_h=1.0[h]
+control_input_forcing_filename=BMI
+control_total_num_simulation_timesteps=0[]
+control_verbosity=0[]
+control_soil_simulate_freeze_thaw_true_false=FALSE
+control_soil_simulate_discrete_soil_moisture_true_false=FALSE
+control_ET_deepest_root_zone_discretization=4
+control_soil_use_lookup_table_num_points=0
+control_ET_simulate_Priestley_Taylor=1.26[]
+control_soil_simulate_soil_evaporation=TRUE
+catchment_impervious_fraction_0-1=0.0[]
+catchment_forested_fraction_0-1=0.70[]
+soil_depth_m=2.0[m]
+soil_Clapp_Hornberger_exponent_b=4.05[]
+soil_sat_hydraulic_conductivity_cm_per_h=1.2168[cm h-1]
+soil_sat_capillary_head_cm=35.5[cm]
+soil_effective_porosity=0.439[]
+soil_wilting_point_moisture_content=0.066[]
+soil_field_capacity_Pcap_over_Patm_0_1=0.33[]
+soil_to_gw_percolation_rate_limiter_0_to_1=0.01[]
+soil_reservoir_rate_const_to_subsurface_lateral_flow=0.01[h-1]
+soil_ice_content_impervious_threshold=0.0[]
+state_soil_reservoir_init_storage_m=0.514179628[m]
+gw_reservoir_max_storage_m=0.25[m]
+gw_discharge_coeff_m_per_timestep=1.8e-05[m h-1]
+gw_discharge_exponent=6.0[]
+state_gw_reservoir_init_storage_m=0.125[m]
+partitioning_scheme_name=Schaake
+surface_routing_num_giuh_ordinates=5
+surface_routing_giuh_ordinates=0.1, 0.2, 0.35, 0.25, 0.1[]
+state_surface_routing_init_giuh_convolution_queue_m=0.0, 0.0, 0.0, 0.0, 0.0[m]
+subsurface_routing_nash_reservoir_time_constant_k=0.03[h-1]
+state_subsurface_routing_init_nash_cascade_storage_m=0.0, 0.0[m]

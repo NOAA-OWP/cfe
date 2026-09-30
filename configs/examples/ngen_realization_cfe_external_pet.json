@@ -1,0 +1,93 @@
+{
+    "_comment": [
+        "CFE — external PET, no AORC forcing needed.",
+        "This is the simplest ngen realization for CFE.",
+        "PET and soil evap are disabled in the CFE config, so CFE",
+        "only advertises 5 BMI inputs: rainfall_depth_m, et_potential_m,",
+        "ice_fraction, param_catchment_vegetated_fraction, bare_soil_rsurf_exp.",
+        "No AORC variable mappings needed."
+    ],
+    "global": {
+        "formulations": [
+            {
+                "name": "bmi_multi",
+                "params": {
+                    "model_type_name": "bmi_multi_cfe",
+                    "forcing_file": "",
+                    "init_config": "",
+                    "allow_exceed_end_time": true,
+                    "main_output_variable": "discharge_m",
+                    "output_variables": [
+                        "discharge_m",
+                        "surface_runoff_m",
+                        "lateral_flow_m",
+                        "baseflow_m",
+                        "actual_et_m",
+                        "state_soil_storage_m",
+                        "state_gw_storage_m"
+                    ],
+                    "modules": [
+                        {
+                            "name": "bmi_c++",
+                            "params": {
+                                "model_type_name": "bmi_c++_sloth",
+                                "library_file": "./extern/sloth/cmake_build/libslothmodel",
+                                "init_config": "/dev/null",
+                                "allow_exceed_end_time": true,
+                                "main_output_variable": "z",
+                                "uses_forcing_file": false,
+                                "model_params": {
+                                    "sloth_ice_fraction(1,double,1,node)": 0.0,
+                                    "sloth_smp(1,double,1,node)": 0.0
+                                }
+                            }
+                        },
+                        {
+                            "_comment": "Replace SLOTH with a real PET module (e.g. pet_bmi) to provide et_potential_m",
+                            "name": "bmi_c++",
+                            "params": {
+                                "model_type_name": "bmi_c++_pet",
+                                "library_file": "./extern/evapotranspiration/cmake_build/libpetbmi",
+                                "init_config": "path/to/pet_config.ini",
+                                "allow_exceed_end_time": true,
+                                "main_output_variable": "water_potential_evaporation_flux",
+                                "uses_forcing_file": false
+                            }
+                        },
+                        {
+                            "name": "bmi_c",
+                            "params": {
+                                "model_type_name": "bmi_c_cfe",
+                                "library_file": "path/to/libcfebmi",
+                                "forcing_file": "",
+                                "init_config": "path/to/{{id}}_cfe_config.cf3",
+                                "allow_exceed_end_time": true,
+                                "main_output_variable": "discharge_m",
+                                "registration_function": "register_bmi_cfe",
+                                "variables_names_map": {
+                                    "rainfall_depth_m": "atmosphere_water__liquid_equivalent_precipitation_rate",
+                                    "et_potential_m": "water_potential_evaporation_flux",
+                                    "ice_fraction": "sloth_ice_fraction",
+                                    "soil_moisture_profile": "sloth_smp"
+                                },
+                                "uses_forcing_file": false
+                            }
+                        }
+                    ],
+                    "uses_forcing_file": false
+                }
+            }
+        ],
+        "forcing": {
+            "file_pattern": ".*{{id}}.*\\.csv",
+            "path": "path/to/forcing/",
+            "provider": "CsvPerFeature"
+        }
+    },
+    "time": {
+        "start_time": "2012-10-01 00:00:00",
+        "end_time": "2021-08-31 00:00:00",
+        "output_interval": 3600
+    },
+    "output_root": "path/to/output/"
+}

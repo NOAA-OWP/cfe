@@ -1,5 +1,14 @@
-#ifndef _GIUH_C
-#define _GIUH_C
+/*
+ * NOAA-OWP/cfe - Version 3 of Conceptual Functional Equivalent to the stormflow/runoff
+ *                generation components of the NOAA/NWS National Water Model version 3.1 
+ *                and earlier
+ *
+ * Originally conceived and developed by: 
+ *         Fred L. Ogden, Chief Scientist, NOAA/NWS 
+ *         Office of Water Prediction, Tuscaloosa, AL
+ *
+ */
+ 
 
 #include "giuh.h"
 
@@ -8,7 +17,7 @@
 //############### GIUH CONVOLUTION INTEGRAL   ##################
 //##############################################################
 extern double giuh_convolution_integral(double runoff_m,int num_giuh_ordinates, 
-					double *giuh_ordinates, double *runoff_queue_m_per_timestep)
+					double *giuh_ordinates, double *giuh_runoff_queue_m_per_timestep)
 {
   //##############################################################
   // This function solves the convolution integral involving N
@@ -18,23 +27,19 @@ extern double giuh_convolution_integral(double runoff_m,int num_giuh_ordinates,
   int N,i;
   
   N = num_giuh_ordinates;
-  runoff_queue_m_per_timestep[N] = 0.0;
+  giuh_runoff_queue_m_per_timestep[N] = 0.0;
   
   for(i=0;i<N;i++)
     {
-      runoff_queue_m_per_timestep[i] += giuh_ordinates[i]*runoff_m;
+      giuh_runoff_queue_m_per_timestep[i] += giuh_ordinates[i]*runoff_m;
     }
   
-  runoff_m_current_timestep = runoff_queue_m_per_timestep[0];
+  runoff_m_current_timestep = giuh_runoff_queue_m_per_timestep[0];
   
   for(i=1;i<=N;i++)  // shift all the entries in preperation for the next timestep
     {
-      runoff_queue_m_per_timestep[i-1] = runoff_queue_m_per_timestep[i];
+      giuh_runoff_queue_m_per_timestep[i-1] = giuh_runoff_queue_m_per_timestep[i];
     }
-  //runoff_queue_m_per_timestep[N-1]=0.0;
   
   return runoff_m_current_timestep;
 }
-
-
-#endif

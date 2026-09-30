@@ -2,97 +2,80 @@
 
 name: Ngen Integration Tests
 
-# Controls when the action will run.
 on:
   push:
-    branches: [ master, dev, notreal ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, dev, notreal ]
+    branches: [ master ]
   workflow_dispatch:
 
 env:
-  # Obtained from https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
-  # TODO: add something later that can check the runners for hyperthreading
   LINUX_NUM_PROC_CORES: 2
   MACOS_NUM_PROC_CORES: 3
   ASAN_OPTIONS: detect_leaks=false
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # Run general unit tests in linux environment
   test_cfe:
-    # The type of runner that the job will run on
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
       fail-fast: false
     runs-on: ${{ matrix.os }}
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checkout and build the CFE
-      - name: Checkout the commit
+      - name: Checkout CFE
         uses: actions/checkout@v4
 
-      - name: Build the CFE Library
+      - name: Build CFE Library
         run: |
-          cmake -B cmake_build -S . -DNGEN=ON -DCMAKE_C_FLAGS='-g -Og -fsanitize=address -Werror'
+          cmake -B cmake_build -S . -DCMAKE_C_FLAGS='-g -Og -fsanitize=address -Werror'
           make -C cmake_build
 
-      - name: Save CFE to a Temp Directory
+      - name: Checkout and build PET
         run: |
-          # Move files to a temporary directory
-          mkdir ${{runner.temp}}/cfe
-          mv ./* ${{runner.temp}}/cfe
+          git clone https://github.com/NOAA-OWP/evapotranspiration.git pet_src
+          cmake -B pet_src/cmake_build -S pet_src -DCMAKE_C_FLAGS='-g -Og -fsanitize=address'
+          make -C pet_src/cmake_build petbmi
 
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: checkout actions in another repo
+      - name: Save CFE and PET to temp directory
+        run: |
+          mkdir ${{ runner.temp }}/cfe
+          cp -r ./* ${{ runner.temp }}/cfe
+          mkdir ${{ runner.temp }}/pet
+          cp -r pet_src/* ${{ runner.temp }}/pet
+
+      - name: Checkout ngen
         uses: actions/checkout@v4
         with:
           repository: noaa-owp/ngen
 
-      - name: Build PET
-        id: submod_build_5
-        uses: ./.github/actions/ngen-submod-build
-        with:
-          mod-dir: "extern/evapotranspiration/evapotranspiration"
-          targets: "petbmi"
-
       - name: Build SLoTH
-        id: submod_build_6
+        id: submod_build_sloth
         uses: ./.github/actions/ngen-submod-build
         with:
           cmake-flags: -DCMAKE_POLICY_VERSION_MINIMUM=3.5
           mod-dir: "extern/sloth/"
           targets: "slothmodel"
 
-      # Build Ngen and save some files
       - name: Build Ngen
         id: ngen_id1
         uses: ./.github/actions/ngen-build
         with:
           targets: "ngen"
           build-cores: ${{ env.LINUX_NUM_PROC_CORES }}
-          #is this required for this test?
           bmi_c: 'ON'
+          build_extern: 'OFF'
         timeout-minutes: 15
 
-      - name: Move CFE Files Including cmake_build to Appropriate Directory
+      - name: Install CFE and PET into ngen extern
         run: |
           rm -rf extern/cfe/cfe/*
-          mv ${{runner.temp}}/cfe/* extern/cfe/cfe
+          mv ${{ runner.temp }}/cfe/* extern/cfe/cfe
+          rm -rf extern/evapotranspiration/evapotranspiration/*
+          mv ${{ runner.temp }}/pet/* extern/evapotranspiration/evapotranspiration
 
-      - name: PET (checkout master -- remove later)
-        run: |
-          git submodule update --remote extern/evapotranspiration/evapotranspiration
-
-      - name: Run NGen Test for CFE (cfe1.0) Coupled with PET
+      - name: Run ngen with CFE coupled with PET
         run: |
           mv ${{ steps.ngen_id1.outputs.build-dir }} ./ngen-build/
-          inputfile='extern/cfe/cfe/realizations/realization_cfe_pet_surfgiuh.json'
-          ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile
-
-      - name: Run Ngen Test for CFE (cfe2.0) Coupled with PET
-        run: |
-          inputfile='extern/cfe/cfe/realizations/realization_cfe_pet_surfnash.json'
+          inputfile='extern/cfe/cfe/realizations/realization_cfe_pet.json'
           ./ngen-build/ngen ./data/catchment_data.geojson "cat-27" ./data/nexus_data.geojson "nex-26" $inputfile

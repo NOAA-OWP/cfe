@@ -1,0 +1,85 @@
+{
+    "global": {
+        "formulations": [
+            {
+                "name": "bmi_multi",
+                "params": {
+                    "model_type_name": "bmi_multi_cfe_pt_enabled",
+                    "forcing_file": "",
+                    "init_config": "",
+                    "allow_exceed_end_time": true,
+                    "main_output_variable": "discharge_m",
+                    "output_variables": [
+                        "discharge_m",
+                        "surface_runoff_m",
+                        "lateral_flow_m",
+                        "baseflow_m",
+                        "actual_et_m",
+                        "state_soil_storage_m",
+                        "state_gw_storage_m"
+                    ],
+                    "modules": [
+                        {
+                            "name": "bmi_c++",
+                            "params": {
+                                "model_type_name": "bmi_c++_sloth",
+                                "library_file": "$SLOTH_LIB",
+                                "init_config": "/dev/null",
+                                "allow_exceed_end_time": true,
+                                "main_output_variable": "z",
+                                "uses_forcing_file": false,
+                                "model_params": {
+                                    "sloth_ice_fraction(1,double,1,node)": 0.0,
+                                    "sloth_smp(1,double,1,node)": 0.0,
+                                    "sloth_et_potential_m(1,double,1,node)": 0.0,
+                                    "sloth_vegetated_fraction(1,double,1,node)": 0.70,
+                                    "sloth_rsurf_exp(1,double,1,node)": 5.0
+                                }
+                            }
+                        },
+                        {
+                            "name": "bmi_c",
+                            "params": {
+                                "model_type_name": "bmi_c_cfe",
+                                "library_file": "$CFE_LIB",
+                                "forcing_file": "",
+                                "init_config": "$CFE_CONFIG",
+                                "allow_exceed_end_time": true,
+                                "main_output_variable": "discharge_m",
+                                "registration_function": "register_bmi_cfe",
+                                "variables_names_map": {
+                                    "rainfall_depth_m": "atmosphere_water__liquid_equivalent_precipitation_rate",
+                                    "et_potential_m": "sloth_et_potential_m",
+                                    "ice_fraction": "sloth_ice_fraction",
+                                    "soil_moisture_profile": "sloth_smp",
+                                    "TMP_2maboveground": "land_surface_air__temperature",
+                                    "DSWRF_surface": "land_surface_radiation~incoming~shortwave__energy_flux",
+                                    "DLWRF_surface": "land_surface_radiation~incoming~longwave__energy_flux",
+                                    "PRES_surface": "land_surface_air__pressure",
+                                    "SPFH_2maboveground": "atmosphere_air_water~vapor__relative_saturation",
+                                    "UGRD_10maboveground": "land_surface_wind__x_component_of_velocity",
+                                    "VGRD_10maboveground": "land_surface_wind__y_component_of_velocity",
+                                    "param_catchment_vegetated_fraction": "sloth_vegetated_fraction",
+                                    "bare_soil_rsurf_exp": "sloth_rsurf_exp"
+                                },
+                                "uses_forcing_file": false
+                            }
+                        }
+                    ],
+                    "uses_forcing_file": false
+                }
+            }
+        ],
+        "forcing": {
+            "file_pattern": ".*{{id}}.*\\.csv",
+            "path": "$FORCING_DIR",
+            "provider": "CsvPerFeature"
+        }
+    },
+    "time": {
+        "start_time": "$START_TIME",
+        "end_time": "$END_TIME",
+        "output_interval": 3600
+    },
+    "output_root": "$OUTPUT_DIR"
+}

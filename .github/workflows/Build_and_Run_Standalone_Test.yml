@@ -1,8 +1,5 @@
-# Test changes that have been pushed to the master branch
+name: Regression Tests
 
-name: Testing and Validation
-
-# Controls when the action will run.
 on:
   push:
     branches: [ master ]
@@ -10,72 +7,35 @@ on:
     branches: [ master ]
   workflow_dispatch:
 
-#env:
-  # Obtained from https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
-  # TODO: add something later that can check the runners for hyperthreading
-  #LINUX_NUM_PROC_CORES: 2
-  #MACOS_NUM_PROC_CORES: 3
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # Run general unit tests in linux environment
-  test_unit:
-    # The type of runner that the job will run on
+  build-and-test:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
       fail-fast: false
     runs-on: ${{ matrix.os }}
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    - name: Checkout the commit
-      uses: actions/checkout@v2
-    
-    - name: Build and Run Standalone BASE option
-      run: |
-        mkdir build && cd build
-        cmake ../ -DBASE=ON
-        make
-        cd ..
-        ./run_cfe.sh BASE
-        
-    - name: Build and Run Standalone FORCING option
-      run: |
-        git submodule update --init
-        cd build
-        cmake ../ -DFORCING=ON
-        make
-        cd ..
-        ./run_cfe.sh FORCING
-        
-    - name: Build and Run Standalone PET option
-      run: |
-        git submodule update --init
-        cd build
-        cmake ../ -DFORCINGPET=ON
-        make
-        cd ..
-        ./run_cfe.sh FORCINGPET
-        
-    - name : Build and Run AETROOTZONE option
-      run: |
-        git clone https://github.com/NOAA-OWP/SoilMoistureProfiles extern/SoilMoistureProfiles
-        cd build
-        cmake ../ -DAETROOTZONE=ON
-        make
-        cd ..
-        ./run_cfe.sh AETROOTZONE
+    - name: Checkout
+      uses: actions/checkout@v4
 
-    - name: Build and Run Unit Tests
-      run: |
-        cmake -B cmake_build -DNGEN=ON -S .
-        cmake --build cmake_build
-        ctest --test-dir cmake_build -I 2,
+    - name: Configure
+      run: cmake -B build -S . -DCMAKE_C_FLAGS='-Werror'
 
-    - name: Build and Run Combined BMI Test
-      run: |
-        cmake -B cmake_build -DNGEN=ON -S .
-        cmake --build cmake_build
-        ctest --test-dir cmake_build -I 1,1
+    - name: Build
+      run: cmake --build build
 
+    - name: Run integration tests (golden output comparison)
+      run: |
+        bash test/run_integration_test.sh \
+          build/cfe_bmi_driver \
+          configs/migrated_legacy_cat87.cf3 \
+          forcings/cat87_01Dec2015.csv \
+          test/golden/v2 \
+          1e-10
+        bash test/run_integration_test.sh \
+          build/cfe_bmi_driver \
+          configs/bmi_config_cat87_v3.cf3 \
+          forcings/cat87_01Dec2015.csv \
+          test/golden/v3 \
+          1e-10

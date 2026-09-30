@@ -1,0 +1,65 @@
+# CFE regression test config — PT and soil evaporation DISABLED
+#
+# Used by: test 6 (CFE-only, zero-epsilon baseline), test 3/4 (NOM-coupled)
+#
+# With PT disabled, CFE advertises only 5 BMI inputs (no AORC fields,
+# no day_of_year). NOM or an external module provides PET via et_potential_m.
+#
+# For standalone driver use, change control_input_forcing_filename from
+# "BMI" to the actual forcing CSV path.
+
+cfe_config_version=3.0[]
+
+# Model Controls
+control_model_timestep_h=1.0[h]
+control_input_forcing_filename=BMI
+control_total_num_simulation_timesteps=0[]
+control_verbosity=1[]
+control_soil_simulate_freeze_thaw_true_false=FALSE
+control_soil_simulate_discrete_soil_moisture_true_false=TRUE
+control_ET_deepest_root_zone_discretization=4
+control_soil_use_lookup_table_num_points=5
+#control_ET_simulate_Priestley_Taylor=1.26[]
+#control_soil_simulate_soil_evaporation=TRUE
+
+# Catchment Characteristics
+catchment_id="cat87"
+catchment_latitude_decimal_degree=35.5214[decimaldegree]
+catchment_longitude_decimal_degree=-97.9797[decimaldegree]
+catchment_elevation=34.5[m]
+catchment_area_km2=1.0[km2]
+catchment_impervious_fraction_0-1=0.0[A A-1]
+
+# Soil Parameters
+soil_depth_m=2.0[m]
+soil_Clapp_Hornberger_exponent_b=8.93396282196045[]
+soil_sat_hydraulic_conductivity_cm_per_h=1.1034026116144564[cm h-1]
+soil_sat_capillary_head_cm=2.455915006614414[cm]
+soil_effective_porosity=0.3963804372958754[V V-1]
+soil_field_capacity_Pcap_over_Patm_0_1=0.333[P P-1]
+soil_ice_content_impervious_threshold=0.12[V V-1]
+soil_reservoir_rate_const_to_subsurface_lateral_flow=0.000005[h-1]
+soil_to_gw_percolation_rate_limiter_0_to_1=0.994294693202810745[]
+state_soil_reservoir_init_storage_m=0.7843498367003[m]
+
+# Groundwater Parameters
+gw_reservoir_max_storage_m=0.014139476776[m]
+gw_discharge_coeff_m_per_timestep=1.8e-05[m h-1]
+gw_discharge_exponent=1.0[]
+state_gw_reservoir_init_storage_m=0.0056557907104[m]
+
+# Partitioning
+partitioning_scheme_name=XINANJIANG
+partitioning_Xinanjiang_tension_water_inflection_point=-0.49
+partitioning_Xinanjiang_tension_water_soil_moist_distrib_exponent=0.09
+partitioning_Xinanjiang_free_water_soil_moist_distrib_exponent=0.09
+
+# Surface Routing
+surface_routing_scheme_name=GIUH
+surface_routing_num_giuh_ordinates=10
+surface_routing_giuh_ordinates=0.1236,0.1598,0.1481,0.1128,0.0986,0.092,0.0808,0.1289,0.0549,0.0006
+state_surface_routing_init_giuh_convolution_queue_m=0,0,0,0,0,0,0,0,0,0[m]
+
+# Subsurface Lateral Flow
+subsurface_routing_nash_reservoir_time_constant_k=0.83[h-1]
+state_subsurface_routing_init_nash_cascade_storage_m=0.0,0.0
