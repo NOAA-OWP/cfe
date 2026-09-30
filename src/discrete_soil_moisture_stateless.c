@@ -460,58 +460,63 @@ int DSBM_step_one_hour_stateless(
 void et_from_soil_discrete
     (
     const SoilControl*    soil_control,
-    const SoilGeometry*   soil_geometry, 
-    const SoilParameters* soil_parameters, 
+    const SoilGeometry*   soil_geometry,
+    const SoilParameters* soil_parameters,
     SoilStateIn*    soil_state,
     struct EVAPOTRANSPIRATION_STRUCTURE* evap_struct
     )
 {
-    //    FLO August, 2025
-    //    Take AET from wettest root zone discretization (disc) in a discretized soil
-    //    using Budyko type function to limit PET iff wilting_point < theta < field_capacity
-    //    Assumes AET=PET when theta >= field_capacity moisture content
-    //            AET=0  when theta <= wilting point moisture content
-    //            0<=AET/PET<=1 between WP and FC (linear)
-    //    Returns AET and modified theta in wettest root zone discretization
-   
+    // FLO September, 2026
+    // Distribute PET equally among the root-zone discretizations (discs),
+    // consistent with the DSBM formulation used to mimic Noah-MP soil moisture.
+    // Each root-zone disc has its own soil-moisture stress multiplier:
+    //     transpiration/PET = 0 when theta <= wilting point,
+    //     transpiration/PET = 1 when theta >= field capacity,
+    //     transpiration/PET varies linearly between wilting point and field capacity.
+    // Extraction from any disc is limited so theta cannot fall below the
+    // wilting-point moisture content. Unmet demand from one disc is not
+    // reassigned to another disc.
 
-    // assume that root zone disc with highest moisture content satisfies all AET 
-    
-    int    wettest_disc            = -1;
-    double wettest_theta           = 0.0;
-    double dz_m_wettest_disc         = 0.0;
-    double PET                     = evap_struct->reduced_potential_et_m_per_timestep;
-    double AET                     = 0.0;
-    
-    int root_limit = soil_control->deepest_root_disc;
-    if (root_limit > NDISC) root_limit = NDISC;  // bounds safety
-    for(int i = 0; i < root_limit; i++) {       // find wettest disc
-      if(soil_state->theta_in[i] > wettest_theta) {
-          wettest_theta = soil_state->theta_in[i];
-          wettest_disc = i;
-      }
-    }
-    dz_m_wettest_disc = soil_geometry->dz_m[wettest_disc];    
-    double wettest_disc_storage_m = wettest_theta * dz_m_wettest_disc;
-      
-    if(wettest_theta <= soil_parameters->theta_wp) {
-        AET    = 0.0;
-    } else if(wettest_theta >= soil_parameters->theta_fc) {
-        AET    = min(PET, wettest_disc_storage_m);
-    } else {
-        double Budyko_numerator   = wettest_theta - soil_parameters->theta_wp;
-        double Budyko_denominator = soil_parameters->theta_fc - soil_parameters->theta_wp;
-        double Budyko_multiplier  = Budyko_numerator / Budyko_denominator;       
-        AET = min(PET * Budyko_multiplier, wettest_disc_storage_m);
+    int nroot = soil_control->deepest_root_disc;
+    if (nroot < 1) nroot = 1;
+    if (nroot > NDISC) nroot = NDISC;
+
+    const double PET = evap_struct->reduced_potential_et_m_per_timestep;
+    const double root_fraction = 1.0 / (double)nroot;
+    const double stress_denominator =
+        fmax(soil_parameters->theta_fc - soil_parameters->theta_wp, 1.0e-12);
+
+    double actual_transpiration_m = 0.0;
+
+    for (int i = 0; i < nroot; i++) {
+        const double theta = soil_state->theta_in[i];
+        double moisture_stress_multiplier;
+
+        if (theta <= soil_parameters->theta_wp) {
+            moisture_stress_multiplier = 0.0;
+        } else if (theta >= soil_parameters->theta_fc) {
+            moisture_stress_multiplier = 1.0;
+        } else {
+            moisture_stress_multiplier =
+                (theta - soil_parameters->theta_wp) / stress_denominator;
+        }
+
+        const double demand_m =
+            PET * root_fraction * moisture_stress_multiplier;
+        const double available_m =
+            fmax(theta - soil_parameters->theta_wp, 0.0) * soil_geometry->dz_m[i];
+        const double actual_transpiration_from_disc_m = fmin(demand_m, available_m);
+
+        if (actual_transpiration_from_disc_m > 0.0) {
+            soil_state->theta_in[i] -= actual_transpiration_from_disc_m / soil_geometry->dz_m[i];
+            if (soil_state->theta_in[i] < soil_parameters->theta_wp)
+                soil_state->theta_in[i] = soil_parameters->theta_wp;
+        }
+
+        actual_transpiration_m += actual_transpiration_from_disc_m;
     }
 
-    // remove AET from storage in wettest disc:
-    if(AET > 0.0) {
-      double delta_theta = AET / dz_m_wettest_disc;          // because: delta_theta = delta_Vw/Vt
-      soil_state->theta_in[wettest_disc] -= delta_theta;   // negative by definition
-    }
-    evap_struct->actual_et_from_soil_m_per_timestep = AET;
+    evap_struct->actual_et_from_soil_m_per_timestep = actual_transpiration_m;
     return;
-    
 }
 
